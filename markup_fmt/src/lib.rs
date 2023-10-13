@@ -17,7 +17,6 @@ pub fn format_text(code: &str, language: Language) -> Result<String, SyntaxError
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root()?;
     let ctx = Ctx {
-        source: code,
         language,
         indent_width: 2,
         options: Default::default(),
