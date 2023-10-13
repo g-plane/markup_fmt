@@ -1,0 +1,5 @@
+{
+  "[vue][svelte]": {
+    "editor.formatOnSave": false
+  }
+}
