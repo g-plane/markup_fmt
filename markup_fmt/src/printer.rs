@@ -184,9 +184,13 @@ impl<'s> DocGen<'s> for Element<'s> {
             docs.push(trailing_ws);
         }
 
-        docs.push(Doc::text("</"));
-        docs.push(Doc::text(self.tag_name));
-        docs.push(Doc::text(">"));
+        docs.push(
+            Doc::text("</")
+                .append(Doc::text(self.tag_name))
+                .append(Doc::line_or_nil())
+                .append(Doc::text(">"))
+                .group(),
+        );
 
         Doc::list(docs).group()
     }
