@@ -43,26 +43,26 @@ impl<'s> DocGen<'s> for Element<'s> {
         docs.push(Doc::text("<"));
         docs.push(Doc::text(self.tag_name));
 
-        docs.push(
-            Doc::list(
-                self.attrs
-                    .iter()
-                    .map(|prop| Doc::line_or_space().append(prop.doc(ctx)))
-                    .collect(),
-            )
-            .nest(ctx.indent_width)
-            .append(if self.self_closing {
-                Doc::nil()
-            } else {
-                Doc::line_or_nil().append(Doc::text(">"))
-            })
-            .group(),
-        );
+        let attrs = Doc::list(
+            self.attrs
+                .iter()
+                .map(|prop| Doc::line_or_space().append(prop.doc(ctx)))
+                .collect(),
+        )
+        .nest(ctx.indent_width)
+        .append(if self.self_closing {
+            Doc::nil()
+        } else {
+            Doc::line_or_nil().append(Doc::text(">"))
+        });
 
         if self.self_closing {
+            docs.push(attrs);
             docs.push(Doc::line_or_space());
             docs.push(Doc::text("/>"));
             return Doc::list(docs).group();
+        } else {
+            docs.push(attrs.group());
         }
 
         let is_whitespace_sensitive = match ctx.language {
