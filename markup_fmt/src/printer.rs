@@ -132,9 +132,18 @@ impl<'s> DocGen<'s> for Element<'s> {
             || self.tag_name.eq_ignore_ascii_case("style")
         {
             if let [Node::TextNode(text_node)] = &self.children[..] {
-                docs.push(Doc::hard_line());
-                docs.extend(reflow(text_node.raw.trim()));
-                docs.push(Doc::hard_line());
+                let doc = Doc::hard_line()
+                    .concat(reflow(text_node.raw.trim()))
+                    .append(Doc::hard_line());
+                docs.push(
+                    if ctx.options.script_indent && self.tag_name.eq_ignore_ascii_case("script")
+                        || ctx.options.style_indent && self.tag_name.eq_ignore_ascii_case("style")
+                    {
+                        doc.nest(ctx.indent_width)
+                    } else {
+                        doc
+                    },
+                );
             }
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(
