@@ -306,18 +306,44 @@ impl<'s> DocGen<'s> for TextNode<'s> {
 }
 
 impl<'s> DocGen<'s> for VueDirective<'s> {
-    fn doc(&self, _: &Ctx) -> Doc<'s> {
+    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+        use crate::config::{VBindStyle, VOnStyle};
+
         let mut docs = Vec::with_capacity(5);
 
         let mut is_short_hand = false;
         docs.push(match self.name {
             ":" => {
-                is_short_hand = true;
-                Doc::text(":")
+                if let Some(VBindStyle::Long) = ctx.options.v_bind_style {
+                    Doc::text("v-bind")
+                } else {
+                    is_short_hand = true;
+                    Doc::text(":")
+                }
+            }
+            "bind" if self.arg_and_modifiers.is_some() => {
+                if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
+                    is_short_hand = true;
+                    Doc::text(":")
+                } else {
+                    Doc::text("v-bind")
+                }
             }
             "@" => {
-                is_short_hand = true;
-                Doc::text("@")
+                if let Some(VOnStyle::Long) = ctx.options.v_on_style {
+                    Doc::text("v-on")
+                } else {
+                    is_short_hand = true;
+                    Doc::text("@")
+                }
+            }
+            "on" => {
+                if let Some(VOnStyle::Short) = ctx.options.v_on_style {
+                    is_short_hand = true;
+                    Doc::text("@")
+                } else {
+                    Doc::text("v-on")
+                }
             }
             "#" => {
                 is_short_hand = true;
