@@ -1,5 +1,5 @@
 mod ast;
-mod config;
+pub mod config;
 mod ctx;
 mod helpers;
 mod parser;
