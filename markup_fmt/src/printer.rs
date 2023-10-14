@@ -49,12 +49,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .map(|prop| Doc::line_or_space().append(prop.doc(ctx)))
                 .collect(),
         )
-        .nest(ctx.indent_width)
-        .append(if self.self_closing {
-            Doc::nil()
-        } else {
-            Doc::line_or_nil().append(Doc::text(">"))
-        });
+        .nest(ctx.indent_width);
 
         if self.void_element {
             docs.push(attrs);
@@ -66,8 +61,15 @@ impl<'s> DocGen<'s> for Element<'s> {
             docs.push(Doc::line_or_space());
             docs.push(Doc::text("/>"));
             return Doc::list(docs).group();
+        } else if ctx.options.closing_bracket_same_line {
+            docs.push(attrs.append(Doc::text(">")).group());
         } else {
-            docs.push(attrs.group());
+            docs.push(
+                attrs
+                    .append(Doc::line_or_nil())
+                    .append(Doc::text(">"))
+                    .group(),
+            );
         }
 
         let is_whitespace_sensitive = match ctx.language {

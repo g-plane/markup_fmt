@@ -2,6 +2,7 @@
 pub struct LanguageOptions {
     pub script_indent: bool,
     pub style_indent: bool,
+    pub closing_bracket_same_line: bool,
     pub v_bind_style: Option<VBindStyle>,
     pub v_on_style: Option<VOnStyle>,
 }
