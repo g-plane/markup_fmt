@@ -35,6 +35,17 @@ impl<'s> Parser<'s> {
         result
     }
 
+    fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
+        SyntaxError {
+            kind,
+            pos: self
+                .chars
+                .peek()
+                .map(|(pos, _)| *pos)
+                .unwrap_or(self.source.len()),
+        }
+    }
+
     fn skip_ws(&mut self) {
         while self
             .chars
@@ -63,7 +74,7 @@ impl<'s> Parser<'s> {
         }
 
         let Some((start, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) else {
-            return Err(SyntaxError::ExpectAttrName);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
         };
         let mut end = start;
 
@@ -98,7 +109,7 @@ impl<'s> Parser<'s> {
 
             let Some((start, _)) = self.chars.next_if(|(_, c)| is_unquoted_attr_value_char(*c))
             else {
-                return Err(SyntaxError::ExpectAttrValue);
+                return Err(self.emit_error(SyntaxErrorKind::ExpectAttrValue));
             };
             let mut end = start;
 
@@ -118,7 +129,7 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
         else {
-            return Err(SyntaxError::ExpectComment);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectComment));
         };
         let start = start + 1;
 
@@ -151,7 +162,7 @@ impl<'s> Parser<'s> {
 
     fn parse_element(&mut self) -> PResult<Element<'s>> {
         let Some(..) = self.chars.next_if(|(_, c)| *c == '<') else {
-            return Err(SyntaxError::ExpectElement);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectElement));
         };
         let tag_name = self.parse_tag_name()?;
 
@@ -169,7 +180,7 @@ impl<'s> Parser<'s> {
                             self_closing: true,
                         });
                     } else {
-                        return Err(SyntaxError::ExpectSelfCloseTag);
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectSelfCloseTag));
                     }
                 }
                 Some((_, '>')) => {
@@ -188,17 +199,20 @@ impl<'s> Parser<'s> {
                 Some((_, '<')) => {
                     let mut chars = self.chars.clone();
                     chars.next();
-                    if chars.next_if(|(_, c)| *c == '/').is_some() {
+                    if let Some((pos, _)) = chars.next_if(|(_, c)| *c == '/') {
                         self.chars = chars;
                         let close_tag_name = self.parse_tag_name()?;
                         if !close_tag_name.eq_ignore_ascii_case(tag_name) {
-                            return Err(SyntaxError::ExpectCloseTag);
+                            return Err(SyntaxError {
+                                kind: SyntaxErrorKind::ExpectCloseTag,
+                                pos,
+                            });
                         }
                         self.skip_ws();
                         if self.chars.next_if(|(_, c)| *c == '>').is_some() {
                             break;
                         } else {
-                            return Err(SyntaxError::ExpectCloseTag);
+                            return Err(self.emit_error(SyntaxErrorKind::ExpectCloseTag));
                         }
                     } else {
                         children.push(
@@ -223,7 +237,7 @@ impl<'s> Parser<'s> {
                         },
                     );
                 }
-                None => return Err(SyntaxError::ExpectCloseTag),
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectCloseTag)),
             }
         }
 
@@ -241,7 +255,7 @@ impl<'s> Parser<'s> {
         }
 
         let Some((start, _)) = self.chars.next_if(|(_, c)| is_identifier_char(*c)) else {
-            return Err(SyntaxError::ExpectIdentifier);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectIdentifier));
         };
         let mut end = start;
 
@@ -282,10 +296,13 @@ impl<'s> Parser<'s> {
                     Some((_, '{')) if matches!(self.language, Language::Vue) => {
                         self.parse_vue_interpolation().map(Node::VueInterpolation)
                     }
-                    Some((_, '#')) if matches!(self.language, Language::Svelte) => self
+                    Some((pos, '#')) if matches!(self.language, Language::Svelte) => self
                         .try_parse(Parser::parse_svelte_if_block)
                         .map(Node::SvelteIfBlock)
-                        .map_err(|_| SyntaxError::UnknownSvelteBlock),
+                        .map_err(|_| SyntaxError {
+                            kind: SyntaxErrorKind::UnknownSvelteBlock,
+                            pos,
+                        }),
                     _ if matches!(self.language, Language::Svelte) => self
                         .parse_svelte_interpolation()
                         .map(Node::SvelteInterpolation),
@@ -293,7 +310,7 @@ impl<'s> Parser<'s> {
                 }
             }
             Some(..) => self.parse_text_node().map(Node::TextNode),
-            None => Err(SyntaxError::ExpectElement),
+            None => Err(self.emit_error(SyntaxErrorKind::ExpectElement)),
         }
     }
 
@@ -358,7 +375,7 @@ impl<'s> Parser<'s> {
                 Some(..) => {
                     children.push(self.parse_node()?);
                 }
-                None => return Err(SyntaxError::ExpectSvelteBlockEnd),
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd)),
             }
         }
         Ok(children)
@@ -372,7 +389,7 @@ impl<'s> Parser<'s> {
             .next_if(|(_, c)| *c == '=')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
         else {
-            return Err(SyntaxError::ExpectSvelteAttr);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttr));
         };
 
         let start = start + 1;
@@ -426,7 +443,7 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
             .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
         else {
-            return Err(SyntaxError::ExpectSvelteIfBlock);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
 
         let expr = self.parse_svelte_expr(start)?;
@@ -441,7 +458,7 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_none()
         {
-            Err(SyntaxError::ExpectSvelteBlockEnd)
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
         } else {
             Ok(SvelteIfBlock {
                 expr,
@@ -453,7 +470,7 @@ impl<'s> Parser<'s> {
 
     fn parse_svelte_interpolation(&mut self) -> PResult<SvelteInterpolation<'s>> {
         let Some((i, _)) = self.chars.next_if(|(_, c)| *c == '{') else {
-            return Err(SyntaxError::ExpectSvelteInterpolation);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteInterpolation));
         };
         Ok(SvelteInterpolation {
             expr: self.parse_svelte_expr(i + 1)?,
@@ -462,7 +479,7 @@ impl<'s> Parser<'s> {
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
         let Some((start, _)) = self.chars.next_if(|(_, c)| is_tag_name_char(*c)) else {
-            return Err(SyntaxError::ExpectTagName);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectTagName));
         };
         let mut end = start;
 
@@ -477,14 +494,14 @@ impl<'s> Parser<'s> {
         let Some((start, first_char)) = self.chars.next_if(|(_, c)| {
             matches!(self.language, Language::Vue | Language::Svelte) && *c != '{'
         }) else {
-            return Err(SyntaxError::ExpectTextNode);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         };
 
         if matches!(self.language, Language::Vue)
             && first_char == '{'
             && matches!(self.chars.peek(), Some((_, '{')))
         {
-            return Err(SyntaxError::ExpectTextNode);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         }
 
         let end;
@@ -560,10 +577,10 @@ impl<'s> Parser<'s> {
                     self.chars = chars;
                     self.parse_identifier()?
                 } else {
-                    return Err(SyntaxError::ExpectVueDirective);
+                    return Err(self.emit_error(SyntaxErrorKind::ExpectVueDirective));
                 }
             }
-            _ => return Err(SyntaxError::ExpectVueDirective),
+            _ => return Err(self.emit_error(SyntaxErrorKind::ExpectVueDirective)),
         };
 
         let arg_and_modifiers = if matches!(name, ":" | "@" | "#")
@@ -595,7 +612,7 @@ impl<'s> Parser<'s> {
             .next_if(|(_, c)| *c == '{')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
         else {
-            return Err(SyntaxError::ExpectVueInterpolation);
+            return Err(self.emit_error(SyntaxErrorKind::ExpectVueInterpolation));
         };
         let start = start + 1;
 
@@ -634,7 +651,13 @@ fn is_tag_name_char(c: char) -> bool {
 pub type PResult<T> = Result<T, SyntaxError>;
 
 #[derive(Clone, Debug)]
-pub enum SyntaxError {
+pub struct SyntaxError {
+    pub kind: SyntaxErrorKind,
+    pub pos: usize,
+}
+
+#[derive(Clone, Debug)]
+pub enum SyntaxErrorKind {
     ExpectAttrName,
     ExpectAttrValue,
     ExpectCloseTag,
