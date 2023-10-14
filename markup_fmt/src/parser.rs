@@ -269,10 +269,10 @@ impl<'s> Parser<'s> {
             Some((_, '<')) => {
                 let mut chars = self.chars.clone();
                 chars.next();
-                if chars.next_if(|(_, c)| *c == '!').is_some() {
-                    self.parse_comment().map(Node::Comment)
-                } else {
-                    self.parse_element().map(Node::Element)
+                match chars.next() {
+                    Some((_, c)) if is_tag_name_char(c) => self.parse_element().map(Node::Element),
+                    Some((_, '!')) => self.parse_comment().map(Node::Comment),
+                    _ => self.parse_text_node().map(Node::TextNode),
                 }
             }
             Some((_, '{')) => {
@@ -461,16 +461,6 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
-        fn is_tag_name_char(c: char) -> bool {
-            c.is_ascii_alphanumeric()
-                || c == '-'
-                || c == '_'
-                || c == '.'
-                || c == ':'
-                || !c.is_ascii()
-                || c == '\\'
-        }
-
         let Some((start, _)) = self.chars.next_if(|(_, c)| is_tag_name_char(*c)) else {
             return Err(SyntaxError::ExpectTagName);
         };
@@ -485,7 +475,7 @@ impl<'s> Parser<'s> {
 
     fn parse_text_node(&mut self) -> PResult<TextNode<'s>> {
         let Some((start, first_char)) = self.chars.next_if(|(_, c)| {
-            *c != '<' && (matches!(self.language, Language::Vue | Language::Svelte) && *c != '{')
+            matches!(self.language, Language::Vue | Language::Svelte) && *c != '{'
         }) else {
             return Err(SyntaxError::ExpectTextNode);
         };
@@ -524,8 +514,15 @@ impl<'s> Parser<'s> {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
-                    end = i;
-                    break;
+                    match chars.next() {
+                        Some((_, c)) if is_tag_name_char(c) || c == '/' || c == '!' => {
+                            end = i;
+                            break;
+                        }
+                        _ => {
+                            self.chars.next();
+                        }
+                    }
                 }
                 Some(..) => {
                     self.chars.next();
@@ -622,6 +619,16 @@ impl<'s> Parser<'s> {
             expr: unsafe { self.source.get_unchecked(start..end) },
         })
     }
+}
+
+fn is_tag_name_char(c: char) -> bool {
+    c.is_ascii_alphanumeric()
+        || c == '-'
+        || c == '_'
+        || c == '.'
+        || c == ':'
+        || !c.is_ascii()
+        || c == '\\'
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;
