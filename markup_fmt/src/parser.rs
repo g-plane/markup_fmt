@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, helpers};
 use std::{iter::Peekable, str::CharIndices};
 
 #[derive(Clone, Debug)]
@@ -165,6 +165,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectElement));
         };
         let tag_name = self.parse_tag_name()?;
+        let void_element = helpers::is_void_element(tag_name);
 
         let mut attrs = vec![];
         loop {
@@ -178,6 +179,7 @@ impl<'s> Parser<'s> {
                             attrs,
                             children: vec![],
                             self_closing: true,
+                            void_element,
                         });
                     } else {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectSelfCloseTag));
@@ -185,6 +187,15 @@ impl<'s> Parser<'s> {
                 }
                 Some((_, '>')) => {
                     self.chars.next();
+                    if void_element {
+                        return Ok(Element {
+                            tag_name,
+                            attrs,
+                            children: vec![],
+                            self_closing: false,
+                            void_element,
+                        });
+                    }
                     break;
                 }
                 _ => {
@@ -246,6 +257,7 @@ impl<'s> Parser<'s> {
             attrs,
             children,
             self_closing: false,
+            void_element,
         })
     }
 

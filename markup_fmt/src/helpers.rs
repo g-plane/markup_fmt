@@ -62,3 +62,12 @@ pub(crate) fn is_whitespace_sensitive_tag(name: &str) -> bool {
     .iter()
     .all(|tag| !tag.eq_ignore_ascii_case(name))
 }
+
+pub(crate) fn is_void_element(name: &str) -> bool {
+    [
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source",
+        "track", "wbr",
+    ]
+    .iter()
+    .any(|tag| tag.eq_ignore_ascii_case(name))
+}

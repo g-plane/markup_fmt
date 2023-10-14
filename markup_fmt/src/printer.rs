@@ -56,7 +56,12 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::line_or_nil().append(Doc::text(">"))
         });
 
-        if self.self_closing {
+        if self.void_element {
+            docs.push(attrs);
+            docs.push(Doc::line_or_nil());
+            docs.push(Doc::text(">"));
+            return Doc::list(docs).group();
+        } else if self.self_closing {
             docs.push(attrs);
             docs.push(Doc::line_or_space());
             docs.push(Doc::text("/>"));

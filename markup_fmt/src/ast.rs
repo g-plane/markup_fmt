@@ -24,6 +24,7 @@ pub struct Element<'s> {
     pub attrs: Vec<Attribute<'s>>,
     pub children: Vec<Node<'s>>,
     pub self_closing: bool,
+    pub void_element: bool,
 }
 
 #[derive(Clone, Debug)]
