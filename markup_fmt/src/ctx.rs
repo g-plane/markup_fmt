@@ -1,17 +1,17 @@
 use crate::{config::LanguageOptions, Language};
 use std::{borrow::Cow, path::Path};
 
-pub(crate) struct Ctx<F>
+pub(crate) struct Ctx<'b, F>
 where
     F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
 {
     pub(crate) language: Language,
     pub(crate) indent_width: usize,
-    pub(crate) options: LanguageOptions,
+    pub(crate) options: &'b LanguageOptions,
     pub(crate) external_formatter: F,
 }
 
-impl<F> Ctx<F>
+impl<'b, F> Ctx<'b, F>
 where
     F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
 {

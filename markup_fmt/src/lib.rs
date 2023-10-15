@@ -11,13 +11,14 @@ use crate::{
     parser::{Parser, SyntaxError},
     printer::DocGen,
 };
-use config::LanguageOptions;
+use config::FormatOptions;
 use std::{borrow::Cow, path::Path};
-use tiny_pretty::PrintOptions;
+use tiny_pretty::{IndentKind, PrintOptions};
 
 pub fn format_text<F>(
     code: &str,
     language: Language,
+    options: &FormatOptions,
     external_formatter: F,
 ) -> Result<String, SyntaxError>
 where
@@ -27,17 +28,21 @@ where
     let ast = parser.parse_root()?;
     let ctx = Ctx {
         language,
-        indent_width: 2,
-        options: LanguageOptions {
-            ..Default::default()
-        },
+        indent_width: options.layout.indent_width,
+        options: &options.language,
         external_formatter,
     };
     Ok(tiny_pretty::print(
         &ast.doc(&ctx),
         &PrintOptions {
-            tab_size: ctx.indent_width,
-            ..Default::default()
+            indent_kind: if options.layout.use_tabs {
+                IndentKind::Tab
+            } else {
+                IndentKind::Space
+            },
+            line_break: options.layout.line_break.clone().into(),
+            width: options.layout.print_width,
+            tab_size: options.layout.indent_width,
         },
     ))
 }
