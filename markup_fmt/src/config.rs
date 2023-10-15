@@ -74,7 +74,7 @@ pub struct LanguageOptions {
 
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase"))]
 pub enum VBindStyle {
     #[default]
     Short,
@@ -83,7 +83,7 @@ pub enum VBindStyle {
 
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase"))]
 pub enum VOnStyle {
     #[default]
     Short,
