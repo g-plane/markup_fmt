@@ -6,7 +6,7 @@ use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration, ResolveConfigurationResult},
     plugins::{FileMatchingInfo, PluginInfo, SyncPluginHandler, SyncPluginInfo},
 };
-use markup_fmt::{config::FormatOptions, format_text, Language};
+use markup_fmt::{config::FormatOptions, format_text, FormatError, Language};
 use std::path::Path;
 
 mod config;
@@ -71,26 +71,16 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
             }
         };
 
-        let mut embedded_fmt_error = None;
-        let formatted = format_text(
-            file_text,
-            language,
-            config,
-            |path, code| match format_with_host(path, code.into(), &ConfigKeyMap::new()) {
-                Ok(Some(code)) => code.into(),
-                Ok(None) => code.into(),
-                Err(e) => {
-                    embedded_fmt_error = Some(e);
-                    code.into()
-                }
-            },
-        )
-        .unwrap(); // TODO
-
-        if let Some(embedded_fmt_error) = embedded_fmt_error {
-            Err(embedded_fmt_error)
-        } else {
-            Ok(Some(formatted))
+        let format_result = format_text(file_text, language, config, |path, code| {
+            format_with_host(path, code.into(), &ConfigKeyMap::new()).map(|result| match result {
+                Some(code) => code.into(),
+                None => code.into(),
+            })
+        });
+        match format_result {
+            Ok(code) => Ok(Some(code)),
+            Err(FormatError::Syntax(err)) => Err(err.into()),
+            Err(FormatError::External(err)) => Err(err),
         }
     }
 }

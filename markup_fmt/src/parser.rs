@@ -1,4 +1,8 @@
-use crate::{ast::*, helpers};
+use crate::{
+    ast::*,
+    error::{SyntaxError, SyntaxErrorKind},
+    helpers,
+};
 use std::{iter::Peekable, str::CharIndices};
 
 #[derive(Clone, Debug)]
@@ -661,29 +665,3 @@ fn is_tag_name_char(c: char) -> bool {
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;
-
-#[derive(Clone, Debug)]
-pub struct SyntaxError {
-    pub kind: SyntaxErrorKind,
-    pub pos: usize,
-}
-
-#[derive(Clone, Debug)]
-pub enum SyntaxErrorKind {
-    ExpectAttrName,
-    ExpectAttrValue,
-    ExpectCloseTag,
-    ExpectComment,
-    ExpectElement,
-    ExpectIdentifier,
-    ExpectSelfCloseTag,
-    ExpectSvelteAttr,
-    ExpectSvelteBlockEnd,
-    ExpectSvelteIfBlock,
-    ExpectSvelteInterpolation,
-    ExpectTagName,
-    ExpectTextNode,
-    ExpectVueDirective,
-    ExpectVueInterpolation,
-    UnknownSvelteBlock,
-}

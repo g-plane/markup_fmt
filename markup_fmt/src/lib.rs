@@ -1,36 +1,34 @@
 mod ast;
 pub mod config;
 mod ctx;
+mod error;
 mod helpers;
 mod parser;
 mod printer;
 
-pub use crate::parser::Language;
-use crate::{
-    ctx::Ctx,
-    parser::{Parser, SyntaxError},
-    printer::DocGen,
-};
+use crate::{ctx::Ctx, parser::Parser, printer::DocGen};
+pub use crate::{error::FormatError, parser::Language};
 use config::FormatOptions;
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::{IndentKind, PrintOptions};
 
-pub fn format_text<F>(
+pub fn format_text<E, F>(
     code: &str,
     language: Language,
     options: &FormatOptions,
     external_formatter: F,
-) -> Result<String, SyntaxError>
+) -> Result<String, FormatError<E>>
 where
-    F: for<'a> FnMut(&Path, &'a str) -> Cow<'a, str>,
+    F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
 {
     let mut parser = Parser::new(code, language.clone());
-    let ast = parser.parse_root()?;
+    let ast = parser.parse_root().map_err(FormatError::Syntax)?;
     let mut ctx = Ctx {
         language,
         indent_width: options.layout.indent_width,
         options: &options.language,
         external_formatter,
+        external_formatter_error: None,
     };
     Ok(tiny_pretty::print(
         &ast.doc(&mut ctx),

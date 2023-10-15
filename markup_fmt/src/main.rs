@@ -14,7 +14,9 @@ fn main() {
     };
     let code = fs::read_to_string(file_path).unwrap();
 
-    let formatted =
-        format_text(&code, language, &Default::default(), |_, code| code.into()).unwrap();
+    let formatted = format_text(&code, language, &Default::default(), |_, code| {
+        Ok::<_, ()>(code.into())
+    })
+    .unwrap();
     print!("{formatted}");
 }
