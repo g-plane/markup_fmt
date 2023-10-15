@@ -30,8 +30,14 @@ where
         external_formatter,
         external_formatter_error: None,
     };
+
+    let doc = ast.doc(&mut ctx);
+    if let Some(error) = ctx.external_formatter_error {
+        return Err(FormatError::External(error));
+    }
+
     Ok(tiny_pretty::print(
-        &ast.doc(&mut ctx),
+        &doc,
         &PrintOptions {
             indent_kind: if options.layout.use_tabs {
                 IndentKind::Tab
