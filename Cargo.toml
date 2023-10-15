@@ -1,5 +1,5 @@
 [workspace]
-members = ["markup_fmt"]
+members = ["dprint_plugin", "markup_fmt"]
 resolver = "2"
 
 [profile.release]

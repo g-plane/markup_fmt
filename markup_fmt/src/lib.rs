@@ -22,18 +22,18 @@ pub fn format_text<F>(
     external_formatter: F,
 ) -> Result<String, SyntaxError>
 where
-    F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    F: for<'a> FnMut(&Path, &'a str) -> Cow<'a, str>,
 {
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root()?;
-    let ctx = Ctx {
+    let mut ctx = Ctx {
         language,
         indent_width: options.layout.indent_width,
         options: &options.language,
         external_formatter,
     };
     Ok(tiny_pretty::print(
-        &ast.doc(&ctx),
+        &ast.doc(&mut ctx),
         &PrintOptions {
             indent_kind: if options.layout.use_tabs {
                 IndentKind::Tab
