@@ -11,15 +11,27 @@ use crate::{
     parser::{Parser, SyntaxError},
     printer::DocGen,
 };
+use config::LanguageOptions;
+use std::{borrow::Cow, path::Path};
 use tiny_pretty::PrintOptions;
 
-pub fn format_text(code: &str, language: Language) -> Result<String, SyntaxError> {
+pub fn format_text<F>(
+    code: &str,
+    language: Language,
+    external_formatter: F,
+) -> Result<String, SyntaxError>
+where
+    F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+{
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root()?;
     let ctx = Ctx {
         language,
         indent_width: 2,
-        options: Default::default(),
+        options: LanguageOptions {
+            ..Default::default()
+        },
+        external_formatter,
     };
     Ok(tiny_pretty::print(
         &ast.doc(&ctx),

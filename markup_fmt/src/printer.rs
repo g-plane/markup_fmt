@@ -1,12 +1,18 @@
 use crate::{ast::*, ctx::Ctx, helpers, Language};
+use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
 pub(super) trait DocGen<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s>;
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>;
 }
 
 impl<'s> DocGen<'s> for Node<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         match self {
             Node::Comment(comment) => comment.doc(ctx),
             Node::Element(element) => element.doc(ctx),
@@ -19,7 +25,10 @@ impl<'s> DocGen<'s> for Node<'s> {
 }
 
 impl<'s> DocGen<'s> for Attribute<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         match self {
             Attribute::NativeAttribute(native_attribute) => native_attribute.doc(ctx),
             Attribute::SvelteAttribute(svelte_attribute) => svelte_attribute.doc(ctx),
@@ -29,7 +38,10 @@ impl<'s> DocGen<'s> for Attribute<'s> {
 }
 
 impl<'s> DocGen<'s> for Comment<'s> {
-    fn doc(&self, _: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, _: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         Doc::text("<!--")
             .concat(reflow(self.raw))
             .append(Doc::text("-->"))
@@ -37,7 +49,10 @@ impl<'s> DocGen<'s> for Comment<'s> {
 }
 
 impl<'s> DocGen<'s> for Element<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         let mut docs = Vec::with_capacity(5);
 
         docs.push(Doc::text("<"));
@@ -135,22 +150,59 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::line_or_nil()
         };
 
-        if self.tag_name.eq_ignore_ascii_case("script")
-            || self.tag_name.eq_ignore_ascii_case("style")
-        {
+        if self.tag_name.eq_ignore_ascii_case("script") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
-                let doc = Doc::hard_line()
-                    .concat(reflow(text_node.raw.trim()))
-                    .append(Doc::hard_line());
-                docs.push(
-                    if ctx.options.script_indent && self.tag_name.eq_ignore_ascii_case("script")
-                        || ctx.options.style_indent && self.tag_name.eq_ignore_ascii_case("style")
-                    {
-                        doc.nest(ctx.indent_width)
-                    } else {
-                        doc
+                let formatted = ctx.format_with_external_formatter(
+                    match self.attrs.iter().find_map(|attr| match attr {
+                        Attribute::NativeAttribute(native_attribute)
+                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                        {
+                            native_attribute.value
+                        }
+                        _ => None,
+                    }) {
+                        Some("ts") => Path::new("script.ts"),
+                        Some("tsx") => Path::new("script.tsx"),
+                        Some("jsx") => Path::new("script.jsx"),
+                        _ => Path::new("style.js"),
                     },
+                    text_node.raw,
                 );
+                let doc = Doc::hard_line()
+                    .concat(reflow(formatted.trim()))
+                    .append(Doc::hard_line());
+                docs.push(if ctx.options.script_indent {
+                    doc.nest(ctx.indent_width)
+                } else {
+                    doc
+                });
+            }
+        } else if self.tag_name.eq_ignore_ascii_case("style") {
+            if let [Node::TextNode(text_node)] = &self.children[..] {
+                let formatted = ctx.format_with_external_formatter(
+                    match self.attrs.iter().find_map(|attr| match attr {
+                        Attribute::NativeAttribute(native_attribute)
+                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                        {
+                            native_attribute.value
+                        }
+                        _ => None,
+                    }) {
+                        Some("scss") => Path::new("style.scss"),
+                        Some("sass") => Path::new("style.sass"),
+                        Some("less") => Path::new("style.less"),
+                        _ => Path::new("style.css"),
+                    },
+                    text_node.raw,
+                );
+                let doc = Doc::hard_line()
+                    .concat(reflow(formatted.trim()))
+                    .append(Doc::hard_line());
+                docs.push(if ctx.options.style_indent {
+                    doc.nest(ctx.indent_width)
+                } else {
+                    doc
+                });
             }
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(
@@ -213,7 +265,10 @@ impl<'s> DocGen<'s> for Element<'s> {
 }
 
 impl<'s> DocGen<'s> for NativeAttribute<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         let name = Doc::text(self.name);
         if let Some(value) = self.value {
             if matches!(ctx.language, Language::Svelte) {
@@ -235,7 +290,10 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
 }
 
 impl<'s> DocGen<'s> for Root<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         Doc::list(
             itertools::intersperse(
                 self.children.iter().filter_map(|child| match child {
@@ -268,7 +326,10 @@ impl<'s> DocGen<'s> for Root<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteAttribute<'s> {
-    fn doc(&self, _: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, _: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         let name = Doc::text(self.name);
         name.append(Doc::text("={"))
             .append(Doc::text(self.expr))
@@ -277,7 +338,10 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         Doc::text("{")
             .append(
                 Doc::line_or_nil()
@@ -291,7 +355,10 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
 }
 
 impl<'s> DocGen<'s> for TextNode<'s> {
-    fn doc(&self, _: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, _: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         let docs = self
             .raw
             .split('\n')
@@ -313,7 +380,10 @@ impl<'s> DocGen<'s> for TextNode<'s> {
 }
 
 impl<'s> DocGen<'s> for VueDirective<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         use crate::config::{VBindStyle, VOnStyle};
 
         let mut docs = Vec::with_capacity(5);
@@ -378,7 +448,10 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
 }
 
 impl<'s> DocGen<'s> for VueInterpolation<'s> {
-    fn doc(&self, ctx: &Ctx) -> Doc<'s> {
+    fn doc<F>(&self, ctx: &Ctx<F>) -> Doc<'s>
+    where
+        F: for<'a> Fn(&Path, &'a str) -> Cow<'a, str>,
+    {
         Doc::text("{{")
             .append(
                 Doc::line_or_space()
@@ -391,11 +464,10 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
     }
 }
 
-fn reflow(s: &str) -> impl Iterator<Item = Doc> {
+fn reflow(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     itertools::intersperse(
         s.split('\n')
-            .map(|s| s.strip_suffix('\r').unwrap_or(s))
-            .map(Doc::text),
+            .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
         Doc::hard_line(),
     )
 }
