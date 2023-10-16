@@ -1,4 +1,4 @@
-use crate::{ast::*, ctx::Ctx, helpers, Language};
+use crate::{ast::*, config::Quotes, ctx::Ctx, helpers, Language};
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
@@ -292,9 +292,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 }
             }
             name.append(Doc::text("="))
-                .append(Doc::text("\""))
-                .append(Doc::text(value))
-                .append(Doc::text("\""))
+                .append(format_attr_value(value, &ctx.options.quotes))
         } else {
             name
         }
@@ -450,9 +448,8 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
 
         if let Some(value) = self.value {
             // TODO: should be formatted as JS
-            docs.push(Doc::text("=\""));
-            docs.push(Doc::text(value));
-            docs.push(Doc::text("\""));
+            docs.push(Doc::text("="));
+            docs.push(format_attr_value(value, &ctx.options.quotes));
         }
 
         Doc::list(docs)
@@ -482,4 +479,18 @@ fn reflow(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
         Doc::hard_line(),
     )
+}
+
+fn format_attr_value<'s>(value: impl Into<Cow<'s, str>>, quotes: &Quotes) -> Doc<'s> {
+    let value = value.into();
+    let quote = if value.contains('"') {
+        Doc::text("'")
+    } else if value.contains('\'') {
+        Doc::text("\"")
+    } else if let Quotes::Double = quotes {
+        Doc::text("\"")
+    } else {
+        Doc::text("'")
+    };
+    quote.clone().append(Doc::text(value)).append(quote)
 }
