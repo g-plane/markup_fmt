@@ -38,13 +38,25 @@ impl<'s> DocGen<'s> for Attribute<'s> {
 }
 
 impl<'s> DocGen<'s> for Comment<'s> {
-    fn doc<E, F>(&self, _: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
-        Doc::text("<!--")
-            .concat(reflow(self.raw))
-            .append(Doc::text("-->"))
+        if ctx.options.format_comments {
+            Doc::text("<!--")
+                .append(
+                    Doc::line_or_space()
+                        .concat(reflow(self.raw.trim()))
+                        .nest(ctx.indent_width),
+                )
+                .append(Doc::line_or_space())
+                .append(Doc::text("-->"))
+                .group()
+        } else {
+            Doc::text("<!--")
+                .concat(reflow(self.raw))
+                .append(Doc::text("-->"))
+        }
     }
 }
 

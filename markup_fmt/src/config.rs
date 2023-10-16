@@ -65,6 +65,7 @@ impl From<LineBreak> for tiny_pretty::LineBreak {
 #[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase", default))]
 /// Configuration related to syntax.
 pub struct LanguageOptions {
+    pub format_comments: bool,
     pub script_indent: bool,
     pub style_indent: bool,
     pub closing_bracket_same_line: bool,
