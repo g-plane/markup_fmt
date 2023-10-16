@@ -229,38 +229,33 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(
-                leading_ws
-                    .append(
-                        Doc::list(
-                            itertools::intersperse(
-                                self.children.iter().filter_map(|child| match child {
-                                    Node::TextNode(text_node) => {
-                                        if text_node
-                                            .raw
-                                            .as_bytes()
-                                            .iter()
-                                            .filter(|byte| **byte == b'\n')
-                                            .count()
-                                            > 1
-                                        {
-                                            // line break will be inserted later
-                                            // by `itertools::intersperse`
-                                            Some(Doc::nil())
-                                        } else if text_node.raw.trim().is_empty() {
-                                            None
-                                        } else {
-                                            Some(text_node.doc(ctx))
-                                        }
-                                    }
-                                    node => Some(node.doc(ctx)),
-                                }),
-                                Doc::hard_line(),
-                            )
-                            .collect(),
-                        )
-                        .group(),
-                    )
-                    .nest(ctx.indent_width),
+                Doc::list(
+                    self.children
+                        .iter()
+                        .filter_map(|child| match child {
+                            Node::TextNode(text_node) => {
+                                if text_node
+                                    .raw
+                                    .as_bytes()
+                                    .iter()
+                                    .filter(|byte| **byte == b'\n')
+                                    .count()
+                                    > 1
+                                {
+                                    Some([Doc::nil(), Doc::empty_line()].into_iter())
+                                } else if text_node.raw.trim().is_empty() {
+                                    None
+                                } else {
+                                    Some([Doc::hard_line(), text_node.doc(ctx)].into_iter())
+                                }
+                            }
+                            node => Some([Doc::hard_line(), node.doc(ctx)].into_iter()),
+                        })
+                        .flatten()
+                        .collect(),
+                )
+                .group()
+                .nest(ctx.indent_width),
             );
             docs.push(trailing_ws);
         } else if is_empty {
