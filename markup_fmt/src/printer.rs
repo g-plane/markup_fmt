@@ -234,17 +234,19 @@ impl<'s> DocGen<'s> for Element<'s> {
                         .iter()
                         .filter_map(|child| match child {
                             Node::TextNode(text_node) => {
-                                if text_node
-                                    .raw
-                                    .as_bytes()
-                                    .iter()
-                                    .filter(|byte| **byte == b'\n')
-                                    .count()
-                                    > 1
-                                {
-                                    Some([Doc::nil(), Doc::empty_line()].into_iter())
-                                } else if text_node.raw.trim().is_empty() {
-                                    None
+                                if text_node.raw.trim().is_empty() {
+                                    if text_node
+                                        .raw
+                                        .as_bytes()
+                                        .iter()
+                                        .filter(|byte| **byte == b'\n')
+                                        .count()
+                                        > 1
+                                    {
+                                        Some([Doc::nil(), Doc::empty_line()].into_iter())
+                                    } else {
+                                        None
+                                    }
                                 } else {
                                     Some([Doc::hard_line(), text_node.doc(ctx)].into_iter())
                                 }
@@ -376,17 +378,15 @@ impl<'s> DocGen<'s> for TextNode<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
-        let docs = self
-            .raw
-            .split('\n')
-            .map(|s| s.strip_suffix('\r').unwrap_or(s))
-            .flat_map(|line| {
-                itertools::intersperse(
-                    line.split_ascii_whitespace().map(Doc::text),
-                    Doc::line_or_space(),
-                )
-            })
-            .collect::<Vec<_>>();
+        let docs = itertools::intersperse(
+            self.raw
+                .split('\n')
+                .map(|s| s.strip_suffix('\r').unwrap_or(s))
+                .flat_map(str::split_ascii_whitespace)
+                .map(Doc::text),
+            Doc::line_or_space(),
+        )
+        .collect::<Vec<_>>();
 
         if docs.is_empty() {
             Doc::nil()
