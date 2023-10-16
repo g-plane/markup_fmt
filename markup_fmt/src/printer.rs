@@ -314,33 +314,32 @@ impl<'s> DocGen<'s> for Root<'s> {
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
         Doc::list(
-            itertools::intersperse(
-                self.children.iter().filter_map(|child| match child {
+            self.children
+                .iter()
+                .filter_map(|child| match child {
                     Node::TextNode(text_node) => {
-                        if text_node
-                            .raw
-                            .as_bytes()
-                            .iter()
-                            .filter(|byte| **byte == b'\n')
-                            .count()
-                            > 1
-                        {
-                            // line break will be inserted later
-                            // by `itertools::intersperse`
-                            Some(Doc::nil())
-                        } else if text_node.raw.trim().is_empty() {
-                            None
+                        if text_node.raw.trim().is_empty() {
+                            if text_node
+                                .raw
+                                .as_bytes()
+                                .iter()
+                                .filter(|byte| **byte == b'\n')
+                                .count()
+                                > 1
+                            {
+                                Some([Doc::nil(), Doc::hard_line()].into_iter())
+                            } else {
+                                None
+                            }
                         } else {
-                            Some(text_node.doc(ctx))
+                            Some([text_node.doc(ctx), Doc::hard_line()].into_iter())
                         }
                     }
-                    node => Some(node.doc(ctx)),
-                }),
-                Doc::hard_line(),
-            )
-            .collect(),
+                    node => Some([node.doc(ctx), Doc::hard_line()].into_iter()),
+                })
+                .flatten()
+                .collect(),
         )
-        .append(Doc::hard_line())
     }
 }
 
