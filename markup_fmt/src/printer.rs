@@ -106,6 +106,13 @@ impl<'s> DocGen<'s> for Element<'s> {
                     && helpers::is_whitespace_sensitive_tag(self.tag_name)
             }
         };
+        let is_empty = match &self.children[..] {
+            [] => true,
+            [Node::TextNode(text_node)] => {
+                !is_whitespace_sensitive && text_node.raw.trim().is_empty()
+            }
+            _ => false,
+        };
         let has_two_more_non_text_children = self
             .children
             .iter()
@@ -134,6 +141,8 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .unwrap_or_default()
         {
             Doc::hard_line()
+        } else if is_empty {
+            Doc::nil()
         } else {
             Doc::line_or_nil()
         };
@@ -158,6 +167,8 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .unwrap_or_default()
         {
             Doc::hard_line()
+        } else if is_empty {
+            Doc::nil()
         } else {
             Doc::line_or_nil()
         };
@@ -252,6 +263,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .nest(ctx.indent_width),
             );
             docs.push(trailing_ws);
+        } else if is_empty {
         } else {
             docs.push(
                 leading_ws
