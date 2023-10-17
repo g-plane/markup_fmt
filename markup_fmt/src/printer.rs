@@ -175,21 +175,19 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         if self.tag_name.eq_ignore_ascii_case("script") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
-                let formatted = ctx.format_with_external_formatter(
-                    match self.attrs.iter().find_map(|attr| match attr {
-                        Attribute::NativeAttribute(native_attribute)
-                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                        {
-                            native_attribute.value
-                        }
-                        _ => None,
-                    }) {
-                        Some("ts") => Path::new("script.ts"),
-                        Some("tsx") => Path::new("script.tsx"),
-                        Some("jsx") => Path::new("script.jsx"),
-                        _ => Path::new("style.js"),
-                    },
+                let formatted = ctx.format_script(
                     text_node.raw,
+                    self.attrs
+                        .iter()
+                        .find_map(|attr| match attr {
+                            Attribute::NativeAttribute(native_attribute)
+                                if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                            {
+                                native_attribute.value
+                            }
+                            _ => None,
+                        })
+                        .unwrap_or("js"),
                 );
                 let doc = Doc::hard_line()
                     .concat(reflow(formatted.trim()))
@@ -202,21 +200,19 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         } else if self.tag_name.eq_ignore_ascii_case("style") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
-                let formatted = ctx.format_with_external_formatter(
-                    match self.attrs.iter().find_map(|attr| match attr {
-                        Attribute::NativeAttribute(native_attribute)
-                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                        {
-                            native_attribute.value
-                        }
-                        _ => None,
-                    }) {
-                        Some("scss") => Path::new("style.scss"),
-                        Some("sass") => Path::new("style.sass"),
-                        Some("less") => Path::new("style.less"),
-                        _ => Path::new("style.css"),
-                    },
+                let formatted = ctx.format_style(
                     text_node.raw,
+                    self.attrs
+                        .iter()
+                        .find_map(|attr| match attr {
+                            Attribute::NativeAttribute(native_attribute)
+                                if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                            {
+                                native_attribute.value
+                            }
+                            _ => None,
+                        })
+                        .unwrap_or("css"),
                 );
                 let doc = Doc::hard_line()
                     .concat(reflow(formatted.trim()))
@@ -344,13 +340,13 @@ impl<'s> DocGen<'s> for Root<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteAttribute<'s> {
-    fn doc<E, F>(&self, _: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
-        let name = Doc::text(self.name);
+        let name = Doc::text(self.name.to_owned());
         name.append(Doc::text("={"))
-            .append(Doc::text(self.expr))
+            .concat(reflow(&ctx.format_expr(self.expr)))
             .append(Doc::text("}"))
     }
 }
@@ -363,7 +359,7 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
         Doc::text("{")
             .append(
                 Doc::line_or_nil()
-                    .append(Doc::text(self.expr.trim()))
+                    .concat(reflow(&ctx.format_expr(self.expr)))
                     .nest(ctx.indent_width),
             )
             .append(Doc::line_or_nil())
@@ -453,8 +449,17 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
         }
 
         if let Some(value) = self.value {
-            // TODO: should be formatted as JS
             docs.push(Doc::text("="));
+
+            let value = if self.name == "for" {
+                if let Some((left, right)) = value.split_once(" of ") {
+                    format!("{} of {}", ctx.format_expr(left), ctx.format_expr(right))
+                } else {
+                    ctx.format_expr(value)
+                }
+            } else {
+                ctx.format_expr(value)
+            };
             docs.push(format_attr_value(value, &ctx.options.quotes));
         }
 
@@ -470,7 +475,7 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
         Doc::text("{{")
             .append(
                 Doc::line_or_space()
-                    .append(Doc::text(self.expr.trim()))
+                    .concat(reflow(&ctx.format_expr(self.expr)))
                     .nest(ctx.indent_width),
             )
             .append(Doc::line_or_space())
@@ -487,8 +492,8 @@ fn reflow(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     )
 }
 
-fn format_attr_value<'s>(value: impl Into<Cow<'s, str>>, quotes: &Quotes) -> Doc<'s> {
-    let value = value.into();
+fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
+    let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::text("'")
     } else if value.contains('\'') {
@@ -498,5 +503,5 @@ fn format_attr_value<'s>(value: impl Into<Cow<'s, str>>, quotes: &Quotes) -> Doc
     } else {
         Doc::text("'")
     };
-    quote.clone().append(Doc::text(value)).append(quote)
+    quote.clone().concat(reflow(value)).append(quote)
 }
