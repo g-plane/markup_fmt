@@ -75,7 +75,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         let attrs = Doc::list(
             self.attrs
                 .iter()
-                .map(|prop| Doc::line_or_space().append(prop.doc(ctx)))
+                .flat_map(|prop| [Doc::line_or_space(), prop.doc(ctx)].into_iter())
                 .collect(),
         )
         .nest(ctx.indent_width);
