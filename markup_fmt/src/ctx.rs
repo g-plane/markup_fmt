@@ -21,7 +21,10 @@ where
         if code.trim().is_empty() {
             String::new()
         } else {
-            let wrapped = format!("({code})");
+            // Trim original code before sending it to the external formatter.
+            // This makes sure the code will be trimmed
+            // though external formatter isn't available.
+            let wrapped = format!("({})", code.trim());
             let formatted = self.format_with_external_formatter(Path::new("expr.ts"), &wrapped);
             let formatted = formatted.trim().trim_matches(';');
             formatted
@@ -36,7 +39,7 @@ where
         if code.trim().is_empty() {
             String::new()
         } else {
-            let wrapped = format!("type T<{code}> = 0");
+            let wrapped = format!("type T<{}> = 0", code.trim());
             let formatted =
                 self.format_with_external_formatter(Path::new("type_params.ts"), &wrapped);
             let formatted = formatted.trim().trim_matches(';');
