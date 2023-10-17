@@ -459,8 +459,31 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             docs.push(Doc::text("="));
 
             let value = if self.name == "for" {
-                if let Some((left, right)) = value.split_once(" of ") {
-                    format!("{} of {}", ctx.format_expr(left), ctx.format_expr(right))
+                use crate::config::VForDelimiterStyle;
+                if let Some((left, right)) = value.split_once(" in ") {
+                    let delimiter =
+                        if let Some(VForDelimiterStyle::Of) = ctx.options.v_for_delimiter_style {
+                            "of"
+                        } else {
+                            "in"
+                        };
+                    format!(
+                        "{} {delimiter} {}",
+                        ctx.format_expr(left),
+                        ctx.format_expr(right)
+                    )
+                } else if let Some((left, right)) = value.split_once(" of ") {
+                    let delimiter =
+                        if let Some(VForDelimiterStyle::In) = ctx.options.v_for_delimiter_style {
+                            "in"
+                        } else {
+                            "of"
+                        };
+                    format!(
+                        "{} {delimiter} {}",
+                        ctx.format_expr(left),
+                        ctx.format_expr(right)
+                    )
                 } else {
                     ctx.format_expr(value)
                 }

@@ -72,6 +72,7 @@ pub struct LanguageOptions {
     pub closing_bracket_same_line: bool,
     pub v_bind_style: Option<VBindStyle>,
     pub v_on_style: Option<VOnStyle>,
+    pub v_for_delimiter_style: Option<VForDelimiterStyle>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -99,4 +100,13 @@ pub enum VOnStyle {
     #[default]
     Short,
     Long,
+}
+
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase"))]
+pub enum VForDelimiterStyle {
+    #[default]
+    In,
+    Of,
 }
