@@ -110,9 +110,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         };
         let is_empty = match &self.children[..] {
             [] => true,
-            [Node::TextNode(text_node)] => {
-                !is_whitespace_sensitive && text_node.raw.trim().is_empty()
-            }
+            [Node::TextNode(text_node)] => text_node.raw.trim().is_empty(),
             _ => false,
         };
         let has_two_more_non_text_children = self
@@ -122,17 +120,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             .count()
             > 1;
 
-        let leading_ws = if is_whitespace_sensitive {
-            if let Some(Node::TextNode(text_node)) = self.children.first() {
-                if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
-                    Doc::line_or_space()
-                } else {
-                    Doc::nil()
-                }
-            } else {
-                Doc::nil()
-            }
-        } else if has_two_more_non_text_children
+        let leading_ws = if has_two_more_non_text_children
             || self
                 .children
                 .first()
@@ -148,17 +136,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         } else {
             Doc::line_or_nil()
         };
-        let trailing_ws = if is_whitespace_sensitive {
-            if let Some(Node::TextNode(text_node)) = self.children.last() {
-                if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
-                    Doc::line_or_space()
-                } else {
-                    Doc::nil()
-                }
-            } else {
-                Doc::nil()
-            }
-        } else if has_two_more_non_text_children
+        let trailing_ws = if has_two_more_non_text_children
             || self
                 .children
                 .last()
@@ -226,9 +204,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 });
             }
         } else if is_empty {
-            if !is_whitespace_sensitive {
-                docs.push(Doc::line_or_nil());
-            }
+            docs.push(Doc::line_or_nil());
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(
                 Doc::list(
@@ -397,11 +373,7 @@ impl<'s> DocGen<'s> for TextNode<'s> {
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
         let docs = itertools::intersperse(
-            self.raw
-                .split('\n')
-                .map(|s| s.strip_suffix('\r').unwrap_or(s))
-                .flat_map(str::split_ascii_whitespace)
-                .map(Doc::text),
+            self.raw.split_ascii_whitespace().map(Doc::text),
             Doc::line_or_space(),
         )
         .collect::<Vec<_>>();
