@@ -27,6 +27,7 @@ where
         language,
         indent_width: options.layout.indent_width,
         options: &options.language,
+        current_tag_name: None,
         external_formatter,
         external_formatter_error: None,
     };

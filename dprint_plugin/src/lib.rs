@@ -74,7 +74,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         let format_result = format_text(file_text, language, config, |path, code| {
             let mut additional_config = ConfigKeyMap::new();
             match path.file_name().and_then(|s| s.to_str()) {
-                Some("expr.ts") => {
+                Some("expr.ts" | "type_params.ts") => {
                     additional_config.insert("semiColons".into(), "asi".into());
                 }
                 _ => {}

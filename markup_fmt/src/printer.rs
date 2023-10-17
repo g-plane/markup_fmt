@@ -3,13 +3,13 @@ use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
 pub(super) trait DocGen<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>;
 }
 
 impl<'s> DocGen<'s> for Node<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
@@ -25,7 +25,7 @@ impl<'s> DocGen<'s> for Node<'s> {
 }
 
 impl<'s> DocGen<'s> for Attribute<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
@@ -61,10 +61,12 @@ impl<'s> DocGen<'s> for Comment<'s> {
 }
 
 impl<'s> DocGen<'s> for Element<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {
+        ctx.current_tag_name = Some(self.tag_name);
+
         let mut docs = Vec::with_capacity(5);
 
         docs.push(Doc::text("<"));
@@ -276,6 +278,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .append(Doc::text(">"))
                 .group(),
         );
+        ctx.current_tag_name = None;
 
         Doc::list(docs).group()
     }
@@ -288,14 +291,31 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
     {
         let name = Doc::text(self.name);
         if let Some(value) = self.value {
-            if matches!(ctx.language, Language::Svelte) {
-                if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                    return name
-                        .append(Doc::text("={"))
-                        .append(Doc::text(expr))
-                        .append(Doc::text("}"));
+            let value = match ctx.language {
+                Language::Vue => {
+                    if ctx
+                        .current_tag_name
+                        .map(|name| name.eq_ignore_ascii_case("script"))
+                        .unwrap_or_default()
+                        && self.name == "generic"
+                    {
+                        Cow::from(ctx.format_type_params(value))
+                    } else {
+                        Cow::from(value)
+                    }
                 }
-            }
+                Language::Svelte => {
+                    if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+                        return name
+                            .append(Doc::text("={"))
+                            .append(Doc::text(expr))
+                            .append(Doc::text("}"));
+                    } else {
+                        Cow::from(value)
+                    }
+                }
+                _ => Cow::from(value),
+            };
             name.append(Doc::text("="))
                 .append(format_attr_value(value, &ctx.options.quotes))
         } else {
@@ -305,7 +325,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
 }
 
 impl<'s> DocGen<'s> for Root<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
     {

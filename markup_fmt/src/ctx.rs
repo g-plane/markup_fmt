@@ -1,18 +1,19 @@
 use crate::{config::LanguageOptions, Language};
 use std::{borrow::Cow, path::Path};
 
-pub(crate) struct Ctx<'b, E, F>
+pub(crate) struct Ctx<'b, 's, E, F>
 where
     F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) language: Language,
     pub(crate) indent_width: usize,
     pub(crate) options: &'b LanguageOptions,
+    pub(crate) current_tag_name: Option<&'s str>,
     pub(crate) external_formatter: F,
     pub(crate) external_formatter_error: Option<E>,
 }
 
-impl<'b, E, F> Ctx<'b, E, F>
+impl<'b, 's, E, F> Ctx<'b, 's, E, F>
 where
     F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
 {
@@ -26,6 +27,22 @@ where
             formatted
                 .strip_prefix('(')
                 .and_then(|s| s.strip_suffix(')'))
+                .unwrap_or(formatted)
+                .to_owned()
+        }
+    }
+
+    pub(crate) fn format_type_params(&mut self, code: &str) -> String {
+        if code.trim().is_empty() {
+            String::new()
+        } else {
+            let wrapped = format!("type T<{code}> = 0");
+            let formatted =
+                self.format_with_external_formatter(Path::new("type_params.ts"), &wrapped);
+            let formatted = formatted.trim().trim_matches(';');
+            formatted
+                .strip_prefix("type T<")
+                .and_then(|s| s.strip_suffix("> = 0"))
                 .unwrap_or(formatted)
                 .to_owned()
         }
