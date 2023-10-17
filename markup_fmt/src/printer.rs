@@ -226,6 +226,9 @@ impl<'s> DocGen<'s> for Element<'s> {
                 });
             }
         } else if is_empty {
+            if !is_whitespace_sensitive {
+                docs.push(Doc::line_or_nil());
+            }
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(
                 Doc::list(
