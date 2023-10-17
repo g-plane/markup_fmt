@@ -74,7 +74,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr_name(&mut self) -> PResult<&'s str> {
         fn is_attr_name_char(c: char) -> bool {
-            !matches!(c, ' ' | '"' | '\'' | '>' | '/' | '=')
+            !matches!(c, '"' | '\'' | '>' | '/' | '=') && !c.is_ascii_whitespace()
         }
 
         let Some((start, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) else {
