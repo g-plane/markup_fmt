@@ -227,6 +227,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     doc
                 });
             }
+        } else if is_empty {
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(
                 Doc::list(
@@ -260,7 +261,6 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .nest(ctx.indent_width),
             );
             docs.push(trailing_ws);
-        } else if is_empty {
         } else {
             docs.push(
                 leading_ws
