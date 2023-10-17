@@ -1,5 +1,5 @@
 use crate::{ast::*, config::Quotes, ctx::Ctx, helpers, Language};
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, mem, path::Path};
 use tiny_pretty::Doc;
 
 pub(super) trait DocGen<'s> {
@@ -210,26 +210,42 @@ impl<'s> DocGen<'s> for Element<'s> {
                 Doc::list(
                     self.children
                         .iter()
-                        .filter_map(|child| match child {
-                            Node::TextNode(text_node) => {
-                                if text_node.raw.trim().is_empty() {
-                                    if text_node
-                                        .raw
-                                        .as_bytes()
-                                        .iter()
-                                        .filter(|byte| **byte == b'\n')
-                                        .count()
-                                        > 1
+                        .enumerate()
+                        .scan(false, |is_prev_text_like, (i, child)| {
+                            let maybe_hard_line = if mem::replace(
+                                is_prev_text_like,
+                                matches!(
+                                    child,
+                                    Node::TextNode(..)
+                                        | Node::VueInterpolation(..)
+                                        | Node::SvelteInterpolation(..)
+                                ),
+                            ) {
+                                Doc::nil()
+                            } else {
+                                Doc::hard_line()
+                            };
+                            let docs = match child {
+                                Node::TextNode(text_node) => {
+                                    if i + 1 == self.children.len() {
+                                        [Doc::nil(), Doc::nil()]
+                                    } else if has_two_more_linebreaks(text_node.raw) {
+                                        [Doc::empty_line(), Doc::hard_line()]
+                                    } else if !text_node.raw.is_empty()
+                                        && text_node
+                                            .raw
+                                            .as_bytes()
+                                            .iter()
+                                            .all(|c| c.is_ascii_whitespace())
                                     {
-                                        Some([Doc::nil(), Doc::empty_line()].into_iter())
+                                        [Doc::nil(), Doc::line_or_space()]
                                     } else {
-                                        None
+                                        [maybe_hard_line, text_node.doc(ctx)]
                                     }
-                                } else {
-                                    Some([Doc::hard_line(), text_node.doc(ctx)].into_iter())
                                 }
-                            }
-                            node => Some([Doc::hard_line(), node.doc(ctx)].into_iter()),
+                                child => [maybe_hard_line, child.doc(ctx)],
+                            };
+                            Some(docs.into_iter())
                         })
                         .flatten()
                         .collect(),
@@ -482,6 +498,10 @@ fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
         Doc::empty_line(),
     )
+}
+
+fn has_two_more_linebreaks(s: &str) -> bool {
+    s.as_bytes().iter().filter(|byte| **byte == b'\n').count() > 1
 }
 
 fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
