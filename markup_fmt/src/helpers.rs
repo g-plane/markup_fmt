@@ -58,6 +58,9 @@ pub(crate) fn is_whitespace_sensitive_tag(name: &str) -> bool {
         "ul",
         "li",
         "fieldset",
+        "video",
+        "audio",
+        "picture",
     ]
     .iter()
     .all(|tag| !tag.eq_ignore_ascii_case(name))
