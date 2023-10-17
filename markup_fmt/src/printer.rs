@@ -397,7 +397,14 @@ impl<'s> DocGen<'s> for TextNode<'s> {
         if docs.is_empty() {
             Doc::nil()
         } else {
-            Doc::list(docs).group()
+            let mut docs = vec![Doc::list(docs).group()];
+            if self.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
+                docs.insert(0, Doc::line_or_space());
+            }
+            if self.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
+                docs.push(Doc::line_or_space());
+            }
+            Doc::list(docs)
         }
     }
 }
