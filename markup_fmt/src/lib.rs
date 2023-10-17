@@ -6,9 +6,8 @@ mod helpers;
 mod parser;
 mod printer;
 
-use crate::{ctx::Ctx, parser::Parser, printer::DocGen};
+use crate::{config::FormatOptions, ctx::Ctx, parser::Parser, printer::DocGen};
 pub use crate::{error::FormatError, parser::Language};
-use config::FormatOptions;
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::{IndentKind, PrintOptions};
 
