@@ -73,10 +73,6 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_attr_name(&mut self) -> PResult<&'s str> {
-        fn is_attr_name_char(c: char) -> bool {
-            !matches!(c, '"' | '\'' | '>' | '/' | '=') && !c.is_ascii_whitespace()
-        }
-
         let Some((start, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
         };
@@ -600,7 +596,11 @@ impl<'s> Parser<'s> {
         };
 
         let arg_and_modifiers = if matches!(name, ":" | "@" | "#")
-            || self.chars.next_if(|(_, c)| *c == ':').is_some()
+            || self
+                .chars
+                .peek()
+                .map(|(_, c)| is_attr_name_char(*c))
+                .unwrap_or_default()
         {
             Some(self.parse_attr_name()?)
         } else {
@@ -662,6 +662,10 @@ fn is_tag_name_char(c: char) -> bool {
         || c == ':'
         || !c.is_ascii()
         || c == '\\'
+}
+
+fn is_attr_name_char(c: char) -> bool {
+    !matches!(c, '"' | '\'' | '>' | '/' | '=') && !c.is_ascii_whitespace()
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;

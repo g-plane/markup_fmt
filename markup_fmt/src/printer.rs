@@ -423,19 +423,16 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
 
         let mut docs = Vec::with_capacity(5);
 
-        let mut is_short_hand = false;
         docs.push(match self.name {
             ":" => {
                 if let Some(VBindStyle::Long) = ctx.options.v_bind_style {
                     Doc::text("v-bind")
                 } else {
-                    is_short_hand = true;
                     Doc::text(":")
                 }
             }
             "bind" if self.arg_and_modifiers.is_some() => {
                 if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
-                    is_short_hand = true;
                     Doc::text(":")
                 } else {
                     Doc::text("v-bind")
@@ -445,29 +442,21 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 if let Some(VOnStyle::Long) = ctx.options.v_on_style {
                     Doc::text("v-on")
                 } else {
-                    is_short_hand = true;
                     Doc::text("@")
                 }
             }
             "on" => {
                 if let Some(VOnStyle::Short) = ctx.options.v_on_style {
-                    is_short_hand = true;
                     Doc::text("@")
                 } else {
                     Doc::text("v-on")
                 }
             }
-            "#" => {
-                is_short_hand = true;
-                Doc::text("#")
-            }
+            "#" => Doc::text("#"),
             name => Doc::text(format!("v-{name}")),
         });
 
         if let Some(arg_and_modifiers) = self.arg_and_modifiers {
-            if !is_short_hand {
-                docs.push(Doc::text(":"));
-            }
             docs.push(Doc::text(arg_and_modifiers));
         }
 
