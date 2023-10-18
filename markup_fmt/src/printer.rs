@@ -256,12 +256,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                     Node::TextNode(text_node) => {
                                         let is_first = i == 0;
                                         let is_last = i + 1 == self.children.len();
-                                        if text_node
-                                            .raw
-                                            .as_bytes()
-                                            .iter()
-                                            .all(|c| c.is_ascii_whitespace())
-                                        {
+                                        if is_all_ascii_whitespace(text_node.raw) {
                                             if !is_last {
                                                 if has_two_more_linebreaks(text_node.raw) {
                                                     docs.push(Doc::empty_line());
@@ -271,20 +266,18 @@ impl<'s> DocGen<'s> for Element<'s> {
                                         } else {
                                             if let Some(hard_line) = maybe_hard_line {
                                                 docs.push(hard_line);
-                                            } else if !is_first
-                                                && text_node
-                                                    .raw
-                                                    .starts_with(|c: char| c.is_ascii_whitespace())
+                                            } else if let Some(doc) =
+                                                should_add_whitespace_before_text_node(
+                                                    text_node, is_first,
+                                                )
                                             {
-                                                docs.push(Doc::soft_line());
+                                                docs.push(doc);
                                             }
                                             docs.push(text_node.doc(ctx));
-                                            if !is_last
-                                                && text_node
-                                                    .raw
-                                                    .ends_with(|c: char| c.is_ascii_whitespace())
+                                            if let Some(doc) =
+                                                should_add_whitespace_after_text_node(text_node, is_last)
                                             {
-                                                docs.push(Doc::soft_line());
+                                                docs.push(doc);
                                             }
                                         }
                                     }
@@ -326,30 +319,26 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 let is_first = i == 0;
                                 let is_last = i + 1 == self.children.len();
                                 if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                                    if has_two_more_linebreaks(text_node.raw) {
-                                        return Doc::empty_line().append(Doc::hard_line());
+                                    return if has_two_more_linebreaks(text_node.raw) {
+                                        Doc::empty_line().append(Doc::hard_line())
+                                    } else if has_two_more_non_text_children {
+                                        Doc::hard_line()
                                     } else {
-                                        return Doc::line_or_space();
-                                    }
+                                        Doc::line_or_space()
+                                    };
                                 }
 
                                 let mut docs = Vec::with_capacity(3);
-                                if !is_first
-                                    && text_node
-                                        .raw
-                                        .trim_end()
-                                        .starts_with(|c: char| c.is_ascii_whitespace())
+                                if let Some(doc) =
+                                    should_add_whitespace_before_text_node(text_node, is_first)
                                 {
-                                    docs.push(Doc::soft_line());
+                                    docs.push(doc);
                                 }
                                 docs.push(text_node.doc(ctx));
-                                if !is_last
-                                    && text_node
-                                        .raw
-                                        .trim_start()
-                                        .ends_with(|c: char| c.is_ascii_whitespace())
+                                if let Some(doc) =
+                                    should_add_whitespace_after_text_node(text_node, is_last)
                                 {
-                                    docs.push(Doc::soft_line());
+                                    docs.push(doc);
                                 }
                                 Doc::list(docs)
                             }
@@ -646,6 +635,44 @@ fn has_two_more_linebreaks(s: &str) -> bool {
 
 fn is_all_ascii_whitespace(s: &str) -> bool {
     !s.is_empty() && s.as_bytes().iter().all(|byte| byte.is_ascii_whitespace())
+}
+
+fn should_add_whitespace_before_text_node<'s>(
+    text_node: &TextNode<'s>,
+    is_first: bool,
+) -> Option<Doc<'s>> {
+    let trimmed = text_node.raw.trim_end();
+    if !is_first && trimmed.starts_with(|c: char| c.is_ascii_whitespace()) {
+        if trimmed
+            .trim_start_matches(|c: char| c.is_ascii_whitespace() && c != '\n')
+            .starts_with('\n')
+        {
+            Some(Doc::hard_line())
+        } else {
+            Some(Doc::soft_line())
+        }
+    } else {
+        None
+    }
+}
+
+fn should_add_whitespace_after_text_node<'s>(
+    text_node: &TextNode<'s>,
+    is_last: bool,
+) -> Option<Doc<'s>> {
+    let trimmed = text_node.raw.trim_start();
+    if !is_last && trimmed.ends_with(|c: char| c.is_ascii_whitespace()) {
+        if trimmed
+            .trim_end_matches(|c: char| c.is_ascii_whitespace() && c != '\n')
+            .ends_with('\n')
+        {
+            Some(Doc::hard_line())
+        } else {
+            Some(Doc::soft_line())
+        }
+    } else {
+        None
+    }
 }
 
 fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
