@@ -308,56 +308,62 @@ impl<'s> DocGen<'s> for Element<'s> {
             );
             docs.push(trailing_ws);
         } else {
-            docs.push(
-                leading_ws
-                    .append(
-                        Doc::list(
-                            self.children
-                                .iter()
-                                .enumerate()
-                                .map(|(i, child)| match child {
-                                    Node::TextNode(text_node) => {
-                                        let is_first = i == 0;
-                                        let is_last = i + 1 == self.children.len();
-                                        if !is_first
-                                            && !is_last
-                                            && is_all_ascii_whitespace(text_node.raw)
-                                        {
-                                            if has_two_more_linebreaks(text_node.raw) {
-                                                return Doc::empty_line().append(Doc::hard_line());
-                                            } else {
-                                                return Doc::line_or_space();
-                                            }
-                                        }
-
-                                        let mut docs = Vec::with_capacity(3);
-                                        if !is_first
-                                            && text_node
-                                                .raw
-                                                .trim_end()
-                                                .starts_with(|c: char| c.is_ascii_whitespace())
-                                        {
-                                            docs.push(Doc::soft_line());
-                                        }
-                                        docs.push(text_node.doc(ctx));
-                                        if !is_last
-                                            && text_node
-                                                .raw
-                                                .trim_start()
-                                                .ends_with(|c: char| c.is_ascii_whitespace())
-                                        {
-                                            docs.push(Doc::soft_line());
-                                        }
-                                        Doc::list(docs)
+            let children_doc = leading_ws.append(
+                Doc::list(
+                    self.children
+                        .iter()
+                        .enumerate()
+                        .map(|(i, child)| match child {
+                            Node::TextNode(text_node) => {
+                                let is_first = i == 0;
+                                let is_last = i + 1 == self.children.len();
+                                if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
+                                    if has_two_more_linebreaks(text_node.raw) {
+                                        return Doc::empty_line().append(Doc::hard_line());
+                                    } else {
+                                        return Doc::line_or_space();
                                     }
-                                    child => child.doc(ctx),
-                                })
-                                .collect(),
-                        )
-                        .group(),
-                    )
-                    .nest(ctx.indent_width),
+                                }
+
+                                let mut docs = Vec::with_capacity(3);
+                                if !is_first
+                                    && text_node
+                                        .raw
+                                        .trim_end()
+                                        .starts_with(|c: char| c.is_ascii_whitespace())
+                                {
+                                    docs.push(Doc::soft_line());
+                                }
+                                docs.push(text_node.doc(ctx));
+                                if !is_last
+                                    && text_node
+                                        .raw
+                                        .trim_start()
+                                        .ends_with(|c: char| c.is_ascii_whitespace())
+                                {
+                                    docs.push(Doc::soft_line());
+                                }
+                                Doc::list(docs)
+                            }
+                            child => child.doc(ctx),
+                        })
+                        .collect(),
+                )
+                .group(),
             );
+            if let [Node::VueInterpolation(..) | Node::SvelteInterpolation(..) | Node::Comment(..)] =
+                &self.children[..]
+            {
+                // This lets it format like this:
+                // ```
+                // <span>{{
+                //    value
+                // }}</span>
+                // ```
+                docs.push(children_doc);
+            } else {
+                docs.push(children_doc.nest(ctx.indent_width));
+            }
             docs.push(trailing_ws);
         }
 
