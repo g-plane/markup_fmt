@@ -35,7 +35,6 @@ pub(crate) fn is_whitespace_sensitive_tag(name: &str) -> bool {
         "param",
         "rp",
         "title",
-        "template",
         "html",
         "body",
         "article",
