@@ -123,7 +123,11 @@ impl<'s> DocGen<'s> for Element<'s> {
         let leading_ws = if is_whitespace_sensitive {
             if let Some(Node::TextNode(text_node)) = self.children.first() {
                 if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
-                    Doc::line_or_space()
+                    if text_node.raw.contains('\n') {
+                        Doc::hard_line()
+                    } else {
+                        Doc::line_or_space()
+                    }
                 } else {
                     Doc::nil()
                 }
@@ -149,7 +153,11 @@ impl<'s> DocGen<'s> for Element<'s> {
         let trailing_ws = if is_whitespace_sensitive {
             if let Some(Node::TextNode(text_node)) = self.children.last() {
                 if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
-                    Doc::line_or_space()
+                    if text_node.raw.contains('\n') {
+                        Doc::hard_line()
+                    } else {
+                        Doc::line_or_space()
+                    }
                 } else {
                     Doc::nil()
                 }
