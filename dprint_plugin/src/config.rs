@@ -97,49 +97,41 @@ pub(crate) fn resolve_config(
                     Default::default()
                 }
             },
-            v_bind_style: match get_nullable_value::<String>(
-                &mut config,
-                "vBindStyle",
-                &mut diagnostics,
-            )
-            .as_deref()
-            {
-                Some("short") => Some(VBindStyle::Short),
-                Some("long") => Some(VBindStyle::Long),
-                _ => {
-                    diagnostics.push(ConfigurationDiagnostic {
-                        property_name: "vBindStyle".into(),
-                        message: "invalid value for config `vBindStyle`".into(),
-                    });
-                    Default::default()
-                }
-            },
-            v_on_style: match get_nullable_value::<String>(
-                &mut config,
-                "vOnStyle",
-                &mut diagnostics,
-            )
-            .as_deref()
-            {
-                Some("short") => Some(VOnStyle::Short),
-                Some("long") => Some(VOnStyle::Long),
-                _ => {
-                    diagnostics.push(ConfigurationDiagnostic {
-                        property_name: "vOnStyle".into(),
-                        message: "invalid value for config `vOnStyle`".into(),
-                    });
-                    Default::default()
-                }
-            },
-            v_for_delimiter_style: match get_nullable_value::<String>(
+            v_bind_style: get_nullable_value::<String>(&mut config, "vBindStyle", &mut diagnostics)
+                .as_deref()
+                .and_then(|option_value| match option_value {
+                    "short" => Some(VBindStyle::Short),
+                    "long" => Some(VBindStyle::Long),
+                    _ => {
+                        diagnostics.push(ConfigurationDiagnostic {
+                            property_name: "vBindStyle".into(),
+                            message: "invalid value for config `vBindStyle`".into(),
+                        });
+                        Default::default()
+                    }
+                }),
+            v_on_style: get_nullable_value::<String>(&mut config, "vOnStyle", &mut diagnostics)
+                .as_deref()
+                .and_then(|option_value| match option_value {
+                    "short" => Some(VOnStyle::Short),
+                    "long" => Some(VOnStyle::Long),
+                    _ => {
+                        diagnostics.push(ConfigurationDiagnostic {
+                            property_name: "vOnStyle".into(),
+                            message: "invalid value for config `vOnStyle`".into(),
+                        });
+                        Default::default()
+                    }
+                }),
+            v_for_delimiter_style: get_nullable_value::<String>(
                 &mut config,
                 "vForDelimiterStyle",
                 &mut diagnostics,
             )
             .as_deref()
-            {
-                Some("in") => Some(VForDelimiterStyle::In),
-                Some("of") => Some(VForDelimiterStyle::Of),
+            .and_then(|option_value| match option_value {
+                "in" => Some(VForDelimiterStyle::In),
+                "of" => Some(VForDelimiterStyle::Of),
                 _ => {
                     diagnostics.push(ConfigurationDiagnostic {
                         property_name: "vForDelimiterStyle".into(),
@@ -147,7 +139,7 @@ pub(crate) fn resolve_config(
                     });
                     Default::default()
                 }
-            },
+            }),
         },
     };
 
