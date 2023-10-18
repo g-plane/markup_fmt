@@ -1,8 +1,11 @@
 use dprint_core::configuration::{
-    get_unknown_property_diagnostics, get_value, ConfigKeyMap, ConfigurationDiagnostic,
-    GlobalConfiguration, NewLineKind, ResolveConfigurationResult,
+    get_nullable_value, get_unknown_property_diagnostics, get_value, ConfigKeyMap,
+    ConfigurationDiagnostic, GlobalConfiguration, NewLineKind, ResolveConfigurationResult,
 };
-use markup_fmt::config::{FormatOptions, LayoutOptions, LineBreak};
+use markup_fmt::config::{
+    ClosingTagLineBreakForEmpty, FormatOptions, LanguageOptions, LayoutOptions, LineBreak, Quotes,
+    VBindStyle, VForDelimiterStyle, VOnStyle,
+};
 
 pub(crate) fn resolve_config(
     mut config: ConfigKeyMap,
@@ -51,7 +54,101 @@ pub(crate) fn resolve_config(
                 }
             },
         },
-        language: Default::default(), // TODO
+        language: LanguageOptions {
+            quotes: match &*get_value(
+                &mut config,
+                "quotes",
+                "double".to_string(),
+                &mut diagnostics,
+            ) {
+                "double" => Quotes::Double,
+                "single" => Quotes::Single,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "quotes".into(),
+                        message: "invalid value for config `quotes`".into(),
+                    });
+                    Default::default()
+                }
+            },
+            format_comments: get_value(&mut config, "formatComments", false, &mut diagnostics),
+            script_indent: get_value(&mut config, "scriptIndent", false, &mut diagnostics),
+            style_indent: get_value(&mut config, "styleIndent", false, &mut diagnostics),
+            closing_bracket_same_line: get_value(
+                &mut config,
+                "closingBracketSameLine",
+                false,
+                &mut diagnostics,
+            ),
+            closing_tag_line_break_for_empty: match &*get_value(
+                &mut config,
+                "closingTagLineBreakForEmpty",
+                "fit".to_string(),
+                &mut diagnostics,
+            ) {
+                "always" => ClosingTagLineBreakForEmpty::Always,
+                "fit" => ClosingTagLineBreakForEmpty::Fit,
+                "never" => ClosingTagLineBreakForEmpty::Never,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "closingTagLineBreakForEmpty".into(),
+                        message: "invalid value for config `closingTagLineBreakForEmpty`".into(),
+                    });
+                    Default::default()
+                }
+            },
+            v_bind_style: match get_nullable_value::<String>(
+                &mut config,
+                "vBindStyle",
+                &mut diagnostics,
+            )
+            .as_deref()
+            {
+                Some("short") => Some(VBindStyle::Short),
+                Some("long") => Some(VBindStyle::Long),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "vBindStyle".into(),
+                        message: "invalid value for config `vBindStyle`".into(),
+                    });
+                    Default::default()
+                }
+            },
+            v_on_style: match get_nullable_value::<String>(
+                &mut config,
+                "vOnStyle",
+                &mut diagnostics,
+            )
+            .as_deref()
+            {
+                Some("short") => Some(VOnStyle::Short),
+                Some("long") => Some(VOnStyle::Long),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "vOnStyle".into(),
+                        message: "invalid value for config `vOnStyle`".into(),
+                    });
+                    Default::default()
+                }
+            },
+            v_for_delimiter_style: match get_nullable_value::<String>(
+                &mut config,
+                "vForDelimiterStyle",
+                &mut diagnostics,
+            )
+            .as_deref()
+            {
+                Some("in") => Some(VForDelimiterStyle::In),
+                Some("of") => Some(VForDelimiterStyle::Of),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "vForDelimiterStyle".into(),
+                        message: "invalid value for config `vForDelimiterStyle`".into(),
+                    });
+                    Default::default()
+                }
+            },
+        },
     };
 
     diagnostics.extend(get_unknown_property_diagnostics(config));
