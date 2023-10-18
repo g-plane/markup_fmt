@@ -1,5 +1,5 @@
 use crate::{ast::*, config::Quotes, ctx::Ctx, helpers, Language};
-use std::{borrow::Cow, mem, path::Path};
+use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
 pub(super) trait DocGen<'s> {
@@ -104,8 +104,8 @@ impl<'s> DocGen<'s> for Element<'s> {
         let is_whitespace_sensitive = match ctx.language {
             Language::Html => helpers::is_whitespace_sensitive_tag(self.tag_name),
             Language::Vue | Language::Svelte => {
-                !helpers::is_component(self.tag_name)
-                    && helpers::is_whitespace_sensitive_tag(self.tag_name)
+                helpers::is_component(self.tag_name)
+                    || helpers::is_whitespace_sensitive_tag(self.tag_name)
             }
         };
         let is_empty = match &self.children[..] {
@@ -120,7 +120,17 @@ impl<'s> DocGen<'s> for Element<'s> {
             .count()
             > 1;
 
-        let leading_ws = if has_two_more_non_text_children
+        let leading_ws = if is_whitespace_sensitive {
+            if let Some(Node::TextNode(text_node)) = self.children.first() {
+                if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
+                    Doc::line_or_space()
+                } else {
+                    Doc::nil()
+                }
+            } else {
+                Doc::nil()
+            }
+        } else if has_two_more_non_text_children
             || self
                 .children
                 .first()
@@ -136,7 +146,17 @@ impl<'s> DocGen<'s> for Element<'s> {
         } else {
             Doc::line_or_nil()
         };
-        let trailing_ws = if has_two_more_non_text_children
+        let trailing_ws = if is_whitespace_sensitive {
+            if let Some(Node::TextNode(text_node)) = self.children.last() {
+                if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
+                    Doc::line_or_space()
+                } else {
+                    Doc::nil()
+                }
+            } else {
+                Doc::nil()
+            }
+        } else if has_two_more_non_text_children
             || self
                 .children
                 .last()
@@ -211,44 +231,72 @@ impl<'s> DocGen<'s> for Element<'s> {
                     self.children
                         .iter()
                         .enumerate()
-                        .scan(false, |is_prev_text_like, (i, child)| {
-                            let maybe_hard_line = if mem::replace(
-                                is_prev_text_like,
-                                matches!(
-                                    child,
-                                    Node::TextNode(..)
-                                        | Node::VueInterpolation(..)
-                                        | Node::SvelteInterpolation(..)
-                                ),
-                            ) {
-                                Doc::nil()
-                            } else {
-                                Doc::hard_line()
-                            };
-                            let docs = match child {
-                                Node::TextNode(text_node) => {
-                                    if i + 1 == self.children.len() {
-                                        [Doc::nil(), Doc::nil()]
-                                    } else if has_two_more_linebreaks(text_node.raw) {
-                                        [Doc::empty_line(), Doc::hard_line()]
-                                    } else if !text_node.raw.is_empty()
-                                        && text_node
+                        .fold(
+                            (Vec::with_capacity(self.children.len() * 2), false),
+                            |(mut docs, is_prev_text_like), (i, child)| {
+                                let maybe_hard_line = if is_prev_text_like {
+                                    None
+                                } else {
+                                    Some(Doc::hard_line())
+                                };
+                                match child {
+                                    Node::TextNode(text_node) => {
+                                        let is_first = i == 0;
+                                        let is_last = i + 1 == self.children.len();
+                                        if text_node
                                             .raw
                                             .as_bytes()
                                             .iter()
                                             .all(|c| c.is_ascii_whitespace())
-                                    {
-                                        [Doc::nil(), Doc::hard_line()]
-                                    } else {
-                                        [maybe_hard_line, text_node.doc(ctx)]
+                                        {
+                                            if !is_last {
+                                                if has_two_more_linebreaks(text_node.raw) {
+                                                    docs.push(Doc::empty_line());
+                                                }
+                                                docs.push(Doc::hard_line());
+                                            }
+                                        } else {
+                                            if let Some(hard_line) = maybe_hard_line {
+                                                docs.push(hard_line);
+                                            } else if !is_first
+                                                && text_node
+                                                    .raw
+                                                    .starts_with(|c: char| c.is_ascii_whitespace())
+                                            {
+                                                docs.push(Doc::soft_line());
+                                            }
+                                            docs.push(text_node.doc(ctx));
+                                            if !is_last
+                                                && text_node
+                                                    .raw
+                                                    .ends_with(|c: char| c.is_ascii_whitespace())
+                                            {
+                                                docs.push(Doc::soft_line());
+                                            }
+                                        }
                                     }
-                                }
-                                child => [maybe_hard_line, child.doc(ctx)],
-                            };
-                            Some(docs.into_iter())
-                        })
-                        .flatten()
-                        .collect(),
+                                    child => {
+                                        if let Some(hard_line) = maybe_hard_line {
+                                            docs.push(hard_line);
+                                        }
+                                        docs.push(child.doc(ctx));
+                                    }
+                                };
+                                (
+                                    docs,
+                                    match child {
+                                        Node::TextNode(..)
+                                        | Node::VueInterpolation(..)
+                                        | Node::SvelteInterpolation(..) => true,
+                                        Node::Element(element) => {
+                                            element.tag_name.eq_ignore_ascii_case("label")
+                                        }
+                                        _ => false,
+                                    },
+                                )
+                            },
+                        )
+                        .0,
                 )
                 .group()
                 .nest(ctx.indent_width),
@@ -258,8 +306,50 @@ impl<'s> DocGen<'s> for Element<'s> {
             docs.push(
                 leading_ws
                     .append(
-                        Doc::list(self.children.iter().map(|child| child.doc(ctx)).collect())
-                            .group(),
+                        Doc::list(
+                            self.children
+                                .iter()
+                                .enumerate()
+                                .map(|(i, child)| match child {
+                                    Node::TextNode(text_node) => {
+                                        let is_first = i == 0;
+                                        let is_last = i + 1 == self.children.len();
+                                        if !is_first
+                                            && !is_last
+                                            && is_all_ascii_whitespace(text_node.raw)
+                                        {
+                                            if has_two_more_linebreaks(text_node.raw) {
+                                                return Doc::empty_line().append(Doc::hard_line());
+                                            } else {
+                                                return Doc::line_or_space();
+                                            }
+                                        }
+
+                                        let mut docs = Vec::with_capacity(3);
+                                        if !is_first
+                                            && text_node
+                                                .raw
+                                                .trim_end()
+                                                .starts_with(|c: char| c.is_ascii_whitespace())
+                                        {
+                                            docs.push(Doc::soft_line());
+                                        }
+                                        docs.push(text_node.doc(ctx));
+                                        if !is_last
+                                            && text_node
+                                                .raw
+                                                .trim_start()
+                                                .ends_with(|c: char| c.is_ascii_whitespace())
+                                        {
+                                            docs.push(Doc::soft_line());
+                                        }
+                                        Doc::list(docs)
+                                    }
+                                    child => child.doc(ctx),
+                                })
+                                .collect(),
+                        )
+                        .group(),
                     )
                     .nest(ctx.indent_width),
             );
@@ -397,13 +487,6 @@ impl<'s> DocGen<'s> for TextNode<'s> {
         if docs.is_empty() {
             Doc::nil()
         } else {
-            let mut docs = vec![Doc::list(docs).group()];
-            if self.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
-                docs.insert(0, Doc::line_or_space());
-            }
-            if self.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
-                docs.push(Doc::line_or_space());
-            }
             Doc::list(docs)
         }
     }
@@ -532,6 +615,10 @@ fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
 
 fn has_two_more_linebreaks(s: &str) -> bool {
     s.as_bytes().iter().filter(|byte| **byte == b'\n').count() > 1
+}
+
+fn is_all_ascii_whitespace(s: &str) -> bool {
+    !s.is_empty() && s.as_bytes().iter().all(|byte| byte.is_ascii_whitespace())
 }
 
 fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
