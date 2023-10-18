@@ -238,7 +238,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                             .iter()
                                             .all(|c| c.is_ascii_whitespace())
                                     {
-                                        [Doc::nil(), Doc::line_or_space()]
+                                        [Doc::nil(), Doc::hard_line()]
                                     } else {
                                         [maybe_hard_line, text_node.doc(ctx)]
                                     }
