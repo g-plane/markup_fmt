@@ -1,4 +1,9 @@
-use crate::{ast::*, config::Quotes, ctx::Ctx, helpers, Language};
+use crate::{
+    ast::*,
+    config::Quotes,
+    ctx::{Ctx, NestWithCtx},
+    helpers, Language,
+};
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
@@ -47,7 +52,7 @@ impl<'s> DocGen<'s> for Comment<'s> {
                 .append(
                     Doc::line_or_space()
                         .concat(reflow(self.raw.trim()))
-                        .nest(ctx.indent_width),
+                        .nest_with_ctx(ctx),
                 )
                 .append(Doc::line_or_space())
                 .append(Doc::text("-->"))
@@ -78,7 +83,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .flat_map(|prop| [Doc::line_or_space(), prop.doc(ctx)].into_iter())
                 .collect(),
         )
-        .nest(ctx.indent_width);
+        .nest_with_ctx(ctx);
 
         if self.void_element {
             docs.push(attrs);
@@ -201,7 +206,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .concat(reflow_raw(formatted.trim()))
                     .append(Doc::hard_line());
                 docs.push(if ctx.options.script_indent {
-                    doc.nest(ctx.indent_width)
+                    doc.nest_with_ctx(ctx)
                 } else {
                     doc
                 });
@@ -226,7 +231,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .concat(reflow_raw(formatted.trim()))
                     .append(Doc::hard_line());
                 docs.push(if ctx.options.style_indent {
-                    doc.nest(ctx.indent_width)
+                    doc.nest_with_ctx(ctx)
                 } else {
                     doc
                 });
@@ -305,7 +310,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         .0,
                 )
                 .group()
-                .nest(ctx.indent_width),
+                .nest_with_ctx(ctx),
             );
             docs.push(trailing_ws);
         } else {
@@ -367,7 +372,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 // ```
                 docs.push(children_doc);
             } else {
-                docs.push(children_doc.nest(ctx.indent_width));
+                docs.push(children_doc.nest_with_ctx(ctx));
             }
             docs.push(trailing_ws);
         }
@@ -474,7 +479,7 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
             .append(
                 Doc::line_or_nil()
                     .concat(reflow_raw(&ctx.format_expr(self.expr)))
-                    .nest(ctx.indent_width),
+                    .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_nil())
             .append(Doc::text("}"))
@@ -598,7 +603,7 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
             .append(
                 Doc::line_or_space()
                     .concat(reflow_raw(&ctx.format_expr(self.expr)))
-                    .nest(ctx.indent_width),
+                    .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))

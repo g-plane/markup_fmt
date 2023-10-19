@@ -1,5 +1,6 @@
 use crate::{config::LanguageOptions, Language};
 use std::{borrow::Cow, path::Path};
+use tiny_pretty::Doc;
 
 pub(crate) struct Ctx<'b, 's, E, F>
 where
@@ -67,5 +68,20 @@ where
                 code.into()
             }
         }
+    }
+}
+
+pub(crate) trait NestWithCtx {
+    fn nest_with_ctx<'b, 's, E, F>(self, ctx: &mut Ctx<'b, 's, E, F>) -> Self
+    where
+        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>;
+}
+
+impl NestWithCtx for Doc<'_> {
+    fn nest_with_ctx<'b, 's, E, F>(self, ctx: &mut Ctx<'b, 's, E, F>) -> Self
+    where
+        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+    {
+        self.nest(ctx.indent_width)
     }
 }
