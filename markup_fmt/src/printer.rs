@@ -10,13 +10,13 @@ use tiny_pretty::Doc;
 pub(super) trait DocGen<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>;
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
 impl<'s> DocGen<'s> for Node<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
             Node::Comment(comment) => comment.doc(ctx),
@@ -32,7 +32,7 @@ impl<'s> DocGen<'s> for Node<'s> {
 impl<'s> DocGen<'s> for Attribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
             Attribute::NativeAttribute(native_attribute) => native_attribute.doc(ctx),
@@ -45,7 +45,7 @@ impl<'s> DocGen<'s> for Attribute<'s> {
 impl<'s> DocGen<'s> for Comment<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         if ctx.options.format_comments {
             Doc::text("<!--")
@@ -68,7 +68,7 @@ impl<'s> DocGen<'s> for Comment<'s> {
 impl<'s> DocGen<'s> for Element<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         ctx.current_tag_name = Some(self.tag_name);
 
@@ -393,7 +393,7 @@ impl<'s> DocGen<'s> for Element<'s> {
 impl<'s> DocGen<'s> for NativeAttribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let name = Doc::text(self.name);
         if let Some(value) = self.value {
@@ -433,7 +433,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
 impl<'s> DocGen<'s> for Root<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::list(
             self.children
@@ -461,7 +461,7 @@ impl<'s> DocGen<'s> for Root<'s> {
 impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let name = Doc::text(self.name.to_owned());
         name.append(Doc::text("={"))
@@ -473,7 +473,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
 impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{")
             .append(
@@ -490,7 +490,7 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
 impl<'s> DocGen<'s> for TextNode<'s> {
     fn doc<E, F>(&self, _: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let docs = itertools::intersperse(
             self.raw.split_ascii_whitespace().map(Doc::text),
@@ -509,7 +509,7 @@ impl<'s> DocGen<'s> for TextNode<'s> {
 impl<'s> DocGen<'s> for VueDirective<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         use crate::config::{VBindStyle, VOnStyle};
 
@@ -597,7 +597,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
 impl<'s> DocGen<'s> for VueInterpolation<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
-        F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{{")
             .append(

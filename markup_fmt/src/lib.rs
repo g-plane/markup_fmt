@@ -18,15 +18,17 @@ pub fn format_text<E, F>(
     external_formatter: F,
 ) -> Result<String, FormatError<E>>
 where
-    F: for<'a> FnMut(&Path, &'a str) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root().map_err(FormatError::Syntax)?;
     let mut ctx = Ctx {
         language,
         indent_width: options.layout.indent_width,
+        print_width: options.layout.print_width,
         options: &options.language,
         current_tag_name: None,
+        indent_level: 0,
         external_formatter,
         external_formatter_error: None,
     };
