@@ -69,6 +69,7 @@ pub struct SvelteInterpolation<'s> {
 #[derive(Clone, Debug)]
 pub struct TextNode<'s> {
     pub raw: &'s str,
+    pub line_breaks: usize,
 }
 
 #[derive(Clone, Debug)]

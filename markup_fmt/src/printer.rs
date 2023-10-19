@@ -123,7 +123,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         let leading_ws = if is_whitespace_sensitive {
             if let Some(Node::TextNode(text_node)) = self.children.first() {
                 if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
-                    if text_node.raw.contains('\n') {
+                    if text_node.line_breaks > 0 {
                         Doc::hard_line()
                     } else {
                         Doc::line_or_space()
@@ -139,7 +139,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .children
                 .first()
                 .map(|child| match child {
-                    Node::TextNode(text_node) => text_node.raw.contains('\n'),
+                    Node::TextNode(text_node) => text_node.line_breaks > 0,
                     _ => false,
                 })
                 .unwrap_or_default()
@@ -153,7 +153,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         let trailing_ws = if is_whitespace_sensitive {
             if let Some(Node::TextNode(text_node)) = self.children.last() {
                 if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
-                    if text_node.raw.contains('\n') {
+                    if text_node.line_breaks > 0 {
                         Doc::hard_line()
                     } else {
                         Doc::line_or_space()
@@ -169,7 +169,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .children
                 .last()
                 .map(|child| match child {
-                    Node::TextNode(text_node) => text_node.raw.contains('\n'),
+                    Node::TextNode(text_node) => text_node.line_breaks > 0,
                     _ => false,
                 })
                 .unwrap_or_default()
@@ -258,7 +258,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                         let is_last = i + 1 == self.children.len();
                                         if is_all_ascii_whitespace(text_node.raw) {
                                             if !is_last {
-                                                if has_two_more_linebreaks(text_node.raw) {
+                                                if text_node.line_breaks > 1 {
                                                     docs.push(Doc::empty_line());
                                                 }
                                                 docs.push(Doc::hard_line());
@@ -319,7 +319,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 let is_first = i == 0;
                                 let is_last = i + 1 == self.children.len();
                                 if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                                    return if has_two_more_linebreaks(text_node.raw) {
+                                    return if text_node.line_breaks > 1 {
                                         Doc::empty_line().append(Doc::hard_line())
                                     } else if has_two_more_non_text_children {
                                         Doc::hard_line()
@@ -436,14 +436,7 @@ impl<'s> DocGen<'s> for Root<'s> {
                 .filter_map(|child| match child {
                     Node::TextNode(text_node) => {
                         if text_node.raw.trim().is_empty() {
-                            if text_node
-                                .raw
-                                .as_bytes()
-                                .iter()
-                                .filter(|byte| **byte == b'\n')
-                                .count()
-                                > 1
-                            {
+                            if text_node.line_breaks > 1 {
                                 Some([Doc::nil(), Doc::hard_line()].into_iter())
                             } else {
                                 None
@@ -627,10 +620,6 @@ fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
         Doc::empty_line(),
     )
-}
-
-fn has_two_more_linebreaks(s: &str) -> bool {
-    s.as_bytes().iter().filter(|byte| **byte == b'\n').count() > 1
 }
 
 fn is_all_ascii_whitespace(s: &str) -> bool {

@@ -333,6 +333,7 @@ impl<'s> Parser<'s> {
             .map(|(i, _)| *i)
             .unwrap_or(self.source.len());
 
+        let mut line_breaks = 0;
         let end;
         loop {
             match self.chars.peek() {
@@ -347,7 +348,10 @@ impl<'s> Parser<'s> {
                         self.chars.next();
                     }
                 }
-                Some(..) => {
+                Some((_, c)) => {
+                    if *c == '\n' {
+                        line_breaks += 1;
+                    }
                     self.chars.next();
                 }
                 None => {
@@ -359,6 +363,7 @@ impl<'s> Parser<'s> {
 
         Ok(TextNode {
             raw: unsafe { self.source.get_unchecked(start..end) },
+            line_breaks,
         })
     }
 
@@ -516,6 +521,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         }
 
+        let mut line_breaks = 0;
         let end;
         loop {
             match self.chars.peek() {
@@ -553,7 +559,10 @@ impl<'s> Parser<'s> {
                         }
                     }
                 }
-                Some(..) => {
+                Some((_, c)) => {
+                    if *c == '\n' {
+                        line_breaks += 1;
+                    }
                     self.chars.next();
                 }
                 None => {
@@ -565,6 +574,7 @@ impl<'s> Parser<'s> {
 
         Ok(TextNode {
             raw: unsafe { self.source.get_unchecked(start..end) },
+            line_breaks,
         })
     }
 
