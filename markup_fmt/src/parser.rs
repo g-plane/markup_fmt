@@ -530,7 +530,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         }
 
-        let mut line_breaks = 0;
+        let mut line_breaks = if first_char == '\n' { 1 } else { 0 };
         let end;
         loop {
             match self.chars.peek() {
