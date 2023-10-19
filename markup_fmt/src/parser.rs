@@ -1,3 +1,12 @@
+//! This parser is designed for internal use,
+//! not generating general-purpose AST.
+//!
+//! Also, the parser consumes string then produces AST directly without tokenizing.
+//! For a formal parser, it should be:
+//! `source -> tokens (produced by lexer/tokenizer) -> AST (produced by parser)`.
+//! So, if you're learning or looking for a parser,
+//! this is not a good example and you should look for other projects.
+
 use crate::{
     ast::*,
     error::{SyntaxError, SyntaxErrorKind},
