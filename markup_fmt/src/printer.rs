@@ -353,16 +353,11 @@ impl<'s> DocGen<'s> for Element<'s> {
                 )
                 .group(),
             );
-            if self.children.iter().all(|child| match child {
-                Node::VueInterpolation(..) | Node::SvelteInterpolation(..) | Node::Comment(..) => {
-                    true
-                }
-                Node::TextNode(text_node) => !text_node
-                    .raw
-                    .as_bytes()
-                    .iter()
-                    .any(|c| c.is_ascii_whitespace()),
-                _ => false,
+            if self.children.iter().all(|child| {
+                matches!(
+                    child,
+                    Node::VueInterpolation(..) | Node::SvelteInterpolation(..) | Node::Comment(..)
+                )
             }) {
                 // This lets it format like this:
                 // ```
