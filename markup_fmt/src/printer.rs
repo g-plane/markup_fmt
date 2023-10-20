@@ -489,7 +489,7 @@ impl<'s> DocGen<'s> for TextNode<'s> {
     {
         let docs = itertools::intersperse(
             self.raw.split_ascii_whitespace().map(Doc::text),
-            Doc::line_or_space(),
+            Doc::soft_line(),
         )
         .collect::<Vec<_>>();
 
