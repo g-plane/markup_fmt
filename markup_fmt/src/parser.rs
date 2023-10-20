@@ -518,7 +518,11 @@ impl<'s> Parser<'s> {
 
     fn parse_text_node(&mut self) -> PResult<TextNode<'s>> {
         let Some((start, first_char)) = self.chars.next_if(|(_, c)| {
-            matches!(self.language, Language::Vue | Language::Svelte) && *c != '{'
+            if let Language::Vue | Language::Svelte = self.language {
+                *c != '{'
+            } else {
+                true
+            }
         }) else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         };
