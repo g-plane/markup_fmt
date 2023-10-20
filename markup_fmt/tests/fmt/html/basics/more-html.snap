@@ -1,0 +1,11 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<html>
+  <head></head>
+  <body>
+    <a href="#">Anchor</a>
+    <div hidden class="foo" id="bar"></div>
+  </body>
+</html>
+

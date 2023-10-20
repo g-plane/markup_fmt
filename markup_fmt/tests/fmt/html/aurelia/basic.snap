@@ -1,0 +1,7 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <i class.bind="icon"></i>
+</template>
+

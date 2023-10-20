@@ -1,0 +1,5 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<a href="1" href="2">123</a>
+

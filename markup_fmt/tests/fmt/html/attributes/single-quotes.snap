@@ -1,0 +1,5 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<img src="test.png" alt='John "ShotGun" Nelson'>
+
