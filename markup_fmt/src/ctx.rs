@@ -68,12 +68,12 @@ where
             Path::new(&format!("script.{lang}")),
             code,
             self.print_width
-                - self.indent_level
-                - if self.options.script_indent {
+                .saturating_sub(self.indent_level)
+                .saturating_sub(if self.options.script_indent {
                     self.indent_width
                 } else {
                     0
-                },
+                }),
         )
     }
 
@@ -82,12 +82,12 @@ where
             Path::new(&format!("style.{lang}")),
             code,
             self.print_width
-                - self.indent_level
-                - if self.options.style_indent {
+                .saturating_sub(self.indent_level)
+                .saturating_sub(if self.options.style_indent {
                     self.indent_width
                 } else {
                     0
-                },
+                }),
         )
     }
 
