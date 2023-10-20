@@ -20,6 +20,7 @@ impl<'s> DocGen<'s> for Node<'s> {
     {
         match self {
             Node::Comment(comment) => comment.doc(ctx),
+            Node::Doctype => Doc::text("<!DOCTYPE html>"),
             Node::Element(element) => element.doc(ctx),
             Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx),
             Node::TextNode(text_node) => text_node.doc(ctx),

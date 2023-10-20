@@ -169,6 +169,43 @@ impl<'s> Parser<'s> {
         })
     }
 
+    fn parse_doctype(&mut self) -> PResult<()> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '<')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '!'))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'d')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'o')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'c')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'t')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'y')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'p')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'e')))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
+        };
+        self.skip_ws();
+
+        if self
+            .chars
+            .next_if(|(_, c)| c.eq_ignore_ascii_case(&'h'))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'t')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'m')))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'l')))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
+        }
+        self.skip_ws();
+
+        if self.chars.next_if(|(_, c)| *c == '>').is_some() {
+            Ok(())
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectDoctype))
+        }
+    }
+
     fn parse_element(&mut self) -> PResult<Element<'s>> {
         let Some(..) = self.chars.next_if(|(_, c)| *c == '<') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectElement));
@@ -306,7 +343,10 @@ impl<'s> Parser<'s> {
                 chars.next();
                 match chars.next() {
                     Some((_, c)) if is_tag_name_char(c) => self.parse_element().map(Node::Element),
-                    Some((_, '!')) => self.parse_comment().map(Node::Comment),
+                    Some((_, '!')) => self
+                        .try_parse(Parser::parse_comment)
+                        .map(Node::Comment)
+                        .or_else(|_| self.parse_doctype().map(|_| Node::Doctype)),
                     _ => self.parse_text_node().map(Node::TextNode),
                 }
             }

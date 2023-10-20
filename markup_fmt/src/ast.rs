@@ -36,6 +36,7 @@ pub struct NativeAttribute<'s> {
 #[derive(Clone, Debug)]
 pub enum Node<'s> {
     Comment(Comment<'s>),
+    Doctype,
     Element(Element<'s>),
     SvelteIfBlock(SvelteIfBlock<'s>),
     SvelteInterpolation(SvelteInterpolation<'s>),
