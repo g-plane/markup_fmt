@@ -71,7 +71,12 @@ impl<'s> DocGen<'s> for Element<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        ctx.current_tag_name = Some(self.tag_name);
+        let tag_name = self
+            .tag_name
+            .split_once(':')
+            .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
+            .unwrap_or(self.tag_name);
+        ctx.current_tag_name = Some(tag_name);
 
         let mut docs = Vec::with_capacity(5);
 
@@ -108,10 +113,9 @@ impl<'s> DocGen<'s> for Element<'s> {
         }
 
         let is_whitespace_sensitive = match ctx.language {
-            Language::Html => helpers::is_whitespace_sensitive_tag(self.tag_name),
+            Language::Html => helpers::is_whitespace_sensitive_tag(tag_name),
             Language::Vue | Language::Svelte => {
-                helpers::is_component(self.tag_name)
-                    || helpers::is_whitespace_sensitive_tag(self.tag_name)
+                helpers::is_component(tag_name) || helpers::is_whitespace_sensitive_tag(tag_name)
             }
         };
         let is_empty = match &self.children[..] {
