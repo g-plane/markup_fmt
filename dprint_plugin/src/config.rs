@@ -73,7 +73,33 @@ pub(crate) fn resolve_config(
             },
             format_comments: get_value(&mut config, "formatComments", false, &mut diagnostics),
             script_indent: get_value(&mut config, "scriptIndent", false, &mut diagnostics),
+            html_script_indent: get_nullable_value(
+                &mut config,
+                "html.scriptIndent",
+                &mut diagnostics,
+            ),
+            vue_script_indent: get_nullable_value(
+                &mut config,
+                "vue.scriptIndent",
+                &mut diagnostics,
+            ),
+            svelte_script_indent: get_nullable_value(
+                &mut config,
+                "svelte.scriptIndent",
+                &mut diagnostics,
+            ),
             style_indent: get_value(&mut config, "styleIndent", false, &mut diagnostics),
+            html_style_indent: get_nullable_value(
+                &mut config,
+                "html.styleIndent",
+                &mut diagnostics,
+            ),
+            vue_style_indent: get_nullable_value(&mut config, "vue.styleIndent", &mut diagnostics),
+            svelte_style_indent: get_nullable_value(
+                &mut config,
+                "svelte.styleIndent",
+                &mut diagnostics,
+            ),
             closing_bracket_same_line: get_value(
                 &mut config,
                 "closingBracketSameLine",

@@ -22,6 +22,40 @@ impl<'b, 's, E, F> Ctx<'b, 's, E, F>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
+    pub(crate) fn script_indent(&self) -> bool {
+        match self.language {
+            Language::Html => self
+                .options
+                .html_script_indent
+                .unwrap_or(self.options.script_indent),
+            Language::Vue => self
+                .options
+                .vue_script_indent
+                .unwrap_or(self.options.script_indent),
+            Language::Svelte => self
+                .options
+                .svelte_script_indent
+                .unwrap_or(self.options.script_indent),
+        }
+    }
+
+    pub(crate) fn style_indent(&self) -> bool {
+        match self.language {
+            Language::Html => self
+                .options
+                .html_style_indent
+                .unwrap_or(self.options.style_indent),
+            Language::Vue => self
+                .options
+                .vue_style_indent
+                .unwrap_or(self.options.style_indent),
+            Language::Svelte => self
+                .options
+                .svelte_style_indent
+                .unwrap_or(self.options.style_indent),
+        }
+    }
+
     pub(crate) fn format_expr(&mut self, code: &str) -> String {
         if code.trim().is_empty() {
             String::new()
@@ -69,7 +103,7 @@ where
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
-                .saturating_sub(if self.options.script_indent {
+                .saturating_sub(if self.script_indent() {
                     self.indent_width
                 } else {
                     0
@@ -83,7 +117,7 @@ where
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
-                .saturating_sub(if self.options.style_indent {
+                .saturating_sub(if self.style_indent() {
                     self.indent_width
                 } else {
                     0

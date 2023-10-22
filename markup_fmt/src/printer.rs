@@ -215,7 +215,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 let doc = Doc::hard_line()
                     .concat(reflow_raw(formatted.trim()))
                     .append(Doc::hard_line());
-                docs.push(if ctx.options.script_indent {
+                docs.push(if ctx.script_indent() {
                     doc.nest_with_ctx(ctx)
                 } else {
                     doc
@@ -240,7 +240,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 let doc = Doc::hard_line()
                     .concat(reflow_raw(formatted.trim()))
                     .append(Doc::hard_line());
-                docs.push(if ctx.options.style_indent {
+                docs.push(if ctx.style_indent() {
                     doc.nest_with_ctx(ctx)
                 } else {
                     doc

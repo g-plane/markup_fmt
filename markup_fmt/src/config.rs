@@ -68,7 +68,19 @@ pub struct LanguageOptions {
     pub quotes: Quotes,
     pub format_comments: bool,
     pub script_indent: bool,
+    #[cfg_attr(feature = "config_serde", serde(rename = "html.scriptIndent"))]
+    pub html_script_indent: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "vue.scriptIndent"))]
+    pub vue_script_indent: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "svelte.scriptIndent"))]
+    pub svelte_script_indent: Option<bool>,
     pub style_indent: bool,
+    #[cfg_attr(feature = "config_serde", serde(rename = "html.styleIndent"))]
+    pub html_style_indent: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "vue.styleIndent"))]
+    pub vue_style_indent: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "svelte.styleIndent"))]
+    pub svelte_style_indent: Option<bool>,
     pub closing_bracket_same_line: bool,
     pub closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty,
     pub v_bind_style: Option<VBindStyle>,
