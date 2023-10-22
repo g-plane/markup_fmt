@@ -128,12 +128,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             [Node::TextNode(text_node)] => text_node.raw.trim().is_empty(),
             _ => false,
         };
-        let has_two_more_non_text_children = self
-            .children
-            .iter()
-            .filter(|child| !matches!(child, Node::TextNode(_)))
-            .count()
-            > 1;
+        let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
 
         let leading_ws = if is_whitespace_sensitive {
             if let Some(Node::TextNode(text_node)) = self.children.first() {
@@ -444,26 +439,43 @@ impl<'s> DocGen<'s> for Root<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
+        let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
         Doc::list(
             self.children
                 .iter()
-                .filter_map(|child| match child {
+                .enumerate()
+                .map(|(i, child)| match child {
                     Node::TextNode(text_node) => {
-                        if text_node.raw.trim().is_empty() {
-                            if text_node.line_breaks > 1 {
-                                Some([Doc::nil(), Doc::hard_line()].into_iter())
+                        let is_first = i == 0;
+                        let is_last = i + 1 == self.children.len();
+                        if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
+                            return if text_node.line_breaks > 1 {
+                                Doc::empty_line().append(Doc::hard_line())
+                            } else if has_two_more_non_text_children {
+                                Doc::hard_line()
                             } else {
-                                None
-                            }
-                        } else {
-                            Some([text_node.doc(ctx), Doc::hard_line()].into_iter())
+                                Doc::line_or_space()
+                            };
                         }
+
+                        let mut docs = Vec::with_capacity(3);
+                        if let Some(doc) =
+                            should_add_whitespace_before_text_node(text_node, is_first)
+                        {
+                            docs.push(doc);
+                        }
+                        docs.push(text_node.doc(ctx));
+                        if let Some(doc) = should_add_whitespace_after_text_node(text_node, is_last)
+                        {
+                            docs.push(doc);
+                        }
+                        Doc::list(docs)
                     }
-                    node => Some([node.doc(ctx), Doc::hard_line()].into_iter()),
+                    child => child.doc(ctx),
                 })
-                .flatten()
                 .collect(),
         )
+        .group()
     }
 }
 
@@ -676,6 +688,14 @@ fn should_add_whitespace_after_text_node<'s>(
     } else {
         None
     }
+}
+
+fn has_two_more_non_text_children(children: &[Node]) -> bool {
+    children
+        .iter()
+        .filter(|child| !matches!(child, Node::TextNode(_)))
+        .count()
+        > 1
 }
 
 fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
