@@ -1,0 +1,4 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+a track<strong>pad</strong>, or a <strong>gyro</strong>scope.
