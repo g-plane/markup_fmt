@@ -273,7 +273,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                         let is_last = i + 1 == self.children.len();
                                         if is_all_ascii_whitespace(text_node.raw) {
                                             if !is_last {
-                                                if text_node.line_breaks > 1 {
+                                                if !is_first && text_node.line_breaks > 1 {
                                                     docs.push(Doc::empty_line());
                                                 }
                                                 docs.push(Doc::hard_line());
