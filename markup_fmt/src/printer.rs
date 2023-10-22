@@ -98,7 +98,9 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         if self.void_element {
             docs.push(attrs);
-            docs.push(Doc::line_or_nil());
+            if !ctx.options.closing_bracket_same_line {
+                docs.push(Doc::line_or_nil());
+            }
             docs.push(Doc::text(">"));
             return Doc::list(docs).group();
         } else if self.self_closing {
