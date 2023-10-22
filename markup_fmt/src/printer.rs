@@ -77,11 +77,16 @@ impl<'s> DocGen<'s> for Element<'s> {
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
         ctx.current_tag_name = Some(tag_name);
+        let should_lower_cased = css_dataset::tags::STANDARD_HTML_TAGS.contains(self.tag_name);
 
         let mut docs = Vec::with_capacity(5);
 
         docs.push(Doc::text("<"));
-        docs.push(Doc::text(self.tag_name));
+        docs.push(Doc::text(if should_lower_cased {
+            Cow::from(self.tag_name.to_ascii_lowercase())
+        } else {
+            Cow::from(self.tag_name)
+        }));
 
         let attrs = Doc::list(
             self.attrs
@@ -379,7 +384,11 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         docs.push(
             Doc::text("</")
-                .append(Doc::text(self.tag_name))
+                .append(Doc::text(if should_lower_cased {
+                    Cow::from(self.tag_name.to_ascii_lowercase())
+                } else {
+                    Cow::from(self.tag_name)
+                }))
                 .append(Doc::line_or_nil())
                 .append(Doc::text(">"))
                 .group(),
