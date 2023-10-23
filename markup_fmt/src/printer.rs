@@ -301,45 +301,11 @@ impl<'s> DocGen<'s> for Element<'s> {
             );
             docs.push(trailing_ws);
         } else {
-            let children_doc = leading_ws.append(
-                Doc::list(
-                    self.children
-                        .iter()
-                        .enumerate()
-                        .map(|(i, child)| match child {
-                            Node::TextNode(text_node) => {
-                                let is_first = i == 0;
-                                let is_last = i + 1 == self.children.len();
-                                if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                                    return if text_node.line_breaks > 1 {
-                                        Doc::empty_line().append(Doc::hard_line())
-                                    } else if has_two_more_non_text_children {
-                                        Doc::hard_line()
-                                    } else {
-                                        Doc::line_or_space()
-                                    };
-                                }
-
-                                let mut docs = Vec::with_capacity(3);
-                                if let Some(doc) =
-                                    should_add_whitespace_before_text_node(text_node, is_first)
-                                {
-                                    docs.push(doc);
-                                }
-                                docs.push(text_node.doc(ctx));
-                                if let Some(doc) =
-                                    should_add_whitespace_after_text_node(text_node, is_last)
-                                {
-                                    docs.push(doc);
-                                }
-                                Doc::list(docs)
-                            }
-                            child => child.doc(ctx),
-                        })
-                        .collect(),
-                )
-                .group(),
-            );
+            let children_doc = leading_ws.append(format_children_without_inserting_linebreak(
+                &self.children,
+                has_two_more_non_text_children,
+                ctx,
+            ));
             if self.children.iter().all(|child| {
                 matches!(
                     child,
@@ -439,42 +405,11 @@ impl<'s> DocGen<'s> for Root<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
-        Doc::list(
-            self.children
-                .iter()
-                .enumerate()
-                .map(|(i, child)| match child {
-                    Node::TextNode(text_node) => {
-                        let is_first = i == 0;
-                        let is_last = i + 1 == self.children.len();
-                        if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                            return if text_node.line_breaks > 1 {
-                                Doc::empty_line().append(Doc::hard_line())
-                            } else if has_two_more_non_text_children {
-                                Doc::hard_line()
-                            } else {
-                                Doc::line_or_space()
-                            };
-                        }
-
-                        let mut docs = Vec::with_capacity(3);
-                        if let Some(doc) =
-                            should_add_whitespace_before_text_node(text_node, is_first)
-                        {
-                            docs.push(doc);
-                        }
-                        docs.push(text_node.doc(ctx));
-                        if let Some(doc) = should_add_whitespace_after_text_node(text_node, is_last)
-                        {
-                            docs.push(doc);
-                        }
-                        Doc::list(docs)
-                    }
-                    child => child.doc(ctx),
-                })
-                .collect(),
+        format_children_without_inserting_linebreak(
+            &self.children,
+            has_two_more_non_text_children,
+            ctx,
         )
-        .group()
         .append(Doc::hard_line())
     }
 }
@@ -710,4 +645,47 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
         Doc::text("'")
     };
     quote.clone().concat(reflow_raw(value)).append(quote)
+}
+
+fn format_children_without_inserting_linebreak<'s, E, F>(
+    children: &[Node<'s>],
+    has_two_more_non_text_children: bool,
+    ctx: &mut Ctx<'_, 's, E, F>,
+) -> Doc<'s>
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    Doc::list(
+        children
+            .iter()
+            .enumerate()
+            .map(|(i, child)| match child {
+                Node::TextNode(text_node) => {
+                    let is_first = i == 0;
+                    let is_last = i + 1 == children.len();
+                    if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
+                        return if text_node.line_breaks > 1 {
+                            Doc::empty_line().append(Doc::hard_line())
+                        } else if has_two_more_non_text_children {
+                            Doc::hard_line()
+                        } else {
+                            Doc::line_or_space()
+                        };
+                    }
+
+                    let mut docs = Vec::with_capacity(3);
+                    if let Some(doc) = should_add_whitespace_before_text_node(text_node, is_first) {
+                        docs.push(doc);
+                    }
+                    docs.push(text_node.doc(ctx));
+                    if let Some(doc) = should_add_whitespace_after_text_node(text_node, is_last) {
+                        docs.push(doc);
+                    }
+                    Doc::list(docs)
+                }
+                child => child.doc(ctx),
+            })
+            .collect(),
+    )
+    .group()
 }
