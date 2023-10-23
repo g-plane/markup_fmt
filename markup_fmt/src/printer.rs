@@ -478,6 +478,7 @@ impl<'s> DocGen<'s> for Root<'s> {
                 .collect(),
         )
         .group()
+        .append(Doc::hard_line())
     }
 }
 
