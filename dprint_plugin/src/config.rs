@@ -4,7 +4,7 @@ use dprint_core::configuration::{
 };
 use markup_fmt::config::{
     ClosingTagLineBreakForEmpty, FormatOptions, LanguageOptions, LayoutOptions, LineBreak, Quotes,
-    VBindStyle, VForDelimiterStyle, VOnStyle,
+    VBindStyle, VForDelimiterStyle, VOnStyle, WhitespaceSensitivity,
 };
 
 pub(crate) fn resolve_config(
@@ -123,6 +123,42 @@ pub(crate) fn resolve_config(
                     Default::default()
                 }
             },
+            whitespace_sensitivity: match &*get_value(
+                &mut config,
+                "whitespaceSensitivity",
+                "css".to_string(),
+                &mut diagnostics,
+            ) {
+                "css" => WhitespaceSensitivity::Css,
+                "strict" => WhitespaceSensitivity::Strict,
+                "ignore" => WhitespaceSensitivity::Ignore,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "whitespaceSensitivity".into(),
+                        message: "invalid value for config `whitespaceSensitivity`".into(),
+                    });
+                    Default::default()
+                }
+            },
+            component_whitespace_sensitivity: get_nullable_value::<String>(
+                &mut config,
+                "component.whitespaceSensitivity",
+                &mut diagnostics,
+            )
+            .as_deref()
+            .and_then(|option_value| match option_value {
+                "css" => Some(WhitespaceSensitivity::Css),
+                "strict" => Some(WhitespaceSensitivity::Strict),
+                "ignore" => Some(WhitespaceSensitivity::Ignore),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "component.whitespaceSensitivity".into(),
+                        message: "invalid value for config `component.whitespaceSensitivity`"
+                            .into(),
+                    });
+                    Default::default()
+                }
+            }),
             v_bind_style: get_nullable_value::<String>(&mut config, "vBindStyle", &mut diagnostics)
                 .as_deref()
                 .and_then(|option_value| match option_value {

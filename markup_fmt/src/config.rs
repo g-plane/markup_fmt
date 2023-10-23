@@ -83,6 +83,12 @@ pub struct LanguageOptions {
     pub svelte_style_indent: Option<bool>,
     pub closing_bracket_same_line: bool,
     pub closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty,
+    pub whitespace_sensitivity: WhitespaceSensitivity,
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(rename = "component.whitespaceSensitivity")
+    )]
+    pub component_whitespace_sensitivity: Option<WhitespaceSensitivity>,
     pub v_bind_style: Option<VBindStyle>,
     pub v_on_style: Option<VOnStyle>,
     pub v_for_delimiter_style: Option<VForDelimiterStyle>,
@@ -105,6 +111,16 @@ pub enum ClosingTagLineBreakForEmpty {
     #[default]
     Fit,
     Never,
+}
+
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase"))]
+pub enum WhitespaceSensitivity {
+    #[default]
+    Css,
+    Strict,
+    Ignore,
 }
 
 #[derive(Clone, Debug, Default)]

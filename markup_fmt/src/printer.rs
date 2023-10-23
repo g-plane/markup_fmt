@@ -2,7 +2,7 @@ use crate::{
     ast::*,
     config::Quotes,
     ctx::{Ctx, NestWithCtx},
-    helpers, Language,
+    Language,
 };
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
@@ -104,12 +104,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             );
         }
 
-        let is_whitespace_sensitive = match ctx.language {
-            Language::Html => helpers::is_whitespace_sensitive_tag(tag_name),
-            Language::Vue | Language::Svelte => {
-                helpers::is_component(tag_name) || helpers::is_whitespace_sensitive_tag(tag_name)
-            }
-        };
+        let is_whitespace_sensitive = ctx.is_whitespace_sensitive(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
             [Node::TextNode(text_node)] => text_node.raw.trim().is_empty(),

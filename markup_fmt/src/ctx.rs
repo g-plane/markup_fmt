@@ -1,4 +1,7 @@
-use crate::{config::LanguageOptions, Language};
+use crate::{
+    config::{LanguageOptions, WhitespaceSensitivity},
+    helpers, Language,
+};
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
@@ -53,6 +56,25 @@ where
                 .options
                 .svelte_style_indent
                 .unwrap_or(self.options.style_indent),
+        }
+    }
+
+    pub(crate) fn is_whitespace_sensitive(&self, tag_name: &str) -> bool {
+        match self.language {
+            Language::Vue | Language::Svelte if helpers::is_component(tag_name) => {
+                matches!(
+                    self.options
+                        .component_whitespace_sensitivity
+                        .clone()
+                        .unwrap_or(self.options.whitespace_sensitivity.clone()),
+                    WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict
+                )
+            }
+            _ => match self.options.whitespace_sensitivity {
+                WhitespaceSensitivity::Css => helpers::is_whitespace_sensitive_tag(tag_name),
+                WhitespaceSensitivity::Strict => true,
+                WhitespaceSensitivity::Ignore => false,
+            },
         }
     }
 
