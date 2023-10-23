@@ -28,6 +28,7 @@ where
         print_width: options.layout.print_width,
         options: &options.language,
         current_tag_name: None,
+        in_svg: false,
         indent_level: 0,
         external_formatter,
         external_formatter_error: None,

@@ -60,6 +60,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
         ctx.current_tag_name = Some(tag_name);
+        ctx.in_svg = tag_name.eq_ignore_ascii_case("svg");
         let should_lower_cased = css_dataset::tags::STANDARD_HTML_TAGS
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
@@ -174,7 +175,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::line_or_nil()
         };
 
-        if self.tag_name.eq_ignore_ascii_case("script") {
+        if tag_name.eq_ignore_ascii_case("script") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
                 let formatted = ctx.format_script(
                     text_node.raw,
@@ -199,7 +200,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     doc
                 });
             }
-        } else if self.tag_name.eq_ignore_ascii_case("style") {
+        } else if tag_name.eq_ignore_ascii_case("style") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
                 let formatted = ctx.format_style(
                     text_node.raw,
@@ -274,6 +275,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .group(),
         );
         ctx.current_tag_name = None;
+        ctx.in_svg = false;
 
         Doc::list(docs).group()
     }

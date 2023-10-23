@@ -16,6 +16,7 @@ where
     pub(crate) print_width: usize,
     pub(crate) options: &'b LanguageOptions,
     pub(crate) current_tag_name: Option<&'s str>,
+    pub(crate) in_svg: bool,
     pub(crate) indent_level: usize,
     pub(crate) external_formatter: F,
     pub(crate) external_formatter_error: Option<E>,
@@ -60,6 +61,10 @@ where
     }
 
     pub(crate) fn is_whitespace_sensitive(&self, tag_name: &str) -> bool {
+        if self.in_svg {
+            return false;
+        }
+
         match self.language {
             Language::Vue | Language::Svelte if helpers::is_component(tag_name) => {
                 matches!(
