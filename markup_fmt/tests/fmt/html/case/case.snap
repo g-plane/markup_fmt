@@ -1,0 +1,24 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<!DOCTYPE html>
+<html CLASS="no-js mY-ClAsS">
+  <head>
+    <meta CHARSET="utf-8">
+    <title>My tITlE</title>
+    <meta NAME="description" content="My CoNtEnT">
+  </head>
+  <body>
+    <p>Hello world!<br> This is HTML5 Boilerplate.</p>
+    <script>
+    window.ga = function () { ga.q.push(arguments) }; ga.q = []; ga.l = +new Date;
+      ga('create', 'UA-XXXXX-Y', 'auto'); ga('send', 'pageview')
+    </script>
+    <script
+      src="https://www.google-analytics.com/analytics.js"
+      ASYNC
+      DEFER
+    ></script>
+  </body>
+</html>
+

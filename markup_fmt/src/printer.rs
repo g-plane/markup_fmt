@@ -60,7 +60,9 @@ impl<'s> DocGen<'s> for Element<'s> {
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
         ctx.current_tag_name = Some(tag_name);
-        let should_lower_cased = css_dataset::tags::STANDARD_HTML_TAGS.contains(self.tag_name);
+        let should_lower_cased = css_dataset::tags::STANDARD_HTML_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
         let mut docs = Vec::with_capacity(5);
 

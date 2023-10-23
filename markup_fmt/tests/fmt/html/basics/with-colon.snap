@@ -7,7 +7,7 @@ source: markup_fmt/tests/fmt.rs
     <div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </div>
-    <div>block</div><DIV>BLOCK</DIV>
+    <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
       pre pr e
@@ -46,7 +46,7 @@ source: markup_fmt/tests/fmt.rs
     <div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </div>
-    <div>block</div><DIV>BLOCK</DIV>
+    <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
       pre pr e
@@ -85,7 +85,7 @@ source: markup_fmt/tests/fmt.rs
     <div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </div>
-    <div>block</div><DIV>BLOCK</DIV>
+    <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
       pre pr e
@@ -124,7 +124,7 @@ source: markup_fmt/tests/fmt.rs
     <div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </div>
-    <div>block</div><DIV>BLOCK</DIV>
+    <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
       pre pr e
@@ -164,7 +164,7 @@ source: markup_fmt/tests/fmt.rs
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </div>
     <div>block</div>
-    <DIV>BLOCK</DIV>
+    <div>BLOCK</div>
     <div>block</div>
     <div>block</div>
     <div>block</div>
@@ -222,12 +222,12 @@ source: markup_fmt/tests/fmt.rs
   <style>
   .a{color:#f00}
   </style>
-  <SCRIPT>
+  <script>
   const func = function() { console.log('Hello, there');}
-  </SCRIPT>
-  <STYLE>
+  </script>
+  <style>
   .A{COLOR:#F00}
-  </STYLE>
+  </style>
   <html:script>const func = function() { console.log('Hello,
     there');}</html:script>
   <html:style>.a{color:#f00}</html:style>
