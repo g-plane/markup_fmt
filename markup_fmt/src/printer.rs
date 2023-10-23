@@ -233,72 +233,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(leading_ws.nest_with_ctx(ctx));
             docs.push(
-                Doc::list(
-                    self.children
-                        .iter()
-                        .enumerate()
-                        .fold(
-                            (Vec::with_capacity(self.children.len() * 2), true),
-                            |(mut docs, is_prev_text_like), (i, child)| {
-                                let maybe_hard_line = if is_prev_text_like {
-                                    None
-                                } else {
-                                    Some(Doc::hard_line())
-                                };
-                                match child {
-                                    Node::TextNode(text_node) => {
-                                        let is_first = i == 0;
-                                        let is_last = i + 1 == self.children.len();
-                                        if is_all_ascii_whitespace(text_node.raw) {
-                                            if !is_first && !is_last {
-                                                if text_node.line_breaks > 1 {
-                                                    docs.push(Doc::empty_line());
-                                                }
-                                                docs.push(Doc::hard_line());
-                                            }
-                                        } else {
-                                            if let Some(hard_line) = maybe_hard_line {
-                                                docs.push(hard_line);
-                                            } else if let Some(doc) =
-                                                should_add_whitespace_before_text_node(
-                                                    text_node, is_first,
-                                                )
-                                            {
-                                                docs.push(doc);
-                                            }
-                                            docs.push(text_node.doc(ctx));
-                                            if let Some(doc) =
-                                                should_add_whitespace_after_text_node(text_node, is_last)
-                                            {
-                                                docs.push(doc);
-                                            }
-                                        }
-                                    }
-                                    child => {
-                                        if let Some(hard_line) = maybe_hard_line {
-                                            docs.push(hard_line);
-                                        }
-                                        docs.push(child.doc(ctx));
-                                    }
-                                };
-                                (
-                                    docs,
-                                    match child {
-                                        Node::TextNode(..)
-                                        | Node::VueInterpolation(..)
-                                        | Node::SvelteInterpolation(..) => true,
-                                        Node::Element(element) => {
-                                            element.tag_name.eq_ignore_ascii_case("label")
-                                        }
-                                        _ => false,
-                                    },
-                                )
-                            },
-                        )
-                        .0,
-                )
-                .group()
-                .nest_with_ctx(ctx),
+                format_children_with_inserting_linebreak(&self.children, ctx).nest_with_ctx(ctx),
             );
             docs.push(trailing_ws);
         } else {
@@ -405,13 +340,23 @@ impl<'s> DocGen<'s> for Root<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
+        use crate::config::WhitespaceSensitivity;
+        let is_whitespace_sensitive = matches!(
+            ctx.options.whitespace_sensitivity,
+            WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict
+        );
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
-        format_children_without_inserting_linebreak(
-            &self.children,
-            has_two_more_non_text_children,
-            ctx,
-        )
-        .append(Doc::hard_line())
+
+        if !is_whitespace_sensitive && has_two_more_non_text_children {
+            format_children_with_inserting_linebreak(&self.children, ctx).append(Doc::hard_line())
+        } else {
+            format_children_without_inserting_linebreak(
+                &self.children,
+                has_two_more_non_text_children,
+                ctx,
+            )
+            .append(Doc::hard_line())
+        }
     }
 }
 
@@ -646,6 +591,78 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
         Doc::text("'")
     };
     quote.clone().concat(reflow_raw(value)).append(quote)
+}
+
+fn format_children_with_inserting_linebreak<'s, E, F>(
+    children: &[Node<'s>],
+    ctx: &mut Ctx<'_, 's, E, F>,
+) -> Doc<'s>
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    Doc::list(
+        children
+            .iter()
+            .enumerate()
+            .fold(
+                (Vec::with_capacity(children.len() * 2), true),
+                |(mut docs, is_prev_text_like), (i, child)| {
+                    let maybe_hard_line = if is_prev_text_like {
+                        None
+                    } else {
+                        Some(Doc::hard_line())
+                    };
+                    match child {
+                        Node::TextNode(text_node) => {
+                            let is_first = i == 0;
+                            let is_last = i + 1 == children.len();
+                            if is_all_ascii_whitespace(text_node.raw) {
+                                if !is_first && !is_last {
+                                    if text_node.line_breaks > 1 {
+                                        docs.push(Doc::empty_line());
+                                    }
+                                    docs.push(Doc::hard_line());
+                                }
+                            } else {
+                                if let Some(hard_line) = maybe_hard_line {
+                                    docs.push(hard_line);
+                                } else if let Some(doc) =
+                                    should_add_whitespace_before_text_node(text_node, is_first)
+                                {
+                                    docs.push(doc);
+                                }
+                                docs.push(text_node.doc(ctx));
+                                if let Some(doc) =
+                                    should_add_whitespace_after_text_node(text_node, is_last)
+                                {
+                                    docs.push(doc);
+                                }
+                            }
+                        }
+                        child => {
+                            if let Some(hard_line) = maybe_hard_line {
+                                docs.push(hard_line);
+                            }
+                            docs.push(child.doc(ctx));
+                        }
+                    };
+                    (
+                        docs,
+                        match child {
+                            Node::TextNode(..)
+                            | Node::VueInterpolation(..)
+                            | Node::SvelteInterpolation(..) => true,
+                            Node::Element(element) => {
+                                element.tag_name.eq_ignore_ascii_case("label")
+                            }
+                            _ => false,
+                        },
+                    )
+                },
+            )
+            .0,
+    )
+    .group()
 }
 
 fn format_children_without_inserting_linebreak<'s, E, F>(
