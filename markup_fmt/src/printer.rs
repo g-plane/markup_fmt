@@ -1,6 +1,6 @@
 use crate::{
     ast::*,
-    config::Quotes,
+    config::{Quotes, WhitespaceSensitivity},
     ctx::{Ctx, NestWithCtx},
     Language,
 };
@@ -105,9 +105,10 @@ impl<'s> DocGen<'s> for Element<'s> {
         }
 
         let is_whitespace_sensitive = ctx.is_whitespace_sensitive(tag_name);
+        let is_whitespace_strict = ctx.is_whitespace_strict(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
-            [Node::TextNode(text_node)] => text_node.raw.trim().is_empty(),
+            [Node::TextNode(text_node)] => !is_whitespace_strict && text_node.raw.trim().is_empty(),
             _ => false,
         };
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
@@ -340,7 +341,6 @@ impl<'s> DocGen<'s> for Root<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        use crate::config::WhitespaceSensitivity;
         let is_whitespace_sensitive = matches!(
             ctx.options.whitespace_sensitivity,
             WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict

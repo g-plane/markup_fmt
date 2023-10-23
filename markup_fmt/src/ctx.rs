@@ -78,6 +78,24 @@ where
         }
     }
 
+    pub(crate) fn is_whitespace_strict(&self, tag_name: &str) -> bool {
+        match self.language {
+            Language::Vue | Language::Svelte if helpers::is_component(tag_name) => {
+                matches!(
+                    self.options
+                        .component_whitespace_sensitivity
+                        .clone()
+                        .unwrap_or(self.options.whitespace_sensitivity.clone()),
+                    WhitespaceSensitivity::Strict
+                )
+            }
+            _ => matches!(
+                self.options.whitespace_sensitivity,
+                WhitespaceSensitivity::Strict
+            ),
+        }
+    }
+
     pub(crate) fn format_expr(&mut self, code: &str) -> String {
         if code.trim().is_empty() {
             String::new()
