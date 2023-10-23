@@ -231,13 +231,14 @@ impl<'s> DocGen<'s> for Element<'s> {
                 ClosingTagLineBreakForEmpty::Never => {}
             };
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
+            docs.push(leading_ws.nest_with_ctx(ctx));
             docs.push(
                 Doc::list(
                     self.children
                         .iter()
                         .enumerate()
                         .fold(
-                            (Vec::with_capacity(self.children.len() * 2), false),
+                            (Vec::with_capacity(self.children.len() * 2), true),
                             |(mut docs, is_prev_text_like), (i, child)| {
                                 let maybe_hard_line = if is_prev_text_like {
                                     None
@@ -249,8 +250,8 @@ impl<'s> DocGen<'s> for Element<'s> {
                                         let is_first = i == 0;
                                         let is_last = i + 1 == self.children.len();
                                         if is_all_ascii_whitespace(text_node.raw) {
-                                            if !is_last {
-                                                if !is_first && text_node.line_breaks > 1 {
+                                            if !is_first && !is_last {
+                                                if text_node.line_breaks > 1 {
                                                     docs.push(Doc::empty_line());
                                                 }
                                                 docs.push(Doc::hard_line());
