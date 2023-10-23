@@ -347,7 +347,10 @@ impl<'s> Parser<'s> {
                         if let Language::Html = self.language {
                             self.try_parse(Parser::parse_comment)
                                 .map(Node::Comment)
-                                .or_else(|_| self.parse_doctype().map(|_| Node::Doctype))
+                                .or_else(|_| {
+                                    self.try_parse(Parser::parse_doctype).map(|_| Node::Doctype)
+                                })
+                                .or_else(|_| self.parse_text_node().map(Node::TextNode))
                         } else {
                             self.parse_comment().map(Node::Comment)
                         }
