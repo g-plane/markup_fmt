@@ -343,10 +343,15 @@ impl<'s> Parser<'s> {
                 chars.next();
                 match chars.next() {
                     Some((_, c)) if is_tag_name_char(c) => self.parse_element().map(Node::Element),
-                    Some((_, '!')) => self
-                        .try_parse(Parser::parse_comment)
-                        .map(Node::Comment)
-                        .or_else(|_| self.parse_doctype().map(|_| Node::Doctype)),
+                    Some((_, '!')) => {
+                        if let Language::Html = self.language {
+                            self.try_parse(Parser::parse_comment)
+                                .map(Node::Comment)
+                                .or_else(|_| self.parse_doctype().map(|_| Node::Doctype))
+                        } else {
+                            self.parse_comment().map(Node::Comment)
+                        }
+                    }
                     _ => self.parse_text_node().map(Node::TextNode),
                 }
             }
