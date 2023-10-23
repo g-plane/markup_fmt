@@ -539,13 +539,16 @@ fn should_add_whitespace_before_text_node<'s>(
 ) -> Option<Doc<'s>> {
     let trimmed = text_node.raw.trim_end();
     if !is_first && trimmed.starts_with(|c: char| c.is_ascii_whitespace()) {
-        if trimmed
-            .trim_start_matches(|c: char| c.is_ascii_whitespace() && c != '\n')
-            .starts_with('\n')
-        {
-            Some(Doc::hard_line())
-        } else {
-            Some(Doc::soft_line())
+        let line_breaks_count = text_node
+            .raw
+            .chars()
+            .take_while(|c| c.is_ascii_whitespace())
+            .filter(|c| *c == '\n')
+            .count();
+        match line_breaks_count {
+            0 => Some(Doc::soft_line()),
+            1 => Some(Doc::hard_line()),
+            _ => Some(Doc::empty_line().append(Doc::hard_line())),
         }
     } else {
         None
@@ -558,13 +561,17 @@ fn should_add_whitespace_after_text_node<'s>(
 ) -> Option<Doc<'s>> {
     let trimmed = text_node.raw.trim_start();
     if !is_last && trimmed.ends_with(|c: char| c.is_ascii_whitespace()) {
-        if trimmed
-            .trim_end_matches(|c: char| c.is_ascii_whitespace() && c != '\n')
-            .ends_with('\n')
-        {
-            Some(Doc::hard_line())
-        } else {
-            Some(Doc::soft_line())
+        let line_breaks_count = text_node
+            .raw
+            .chars()
+            .rev()
+            .take_while(|c| c.is_ascii_whitespace())
+            .filter(|c| *c == '\n')
+            .count();
+        match line_breaks_count {
+            0 => Some(Doc::soft_line()),
+            1 => Some(Doc::hard_line()),
+            _ => Some(Doc::empty_line().append(Doc::hard_line())),
         }
     } else {
         None
