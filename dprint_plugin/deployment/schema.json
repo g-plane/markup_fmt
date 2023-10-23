@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://plugins.dprint.dev/g-plane/markup_fmt/v0.0.0/schema.json",
+  "type": "object",
+  "definitions": {
+    "printWidth": {
+      "type": "integer",
+      "default": 80,
+      "minimum": 0
+    },
+    "useTabs": {
+      "type": "boolean",
+      "default": false
+    },
+    "indentWidth": {
+      "type": "integer",
+      "default": 2,
+      "minimum": 0
+    },
+    "lineBreak": {
+      "type": "string",
+      "enum": ["lf", "crlf"],
+      "default": "lf"
+    },
+    "quotes": {
+      "type": "string",
+      "enum": ["double", "single"],
+      "default": "double"
+    },
+    "formatComments": {
+      "type": "boolean",
+      "default": false
+    },
+    "scriptIndent": {
+      "type": "boolean",
+      "default": false
+    },
+    "html.scriptIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "vue.scriptIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "svelte.scriptIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "styleIndent": {
+      "type": "boolean",
+      "default": false
+    },
+    "html.styleIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "vue.styleIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "svelte.styleIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "closingBracketSameLine": {
+      "type": "boolean",
+      "default": false
+    },
+    "closingTagLineBreakForEmpty": {
+      "type": "string",
+      "enum": ["always", "fit", "never"],
+      "default": "fit"
+    },
+    "whitespaceSensitivity": {
+      "type": "string",
+      "enum": ["css", "strict", "ignore"],
+      "default": "css"
+    },
+    "component.whitespaceSensitivity": {
+      "type": ["string", "null"],
+      "enum": ["css", "strict", "ignore", null],
+      "default": null
+    },
+    "vBindStyle": {
+      "type": ["string", "null"],
+      "enum": ["short", "long", null],
+      "default": null
+    },
+    "vOnStyle": {
+      "type": ["string", "null"],
+      "enum": ["short", "long", null],
+      "default": null
+    },
+    "vForDelimiterStyle": {
+      "type": ["string", "null"],
+      "enum": ["in", "of", null],
+      "default": null
+    }
+  }
+}
