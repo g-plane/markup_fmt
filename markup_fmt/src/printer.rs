@@ -13,23 +13,6 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
-impl<'s> DocGen<'s> for Node<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
-    where
-        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
-    {
-        match self {
-            Node::Comment(comment) => comment.doc(ctx),
-            Node::Doctype => Doc::text("<!DOCTYPE html>"),
-            Node::Element(element) => element.doc(ctx),
-            Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx),
-            Node::TextNode(text_node) => text_node.doc(ctx),
-            Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx),
-            _ => todo!(),
-        }
-    }
-}
-
 impl<'s> DocGen<'s> for Attribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
@@ -432,6 +415,23 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 .append(format_attr_value(value, &ctx.options.quotes))
         } else {
             name
+        }
+    }
+}
+
+impl<'s> DocGen<'s> for Node<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        match self {
+            Node::Comment(comment) => comment.doc(ctx),
+            Node::Doctype => Doc::text("<!DOCTYPE html>"),
+            Node::Element(element) => element.doc(ctx),
+            Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx),
+            Node::TextNode(text_node) => text_node.doc(ctx),
+            Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx),
+            _ => todo!(),
         }
     }
 }
