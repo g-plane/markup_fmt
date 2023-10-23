@@ -1,0 +1,10 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<?
+hello
+?>
+<!-
+world
+->
+

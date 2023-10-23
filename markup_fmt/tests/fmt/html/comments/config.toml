@@ -1,0 +1,10 @@
+[default]
+
+[small-print-width]
+printWidth = 1
+
+[strict-whitespace]
+whitespaceSensitivity = "strict"
+
+[ignore-whitespace]
+whitespaceSensitivity = "ignore"
