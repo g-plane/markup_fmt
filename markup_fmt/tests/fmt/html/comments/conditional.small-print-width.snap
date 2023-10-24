@@ -83,7 +83,8 @@ source: markup_fmt/tests/fmt.rs
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><![endif]-->
-<!--[if gte IE 9]><!--><html
+<!--[if gte IE 9]><!-->
+<html
 >
   <!--<![endif]-->
   <head
@@ -99,7 +100,8 @@ source: markup_fmt/tests/fmt.rs
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><![endif]-->
-<!--[if gte IE 9]><!--><html
+<!--[if gte IE 9]><!-->
+<html
   hello
 >
   <!--<![endif]-->
@@ -116,7 +118,8 @@ source: markup_fmt/tests/fmt.rs
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><head><![endif]-->
-<!--[if gte IE 9]><!--><html
+<!--[if gte IE 9]><!-->
+<html
 >
   <head
   >
@@ -133,7 +136,8 @@ source: markup_fmt/tests/fmt.rs
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><![endif]-->
 <!--[if gte IE 9
-]><!--><html
+]><!-->
+<html
 >
   <!--<![endif]-->
   <head

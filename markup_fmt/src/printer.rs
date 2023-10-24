@@ -374,13 +374,24 @@ impl<'s> DocGen<'s> for Root<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
+        let is_whole_document_like = self.children.iter().any(|child| match child {
+            Node::Doctype => true,
+            Node::Element(element) => element.tag_name.eq_ignore_ascii_case("html"),
+            _ => false,
+        });
         let is_whitespace_sensitive = matches!(
             ctx.options.whitespace_sensitivity,
             WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict
         );
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
 
-        if !is_whitespace_sensitive && has_two_more_non_text_children {
+        if is_whole_document_like
+            && !matches!(
+                ctx.options.whitespace_sensitivity,
+                WhitespaceSensitivity::Strict
+            )
+            || !is_whitespace_sensitive && has_two_more_non_text_children
+        {
             format_children_with_inserting_linebreak(&self.children, ctx).append(Doc::hard_line())
         } else {
             format_children_without_inserting_linebreak(

@@ -1,7 +1,8 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<!DOCTYPE html><html CLASS="no-js mY-ClAsS">
+<!DOCTYPE html>
+<html CLASS="no-js mY-ClAsS">
   <head>
     <meta CHARSET="utf-8">
     <title>My tITlE</title>
