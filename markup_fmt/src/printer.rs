@@ -245,11 +245,13 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         } else if is_empty {
             use crate::config::ClosingTagLineBreakForEmpty;
-            match ctx.options.closing_tag_line_break_for_empty {
-                ClosingTagLineBreakForEmpty::Always => docs.push(Doc::hard_line()),
-                ClosingTagLineBreakForEmpty::Fit => docs.push(Doc::line_or_nil()),
-                ClosingTagLineBreakForEmpty::Never => {}
-            };
+            if !is_whitespace_strict {
+                match ctx.options.closing_tag_line_break_for_empty {
+                    ClosingTagLineBreakForEmpty::Always => docs.push(Doc::hard_line()),
+                    ClosingTagLineBreakForEmpty::Fit => docs.push(Doc::line_or_nil()),
+                    ClosingTagLineBreakForEmpty::Never => {}
+                };
+            }
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(leading_ws.nest_with_ctx(ctx));
             docs.push(
