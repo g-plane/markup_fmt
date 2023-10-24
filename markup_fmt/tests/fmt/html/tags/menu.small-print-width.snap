@@ -1,0 +1,32 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<menu
+>
+  <li
+  >
+    <button
+      onclick="copy()"
+    >Copy</button
+    >
+  </li
+  >
+  <li
+  >
+    <button
+      onclick="cut()"
+    >Cut</button
+    >
+  </li
+  >
+  <li
+  >
+    <button
+      onclick="paste()"
+    >Paste</button
+    >
+  </li
+  >
+</menu
+>
+
