@@ -2,7 +2,7 @@ pub(crate) fn is_component(name: &str) -> bool {
     name.contains('-') || name.contains(|c: char| c.is_ascii_uppercase())
 }
 
-static NON_SENSITIVE_TAGS: [&'static str; 63] = [
+static NON_WS_SENSITIVE_TAGS: [&'static str; 69] = [
     "address",
     "blockquote",
     "center",
@@ -12,6 +12,9 @@ static NON_SENSITIVE_TAGS: [&'static str; 63] = [
     "figcaption",
     "footer",
     "form",
+    "select",
+    "option",
+    "optgroup",
     "header",
     "hr",
     "legend",
@@ -21,6 +24,9 @@ static NON_SENSITIVE_TAGS: [&'static str; 63] = [
     "plaintext",
     "pre",
     "search",
+    "object",
+    "details",
+    "summary",
     "xmp",
     "area",
     "base",
@@ -71,7 +77,7 @@ static NON_SENSITIVE_TAGS: [&'static str; 63] = [
 pub(crate) fn is_whitespace_sensitive_tag(name: &str) -> bool {
     // There's also a tag called "a" in SVG, so we need to check it specially.
     name.eq_ignore_ascii_case("a")
-        || !NON_SENSITIVE_TAGS
+        || !NON_WS_SENSITIVE_TAGS
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(name))
             && !css_dataset::tags::SVG_TAGS
