@@ -10,8 +10,8 @@ source: markup_fmt/tests/fmt.rs
     <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
-      pre pr e
-    </pre>
+ pre pr
+e</pre>
     <textarea>
       pre-wrap pr e-wrap
     </textarea>
@@ -28,8 +28,8 @@ source: markup_fmt/tests/fmt.rs
       block
     </html:div>
     <html:pre>
-      pre pr e
-    </html:pre>
+ pre pr
+e</html:pre>
     <html:textarea>
       pre-wrap pr e-wrap
     </html:textarea>
@@ -49,8 +49,8 @@ source: markup_fmt/tests/fmt.rs
     <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
-      pre pr e
-    </pre>
+ pre pr
+e</pre>
     <textarea>
       pre-wrap pr e-wrap
     </textarea>
@@ -67,8 +67,8 @@ source: markup_fmt/tests/fmt.rs
       block
     </html:div>
     <html:pre>
-      pre pr e
-    </html:pre>
+ pre pr
+e</html:pre>
     <html:textarea>
       pre-wrap pr e-wrap
     </html:textarea>
@@ -88,8 +88,8 @@ source: markup_fmt/tests/fmt.rs
     <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
-      pre pr e
-    </pre>
+ pre pr
+e</pre>
     <textarea>
       pre-wrap pr e-wrap
     </textarea>
@@ -106,8 +106,8 @@ source: markup_fmt/tests/fmt.rs
       block
     </html:div>
     <html:pre>
-      pre pr e
-    </html:pre>
+ pre pr
+e</html:pre>
     <html:textarea>
       pre-wrap pr e-wrap
     </html:textarea>
@@ -127,8 +127,8 @@ source: markup_fmt/tests/fmt.rs
     <div>block</div><div>BLOCK</div>
     <div>block</div><div>block</div><div>block</div>
     <pre>
-      pre pr e
-    </pre>
+ pre pr
+e</pre>
     <textarea>
       pre-wrap pr e-wrap
     </textarea>
@@ -145,8 +145,8 @@ source: markup_fmt/tests/fmt.rs
       block
     </html:div>
     <html:pre>
-      pre pr e
-    </html:pre>
+ pre pr
+e</html:pre>
     <html:textarea>
       pre-wrap pr e-wrap
     </html:textarea>
@@ -169,8 +169,8 @@ source: markup_fmt/tests/fmt.rs
     <div>block</div>
     <div>block</div>
     <pre>
-      pre pr e
-    </pre>
+ pre pr
+e</pre>
     <textarea>
       pre-wrap pr e-wrap
     </textarea>
@@ -190,8 +190,8 @@ source: markup_fmt/tests/fmt.rs
     <html:div>block</html:div>
     <html:div>block</html:div>
     <html:pre>
-      pre pr e
-    </html:pre>
+ pre pr
+e</html:pre>
     <html:textarea>
       pre-wrap pr e-wrap
     </html:textarea>

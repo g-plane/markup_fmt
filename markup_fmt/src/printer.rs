@@ -210,7 +210,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         .unwrap_or("js"),
                 );
                 let doc = Doc::hard_line()
-                    .concat(reflow_raw(formatted.trim()))
+                    .concat(reflow_raw_owned(formatted.trim()))
                     .append(Doc::hard_line());
                 docs.push(if ctx.script_indent() {
                     doc.nest_with_ctx(ctx)
@@ -235,13 +235,23 @@ impl<'s> DocGen<'s> for Element<'s> {
                         .unwrap_or("css"),
                 );
                 let doc = Doc::hard_line()
-                    .concat(reflow_raw(formatted.trim()))
+                    .concat(reflow_raw_owned(formatted.trim()))
                     .append(Doc::hard_line());
                 docs.push(if ctx.style_indent() {
                     doc.nest_with_ctx(ctx)
                 } else {
                     doc
                 });
+            }
+        } else if tag_name.eq_ignore_ascii_case("pre") {
+            if let [Node::TextNode(text_node)] = &self.children[..] {
+                if text_node.raw.contains('\n')
+                    && !text_node.raw.starts_with('\n')
+                    && !text_node.raw.starts_with("\r\n")
+                {
+                    docs.push(Doc::empty_line());
+                }
+                docs.extend(reflow_raw(text_node.raw));
             }
         } else if is_empty {
             use crate::config::ClosingTagLineBreakForEmpty;
@@ -389,7 +399,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     {
         let name = Doc::text(self.name.to_owned());
         name.append(Doc::text("={"))
-            .concat(reflow_raw(&ctx.format_expr(self.expr)))
+            .concat(reflow_raw_owned(&ctx.format_expr(self.expr)))
             .append(Doc::text("}"))
     }
 }
@@ -402,7 +412,7 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
         Doc::text("{")
             .append(
                 Doc::line_or_nil()
-                    .concat(reflow_raw(&ctx.format_expr(self.expr)))
+                    .concat(reflow_raw_owned(&ctx.format_expr(self.expr)))
                     .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_nil())
@@ -526,7 +536,7 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
         Doc::text("{{")
             .append(
                 Doc::line_or_space()
-                    .concat(reflow_raw(&ctx.format_expr(self.expr)))
+                    .concat(reflow_raw_owned(&ctx.format_expr(self.expr)))
                     .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_space())
@@ -543,7 +553,15 @@ fn reflow(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     )
 }
 
-fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
+fn reflow_raw<'s>(s: &'s str) -> impl Iterator<Item = Doc<'s>> {
+    itertools::intersperse(
+        s.split('\n')
+            .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s))),
+        Doc::empty_line(),
+    )
+}
+
+fn reflow_raw_owned(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     itertools::intersperse(
         s.split('\n')
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
@@ -619,7 +637,7 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
     } else {
         Doc::text("'")
     };
-    quote.clone().concat(reflow_raw(value)).append(quote)
+    quote.clone().concat(reflow_raw_owned(value)).append(quote)
 }
 
 fn format_children_with_inserting_linebreak<'s, E, F>(

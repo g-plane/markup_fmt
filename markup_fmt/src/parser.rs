@@ -251,6 +251,16 @@ impl<'s> Parser<'s> {
         }
 
         let mut children = vec![];
+        if tag_name.eq_ignore_ascii_case("script")
+            || tag_name.eq_ignore_ascii_case("style")
+            || tag_name.eq_ignore_ascii_case("pre")
+        {
+            let text_node = self.parse_raw_text_node(tag_name)?;
+            if !text_node.raw.is_empty() {
+                children.push(Node::TextNode(text_node));
+            }
+        }
+
         loop {
             match self.chars.peek() {
                 Some((_, '<')) => {
@@ -272,23 +282,16 @@ impl<'s> Parser<'s> {
                             return Err(self.emit_error(SyntaxErrorKind::ExpectCloseTag));
                         }
                     } else {
-                        children.push(
-                            if tag_name.eq_ignore_ascii_case("script")
-                                || tag_name.eq_ignore_ascii_case("style")
-                            {
-                                self.parse_raw_text_node().map(Node::TextNode)?
-                            } else {
-                                self.parse_node()?
-                            },
-                        );
+                        children.push(self.parse_node()?);
                     }
                 }
                 Some(..) => {
                     children.push(
                         if tag_name.eq_ignore_ascii_case("script")
                             || tag_name.eq_ignore_ascii_case("style")
+                            || tag_name.eq_ignore_ascii_case("pre")
                         {
-                            self.parse_raw_text_node().map(Node::TextNode)?
+                            self.parse_raw_text_node(tag_name).map(Node::TextNode)?
                         } else {
                             self.parse_node()?
                         },
@@ -383,7 +386,7 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_raw_text_node(&mut self) -> PResult<TextNode<'s>> {
+    fn parse_raw_text_node(&mut self, tag_name: &str) -> PResult<TextNode<'s>> {
         let start = self
             .chars
             .peek()
@@ -398,7 +401,15 @@ impl<'s> Parser<'s> {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
-                    if chars.next_if(|(_, c)| *c == '/').is_some() {
+                    if chars
+                        .next_if(|(_, c)| *c == '/')
+                        .map(|_| {
+                            chars
+                                .zip(tag_name.chars())
+                                .all(|((_, a), b)| a.eq_ignore_ascii_case(&b))
+                        })
+                        .unwrap_or_default()
+                    {
                         end = i;
                         break;
                     } else {
