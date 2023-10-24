@@ -243,7 +243,8 @@ impl<'s> DocGen<'s> for Element<'s> {
                     doc
                 });
             }
-        } else if tag_name.eq_ignore_ascii_case("pre") {
+        } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
+        {
             if let [Node::TextNode(text_node)] = &self.children[..] {
                 if text_node.raw.contains('\n')
                     && !text_node.raw.starts_with('\n')

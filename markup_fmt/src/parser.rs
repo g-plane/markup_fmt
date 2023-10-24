@@ -254,6 +254,7 @@ impl<'s> Parser<'s> {
         if tag_name.eq_ignore_ascii_case("script")
             || tag_name.eq_ignore_ascii_case("style")
             || tag_name.eq_ignore_ascii_case("pre")
+            || tag_name.eq_ignore_ascii_case("textarea")
         {
             let text_node = self.parse_raw_text_node(tag_name)?;
             if !text_node.raw.is_empty() {
@@ -290,6 +291,7 @@ impl<'s> Parser<'s> {
                         if tag_name.eq_ignore_ascii_case("script")
                             || tag_name.eq_ignore_ascii_case("style")
                             || tag_name.eq_ignore_ascii_case("pre")
+                            || tag_name.eq_ignore_ascii_case("textarea")
                         {
                             self.parse_raw_text_node(tag_name).map(Node::TextNode)?
                         } else {

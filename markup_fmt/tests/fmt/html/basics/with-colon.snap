@@ -13,8 +13,8 @@ source: markup_fmt/tests/fmt.rs
  pre pr
 e</pre>
     <textarea>
-      pre-wrap pr e-wrap
-    </textarea>
+ pre-wrap pr
+e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
@@ -31,8 +31,8 @@ e</pre>
  pre pr
 e</html:pre>
     <html:textarea>
-      pre-wrap pr e-wrap
-    </html:textarea>
+ pre-wrap pr
+e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
@@ -52,8 +52,8 @@ e</html:pre>
  pre pr
 e</pre>
     <textarea>
-      pre-wrap pr e-wrap
-    </textarea>
+ pre-wrap pr
+e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
@@ -70,8 +70,8 @@ e</pre>
  pre pr
 e</html:pre>
     <html:textarea>
-      pre-wrap pr e-wrap
-    </html:textarea>
+ pre-wrap pr
+e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
@@ -91,8 +91,8 @@ e</html:pre>
  pre pr
 e</pre>
     <textarea>
-      pre-wrap pr e-wrap
-    </textarea>
+ pre-wrap pr
+e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
@@ -109,8 +109,8 @@ e</pre>
  pre pr
 e</html:pre>
     <html:textarea>
-      pre-wrap pr e-wrap
-    </html:textarea>
+ pre-wrap pr
+e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
@@ -130,8 +130,8 @@ e</html:pre>
  pre pr
 e</pre>
     <textarea>
-      pre-wrap pr e-wrap
-    </textarea>
+ pre-wrap pr
+e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
@@ -148,8 +148,8 @@ e</pre>
  pre pr
 e</html:pre>
     <html:textarea>
-      pre-wrap pr e-wrap
-    </html:textarea>
+ pre-wrap pr
+e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
@@ -172,8 +172,8 @@ e</html:pre>
  pre pr
 e</pre>
     <textarea>
-      pre-wrap pr e-wrap
-    </textarea>
+ pre-wrap pr
+e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
@@ -193,8 +193,8 @@ e</pre>
  pre pr
 e</html:pre>
     <html:textarea>
-      pre-wrap pr e-wrap
-    </html:textarea>
+ pre-wrap pr
+e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
