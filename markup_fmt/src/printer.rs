@@ -127,7 +127,13 @@ impl<'s> DocGen<'s> for Element<'s> {
         let is_whitespace_strict = ctx.is_whitespace_strict(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
-            [Node::TextNode(text_node)] => !is_whitespace_strict && text_node.raw.trim().is_empty(),
+            [Node::TextNode(text_node)] => {
+                !is_whitespace_strict
+                    && text_node
+                        .raw
+                        .trim_matches(|c: char| c.is_ascii_whitespace())
+                        .is_empty()
+            }
             _ => false,
         };
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
@@ -589,7 +595,9 @@ fn should_add_whitespace_before_text_node<'s>(
     text_node: &TextNode<'s>,
     is_first: bool,
 ) -> Option<Doc<'s>> {
-    let trimmed = text_node.raw.trim_end();
+    let trimmed = text_node
+        .raw
+        .trim_end_matches(|c: char| c.is_ascii_whitespace());
     if !is_first && trimmed.starts_with(|c: char| c.is_ascii_whitespace()) {
         let line_breaks_count = text_node
             .raw
@@ -611,7 +619,9 @@ fn should_add_whitespace_after_text_node<'s>(
     text_node: &TextNode<'s>,
     is_last: bool,
 ) -> Option<Doc<'s>> {
-    let trimmed = text_node.raw.trim_start();
+    let trimmed = text_node
+        .raw
+        .trim_start_matches(|c: char| c.is_ascii_whitespace());
     if !is_last && trimmed.ends_with(|c: char| c.is_ascii_whitespace()) {
         let line_breaks_count = text_node
             .raw
