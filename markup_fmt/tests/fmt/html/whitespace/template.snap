@@ -1,0 +1,13 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <template>foo</template>
+</template>
+
+<template>
+  <template
+  >foooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo</template
+  >
+</template>
+
