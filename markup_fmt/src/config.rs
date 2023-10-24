@@ -83,6 +83,7 @@ pub struct LanguageOptions {
     pub svelte_style_indent: Option<bool>,
     pub closing_bracket_same_line: bool,
     pub closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty,
+    pub max_attrs_per_line: Option<usize>,
     pub whitespace_sensitivity: WhitespaceSensitivity,
     #[cfg_attr(
         feature = "config_serde",

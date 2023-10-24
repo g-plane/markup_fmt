@@ -1,0 +1,5 @@
+[one]
+maxAttrsPerLine = 1
+
+[two]
+maxAttrsPerLine = 2

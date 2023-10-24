@@ -74,13 +74,31 @@ impl<'s> DocGen<'s> for Element<'s> {
             Cow::from(self.tag_name)
         }));
 
-        let attrs = Doc::list(
-            self.attrs
-                .iter()
-                .flat_map(|prop| [Doc::line_or_space(), prop.doc(ctx)].into_iter())
-                .collect(),
-        )
-        .nest_with_ctx(ctx);
+        let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
+            Doc::line_or_space()
+                .concat(itertools::intersperse(
+                    self.attrs.chunks(max).map(|chunk| {
+                        Doc::list(
+                            itertools::intersperse(
+                                chunk.iter().map(|attr| attr.doc(ctx)),
+                                Doc::line_or_space(),
+                            )
+                            .collect(),
+                        )
+                        .group()
+                    }),
+                    Doc::hard_line(),
+                ))
+                .nest_with_ctx(ctx)
+        } else {
+            Doc::list(
+                self.attrs
+                    .iter()
+                    .flat_map(|attr| [Doc::line_or_space(), attr.doc(ctx)].into_iter())
+                    .collect(),
+            )
+            .nest_with_ctx(ctx)
+        };
 
         if self.void_element {
             docs.push(attrs);

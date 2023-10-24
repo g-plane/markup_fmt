@@ -159,6 +159,11 @@ pub(crate) fn resolve_config(
                     Default::default()
                 }
             }),
+            max_attrs_per_line: get_nullable_value(
+                &mut config,
+                "maxAttrsPerLine",
+                &mut diagnostics,
+            ),
             v_bind_style: get_nullable_value::<String>(&mut config, "vBindStyle", &mut diagnostics)
                 .as_deref()
                 .and_then(|option_value| match option_value {
