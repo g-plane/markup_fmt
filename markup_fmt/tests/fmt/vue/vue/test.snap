@@ -1,0 +1,15 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<script>
+
+</script>
+
+<template>
+  <br />
+  <footer>
+    foo
+    <br />
+  </footer>
+</template>
+

@@ -1,0 +1,7 @@
+<template>
+  <style>a { text-decoration: none; }</style>
+  <script>window.addEventListener('load', () => {})</script>
+</template>
+
+<style>a { text-decoration: none; }</style>
+<script>window.addEventListener('load', () => {})</script>

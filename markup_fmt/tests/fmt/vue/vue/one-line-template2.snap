@@ -1,0 +1,10 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <div>
+    <p>foo</p>
+    <div>bar</div>
+  </div>
+</template>
+
