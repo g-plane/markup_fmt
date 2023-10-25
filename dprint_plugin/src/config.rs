@@ -128,6 +128,27 @@ pub(crate) fn resolve_config(
                 "maxAttrsPerLine",
                 &mut diagnostics,
             ),
+            html_normal_self_closing: get_nullable_value(
+                &mut config,
+                "html.normal.selfClosing",
+                &mut diagnostics,
+            ),
+            html_void_self_closing: get_nullable_value(
+                &mut config,
+                "html.void.selfClosing",
+                &mut diagnostics,
+            ),
+            component_self_closing: get_nullable_value(
+                &mut config,
+                "component.selfClosing",
+                &mut diagnostics,
+            ),
+            svg_self_closing: get_nullable_value(&mut config, "svg.selfClosing", &mut diagnostics),
+            mathml_self_closing: get_nullable_value(
+                &mut config,
+                "mathml.selfClosing",
+                &mut diagnostics,
+            ),
             whitespace_sensitivity: match &*get_value(
                 &mut config,
                 "whitespaceSensitivity",

@@ -10,10 +10,10 @@ source: markup_fmt/tests/fmt.rs
 <div>before<dialog open>dialog long long long long long long long long
   </dialog>after</div>
 
-<div>before<object data="horse.wav"><param name="autoplay" value="true"><param
+<div>before<object data="horse.wav"><param name="autoplay" value="true" /><param
       name="autoplay"
       value="true"
-    ></object>after</div>
+    /></object>after</div>
 
 <div>before<meter
     min="0"

@@ -1,0 +1,26 @@
+[default]
+# self closing or not is untouched
+
+[html-normal-enabled]
+"html.normal.selfClosing" = true
+
+[html-normal-disabled]
+"html.normal.selfClosing" = false
+
+[html-void-enabled]
+"html.void.selfClosing" = true
+
+[html-void-disabled]
+"html.void.selfClosing" = false
+
+[svg-enabled]
+"svg.selfClosing" = true
+
+[svg-disabled]
+"svg.selfClosing" = false
+
+[mathml-enabled]
+"mathml.selfClosing" = true
+
+[mathml-disabled]
+"mathml.selfClosing" = false

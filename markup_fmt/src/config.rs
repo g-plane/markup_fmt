@@ -66,7 +66,9 @@ impl From<LineBreak> for tiny_pretty::LineBreak {
 /// Configuration related to syntax.
 pub struct LanguageOptions {
     pub quotes: Quotes,
+
     pub format_comments: bool,
+
     pub script_indent: bool,
     #[cfg_attr(feature = "config_serde", serde(rename = "html.scriptIndent"))]
     pub html_script_indent: Option<bool>,
@@ -74,6 +76,7 @@ pub struct LanguageOptions {
     pub vue_script_indent: Option<bool>,
     #[cfg_attr(feature = "config_serde", serde(rename = "svelte.scriptIndent"))]
     pub svelte_script_indent: Option<bool>,
+
     pub style_indent: bool,
     #[cfg_attr(feature = "config_serde", serde(rename = "html.styleIndent"))]
     pub html_style_indent: Option<bool>,
@@ -81,15 +84,31 @@ pub struct LanguageOptions {
     pub vue_style_indent: Option<bool>,
     #[cfg_attr(feature = "config_serde", serde(rename = "svelte.styleIndent"))]
     pub svelte_style_indent: Option<bool>,
+
     pub closing_bracket_same_line: bool,
+
     pub closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty,
+
     pub max_attrs_per_line: Option<usize>,
+
+    #[cfg_attr(feature = "config_serde", serde(rename = "html.normal.selfClosing"))]
+    pub html_normal_self_closing: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "html.void.selfClosing"))]
+    pub html_void_self_closing: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "component.selfClosing"))]
+    pub component_self_closing: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "svg.selfClosing"))]
+    pub svg_self_closing: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "mathml.selfClosing"))]
+    pub mathml_self_closing: Option<bool>,
+
     pub whitespace_sensitivity: WhitespaceSensitivity,
     #[cfg_attr(
         feature = "config_serde",
         serde(rename = "component.whitespaceSensitivity")
     )]
     pub component_whitespace_sensitivity: Option<WhitespaceSensitivity>,
+
     pub v_bind_style: Option<VBindStyle>,
     pub v_on_style: Option<VOnStyle>,
     pub v_for_delimiter_style: Option<VForDelimiterStyle>,

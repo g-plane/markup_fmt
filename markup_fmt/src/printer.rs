@@ -2,7 +2,7 @@ use crate::{
     ast::*,
     config::{Quotes, WhitespaceSensitivity},
     ctx::{Ctx, NestWithCtx},
-    Language,
+    helpers, Language,
 };
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
@@ -65,6 +65,40 @@ impl<'s> DocGen<'s> for Element<'s> {
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
+        let self_closing = if helpers::is_void_element(tag_name) {
+            ctx.options
+                .html_void_self_closing
+                .unwrap_or(self.self_closing)
+        } else if css_dataset::tags::STANDARD_HTML_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(tag_name))
+            || css_dataset::tags::NON_STANDARD_HTML_TAGS
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(tag_name))
+        {
+            ctx.options
+                .html_normal_self_closing
+                .unwrap_or(self.self_closing)
+        } else if matches!(ctx.language, Language::Vue | Language::Svelte)
+            && helpers::is_component(self.tag_name)
+        {
+            ctx.options
+                .component_self_closing
+                .unwrap_or(self.self_closing)
+        } else if css_dataset::tags::SVG_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
+        {
+            ctx.options.svg_self_closing.unwrap_or(self.self_closing)
+        } else if css_dataset::tags::MATH_ML_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
+        {
+            ctx.options.mathml_self_closing.unwrap_or(self.self_closing)
+        } else {
+            self.self_closing
+        };
+
         let mut docs = Vec::with_capacity(5);
 
         docs.push(Doc::text("<"));
@@ -102,12 +136,17 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         if self.void_element {
             docs.push(attrs);
-            if !ctx.options.closing_bracket_same_line {
-                docs.push(Doc::line_or_nil());
+            if self_closing {
+                docs.push(Doc::line_or_space());
+                docs.push(Doc::text("/>"));
+            } else {
+                if !ctx.options.closing_bracket_same_line {
+                    docs.push(Doc::line_or_nil());
+                }
+                docs.push(Doc::text(">"));
             }
-            docs.push(Doc::text(">"));
             return Doc::list(docs).group();
-        } else if self.self_closing {
+        } else if self_closing && self.children.is_empty() {
             docs.push(attrs);
             docs.push(Doc::line_or_space());
             docs.push(Doc::text("/>"));
