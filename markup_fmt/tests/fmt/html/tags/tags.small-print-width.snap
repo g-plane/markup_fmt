@@ -343,8 +343,7 @@ source: markup_fmt/tests/fmt.rs
 >
   x<span
     a="b"
-  >
-  </span
+  ></span
   >
 </p
 >
@@ -362,19 +361,16 @@ source: markup_fmt/tests/fmt.rs
 </p
 >
 <span
->
-</span
+></span
 >
 
 <label
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
->
-</label
+></label
 >
 |
 <span
->
-</span
+></span
 >
 <br
 >
@@ -416,8 +412,7 @@ source: markup_fmt/tests/fmt.rs
 >
   "<span
     [innerHTML]="title"
-  >
-  </span
+  ></span
   >
   "
   is
@@ -437,44 +432,35 @@ source: markup_fmt/tests/fmt.rs
 <div
 >
   <app-nav
-  >
-  </app-nav
+  ></app-nav
   >
   <router-outlet
-  >
-  </router-outlet
+  ></router-outlet
   >
   <app-footer
-  >
-  </app-footer
+  ></app-footer
   >
 
   <app-nav
     [input]="something"
-  >
-  </app-nav
+  ></app-nav
   >
   <router-outlet
-  >
-  </router-outlet
+  ></router-outlet
   >
   <app-footer
-  >
-  </app-footer
+  ></app-footer
   >
 
   <app-primary-navigation
-  >
-  </app-primary-navigation
+  ></app-primary-navigation
   >
   <router-outlet
-  >
-  </router-outlet
+  ></router-outlet
   >
   <app-footer
     [input]="something"
-  >
-  </app-footer
+  ></app-footer
   >
 </div
 >

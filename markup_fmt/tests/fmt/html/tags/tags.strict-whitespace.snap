@@ -142,9 +142,7 @@ source: markup_fmt/tests/fmt.rs
 </span>
 
 <!-- #5810 -->
-<table><tr>
-    
-  </tr>
+<table><tr> </tr>
 </table><div>Should not insert empty line before this div</div>
 
 <!-- self-closing -->

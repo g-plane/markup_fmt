@@ -36,7 +36,7 @@ source: markup_fmt/tests/fmt.rs
 <body width="100%" align="center">
   <center>
     <!--[if (gte mso 9)|(IE)]><table cellpadding="0" cellspacing="0" border="0" width="600" align="center"><tr><td><![endif]-->
-    <div>  </div>
+    <div> </div>
     <!--[if (gte mso 9)|(IE)]></td></tr></table><![endif]-->
   </center>
 </body>

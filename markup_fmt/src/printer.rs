@@ -124,11 +124,10 @@ impl<'s> DocGen<'s> for Element<'s> {
         }
 
         let is_whitespace_sensitive = ctx.is_whitespace_sensitive(tag_name);
-        let is_whitespace_strict = ctx.is_whitespace_strict(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
             [Node::TextNode(text_node)] => {
-                !is_whitespace_strict
+                !is_whitespace_sensitive
                     && text_node
                         .raw
                         .trim_matches(|c: char| c.is_ascii_whitespace())
@@ -262,7 +261,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         } else if is_empty {
             use crate::config::ClosingTagLineBreakForEmpty;
-            if !is_whitespace_strict {
+            if !is_whitespace_sensitive {
                 match ctx.options.closing_tag_line_break_for_empty {
                     ClosingTagLineBreakForEmpty::Always => docs.push(Doc::hard_line()),
                     ClosingTagLineBreakForEmpty::Fit => docs.push(Doc::line_or_nil()),
@@ -275,6 +274,10 @@ impl<'s> DocGen<'s> for Element<'s> {
                 format_children_with_inserting_linebreak(&self.children, ctx).nest_with_ctx(ctx),
             );
             docs.push(trailing_ws);
+        } else if is_whitespace_sensitive
+            && matches!(&self.children[..], [Node::TextNode(text_node)] if is_all_ascii_whitespace(text_node.raw))
+        {
+            docs.push(Doc::line_or_space());
         } else {
             let children_doc = leading_ws.append(format_children_without_inserting_linebreak(
                 &self.children,

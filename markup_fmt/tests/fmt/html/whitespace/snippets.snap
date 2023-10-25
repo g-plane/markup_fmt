@@ -7,12 +7,12 @@ source: markup_fmt/tests/fmt.rs
 <div></div>
 <div></div>
 <div></div>
-<span></span>
-<span></span>
-<span></span>
-<span></span>
-<span></span>
-<span></span>
+<span> </span>
+<span> </span>
+<span> </span>
+<span> </span>
+<span> </span>
+<span> </span>
 <img>
 <img>
 <img>
