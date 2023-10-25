@@ -508,12 +508,12 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
         match self.name {
             ":" => {
                 docs.push(if let Some(VBindStyle::Long) = ctx.options.v_bind_style {
-                    Doc::text("v-bind")
+                    Doc::text("v-bind:")
                 } else {
                     Doc::text(":")
                 });
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {
-                    docs.push(Doc::text(arg_and_modifiers));
+                    docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
                 }
             }
             "bind" => {
@@ -521,31 +521,31 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                     docs.push(if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
                         Doc::text(":")
                     } else {
-                        Doc::text("v-bind")
+                        Doc::text("v-bind:")
                     });
-                    docs.push(Doc::text(arg_and_modifiers));
+                    docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
                 } else {
                     docs.push(Doc::text("v-bind"));
                 }
             }
             "@" => {
                 docs.push(if let Some(VOnStyle::Long) = ctx.options.v_on_style {
-                    Doc::text("v-on")
+                    Doc::text("v-on:")
                 } else {
                     Doc::text("@")
                 });
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {
-                    docs.push(Doc::text(arg_and_modifiers));
+                    docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
                 }
             }
             "on" => {
                 docs.push(if let Some(VOnStyle::Short) = ctx.options.v_on_style {
                     Doc::text("@")
                 } else {
-                    Doc::text("v-on")
+                    Doc::text("v-on:")
                 });
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {
-                    docs.push(Doc::text(arg_and_modifiers));
+                    docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
                 }
             }
             "#" => {
