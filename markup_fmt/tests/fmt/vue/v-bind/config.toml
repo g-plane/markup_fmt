@@ -1,0 +1,7 @@
+[default]
+
+[short]
+vBindStyle = "short"
+
+[long]
+vBindStyle = "long"

@@ -1,0 +1,7 @@
+[default]
+
+[in]
+vForDelimiterStyle = "in"
+
+[of]
+vForDelimiterStyle = "of"

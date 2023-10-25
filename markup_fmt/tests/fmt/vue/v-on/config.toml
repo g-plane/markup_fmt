@@ -1,0 +1,7 @@
+[default]
+
+[short]
+vOnStyle = "short"
+
+[long]
+vOnStyle = "long"

@@ -1,0 +1,8 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <div v-for="a in b"></div>
+  <div v-for="a in b"></div>
+</template>
+

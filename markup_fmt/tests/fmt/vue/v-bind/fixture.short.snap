@@ -1,0 +1,10 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <button :type=""></button>
+  <button :type.sync=""></button>
+  <button :type=""></button>
+  <button :type.sync=""></button>
+</template>
+
