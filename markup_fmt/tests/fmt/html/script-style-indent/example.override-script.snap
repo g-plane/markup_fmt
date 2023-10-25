@@ -1,0 +1,15 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <style>
+    a { text-decoration: none; }
+    </style>
+    <script>
+      window.addEventListener('load', () => {})
+    </script>
+  </body>
+</html>
+

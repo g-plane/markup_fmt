@@ -1,0 +1,17 @@
+[script]
+scriptIndent = true
+
+[style]
+styleIndent = true
+
+[override-script]
+scriptIndent = false
+"html.scriptIndent" = true
+
+[override-style]
+styleIndent = false
+"html.styleIndent" = true
+
+[both]
+scriptIndent = true
+styleIndent = true

@@ -1,0 +1,11 @@
+[always]
+closingTagLineBreakForEmpty = "always"
+printWidth = 50
+
+[fit]
+closingTagLineBreakForEmpty = "fit"
+printWidth = 50
+
+[never]
+closingTagLineBreakForEmpty = "never"
+printWidth = 50
