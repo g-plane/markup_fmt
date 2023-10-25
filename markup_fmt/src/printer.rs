@@ -574,7 +574,7 @@ fn reflow(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     )
 }
 
-fn reflow_raw<'s>(s: &'s str) -> impl Iterator<Item = Doc<'s>> {
+fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'_>> {
     itertools::intersperse(
         s.split('\n')
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s))),

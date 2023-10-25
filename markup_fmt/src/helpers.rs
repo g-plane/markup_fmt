@@ -2,7 +2,7 @@ pub(crate) fn is_component(name: &str) -> bool {
     name.contains('-') || name.contains(|c: char| c.is_ascii_uppercase())
 }
 
-static NON_WS_SENSITIVE_TAGS: [&'static str; 69] = [
+static NON_WS_SENSITIVE_TAGS: [&str; 69] = [
     "address",
     "blockquote",
     "center",
@@ -85,7 +85,7 @@ pub(crate) fn is_whitespace_sensitive_tag(name: &str) -> bool {
                 .any(|tag| tag.eq_ignore_ascii_case(name))
 }
 
-static VOID_ELEMENTS: [&'static str; 14] = [
+static VOID_ELEMENTS: [&str; 14] = [
     "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track",
     "wbr", "param",
 ];
