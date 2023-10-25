@@ -18,4 +18,7 @@
       v-for="    (,a,b) of 'abcd'        "
     ></div>
   </div>
+<div
+  v-for="  item instanceof  items "
+></div>
 </template>

@@ -1,7 +1,0 @@
----
-source: markup_fmt/tests/fmt.rs
----
-<template>
-  <div v-for="item instanceof  items"></div>
-</template>
-
