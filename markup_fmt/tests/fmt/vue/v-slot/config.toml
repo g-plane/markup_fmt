@@ -1,0 +1,41 @@
+[default]
+
+[all-long]
+"vSlotStyle" = "long"
+
+[all-short]
+"vSlotStyle" = "short"
+
+[all-vslot]
+"vSlotStyle" = "vSlot"
+
+[component-long]
+"component.vSlotStyle" = "long"
+
+[component-short]
+"component.vSlotStyle" = "short"
+
+[component-vslot]
+"component.vSlotStyle" = "vSlot"
+
+[default-long]
+"default.vSlotStyle" = "long"
+
+[default-short]
+"default.vSlotStyle" = "short"
+
+[default-vslot]
+"default.vSlotStyle" = "vSlot"
+
+[named-long]
+"named.vSlotStyle" = "long"
+
+[named-short]
+"named.vSlotStyle" = "short"
+
+[named-vslot]
+"named.vSlotStyle" = "vSlot"
+
+[override]
+"vSlotStyle" = "short"
+"component.vSlotStyle" = "vSlot"

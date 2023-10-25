@@ -1,6 +1,6 @@
 use crate::{
     ast::*,
-    config::{Quotes, WhitespaceSensitivity},
+    config::{Quotes, VSlotStyle, WhitespaceSensitivity},
     ctx::{Ctx, NestWithCtx},
     helpers, Language,
 };
@@ -511,42 +511,76 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
 
         let mut docs = Vec::with_capacity(5);
 
-        docs.push(match self.name {
+        match self.name {
             ":" => {
-                if let Some(VBindStyle::Long) = ctx.options.v_bind_style {
+                docs.push(if let Some(VBindStyle::Long) = ctx.options.v_bind_style {
                     Doc::text("v-bind")
                 } else {
                     Doc::text(":")
+                });
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(Doc::text(arg_and_modifiers));
                 }
             }
-            "bind" if self.arg_and_modifiers.is_some() => {
-                if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
-                    Doc::text(":")
+            "bind" => {
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
+                        Doc::text(":")
+                    } else {
+                        Doc::text("v-bind")
+                    });
+                    docs.push(Doc::text(arg_and_modifiers));
                 } else {
-                    Doc::text("v-bind")
+                    docs.push(Doc::text("v-bind"));
                 }
             }
             "@" => {
-                if let Some(VOnStyle::Long) = ctx.options.v_on_style {
+                docs.push(if let Some(VOnStyle::Long) = ctx.options.v_on_style {
                     Doc::text("v-on")
                 } else {
                     Doc::text("@")
+                });
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(Doc::text(arg_and_modifiers));
                 }
             }
             "on" => {
-                if let Some(VOnStyle::Short) = ctx.options.v_on_style {
+                docs.push(if let Some(VOnStyle::Short) = ctx.options.v_on_style {
                     Doc::text("@")
                 } else {
                     Doc::text("v-on")
+                });
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(Doc::text(arg_and_modifiers));
                 }
             }
-            "#" => Doc::text("#"),
-            name => Doc::text(format!("v-{name}")),
-        });
-
-        if let Some(arg_and_modifiers) = self.arg_and_modifiers {
-            docs.push(Doc::text(arg_and_modifiers));
-        }
+            "#" => {
+                let slot = extract_slot_name(self.arg_and_modifiers);
+                let style = match get_v_slot_style_option(slot, ctx) {
+                    Some(VSlotStyle::Short) | None => VSlotStyle::Short,
+                    Some(VSlotStyle::VSlot) if slot == "default" => VSlotStyle::VSlot,
+                    Some(VSlotStyle::Long | VSlotStyle::VSlot) => VSlotStyle::Long,
+                };
+                docs.push(format_v_slot(style, slot));
+            }
+            "slot" => {
+                let slot = extract_slot_name(self.arg_and_modifiers);
+                let style = match get_v_slot_style_option(slot, ctx) {
+                    Some(VSlotStyle::Short) => VSlotStyle::Short,
+                    Some(VSlotStyle::VSlot) if slot == "default" => VSlotStyle::VSlot,
+                    Some(VSlotStyle::Long | VSlotStyle::VSlot) => VSlotStyle::Long,
+                    None if self.arg_and_modifiers.is_some() => VSlotStyle::Long,
+                    None => VSlotStyle::VSlot,
+                };
+                docs.push(format_v_slot(style, slot));
+            }
+            name => {
+                docs.push(Doc::text(format!("v-{name}")));
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(Doc::text(arg_and_modifiers));
+                }
+            }
+        };
 
         if let Some(value) = self.value {
             docs.push(Doc::text("="));
@@ -819,4 +853,38 @@ where
             .collect(),
     )
     .group()
+}
+
+fn extract_slot_name(arg_and_modifiers: Option<&str>) -> &str {
+    arg_and_modifiers
+        .map(|arg| arg.strip_prefix(':').unwrap_or(arg))
+        .unwrap_or("default")
+}
+
+fn get_v_slot_style_option<E, F>(slot: &str, ctx: &Ctx<E, F>) -> Option<VSlotStyle>
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    let option = if ctx
+        .current_tag_name
+        .map(|name| name.eq_ignore_ascii_case("template"))
+        .unwrap_or_default()
+    {
+        if slot == "default" {
+            ctx.options.default_v_slot_style.clone()
+        } else {
+            ctx.options.named_v_slot_style.clone()
+        }
+    } else {
+        ctx.options.component_v_slot_style.clone()
+    };
+    option.or(ctx.options.v_slot_style.clone())
+}
+
+fn format_v_slot(style: VSlotStyle, slot: &str) -> Doc<'_> {
+    match style {
+        VSlotStyle::Short => Doc::text(format!("#{slot}")),
+        VSlotStyle::Long => Doc::text(format!("v-slot:{slot}")),
+        VSlotStyle::VSlot => Doc::text("v-slot"),
+    }
 }

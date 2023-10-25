@@ -1,0 +1,17 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <my-component #default=""></my-component>
+  <my-component #default=""></my-component>
+  <my-component #named=""></my-component>
+  <my-component #default=""></my-component>
+  <my-component #named=""></my-component>
+
+  <template #default=""></template>
+  <template #default=""></template>
+  <template #named=""></template>
+  <template #default=""></template>
+  <template #named=""></template>
+</template>
+

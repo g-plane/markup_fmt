@@ -1,0 +1,17 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <my-component v-slot=""></my-component>
+  <my-component v-slot=""></my-component>
+  <my-component v-slot:named=""></my-component>
+  <my-component v-slot=""></my-component>
+  <my-component v-slot:named=""></my-component>
+
+  <template v-slot=""></template>
+  <template v-slot:default=""></template>
+  <template v-slot:named=""></template>
+  <template #default=""></template>
+  <template #named=""></template>
+</template>
+

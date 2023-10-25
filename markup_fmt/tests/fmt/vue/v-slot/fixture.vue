@@ -1,0 +1,13 @@
+<template>
+  <my-component v-slot=""></my-component>
+  <my-component v-slot:default=""></my-component>
+  <my-component v-slot:named=""></my-component>
+  <my-component #default=""></my-component>
+  <my-component #named=""></my-component>
+
+  <template v-slot=""></template>
+  <template v-slot:default=""></template>
+  <template v-slot:named=""></template>
+  <template #default=""></template>
+  <template #named=""></template>
+</template>

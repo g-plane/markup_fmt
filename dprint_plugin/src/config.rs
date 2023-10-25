@@ -4,7 +4,7 @@ use dprint_core::configuration::{
 };
 use markup_fmt::config::{
     ClosingTagLineBreakForEmpty, FormatOptions, LanguageOptions, LayoutOptions, LineBreak, Quotes,
-    VBindStyle, VForDelimiterStyle, VOnStyle, WhitespaceSensitivity,
+    VBindStyle, VForDelimiterStyle, VOnStyle, VSlotStyle, WhitespaceSensitivity,
 };
 
 pub(crate) fn resolve_config(
@@ -224,6 +224,74 @@ pub(crate) fn resolve_config(
                     diagnostics.push(ConfigurationDiagnostic {
                         property_name: "vForDelimiterStyle".into(),
                         message: "invalid value for config `vForDelimiterStyle`".into(),
+                    });
+                    Default::default()
+                }
+            }),
+            v_slot_style: get_nullable_value::<String>(&mut config, "vSlotStyle", &mut diagnostics)
+                .as_deref()
+                .and_then(|option_value| match option_value {
+                    "short" => Some(VSlotStyle::Short),
+                    "long" => Some(VSlotStyle::Long),
+                    "vSlot" => Some(VSlotStyle::VSlot),
+                    _ => {
+                        diagnostics.push(ConfigurationDiagnostic {
+                            property_name: "vSlotStyle".into(),
+                            message: "invalid value for config `vSlotStyle`".into(),
+                        });
+                        Default::default()
+                    }
+                }),
+            component_v_slot_style: get_nullable_value::<String>(
+                &mut config,
+                "component.vSlotStyle",
+                &mut diagnostics,
+            )
+            .as_deref()
+            .and_then(|option_value| match option_value {
+                "short" => Some(VSlotStyle::Short),
+                "long" => Some(VSlotStyle::Long),
+                "vSlot" => Some(VSlotStyle::VSlot),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "component.vSlotStyle".into(),
+                        message: "invalid value for config `component.vSlotStyle`".into(),
+                    });
+                    Default::default()
+                }
+            }),
+            default_v_slot_style: get_nullable_value::<String>(
+                &mut config,
+                "default.vSlotStyle",
+                &mut diagnostics,
+            )
+            .as_deref()
+            .and_then(|option_value| match option_value {
+                "short" => Some(VSlotStyle::Short),
+                "long" => Some(VSlotStyle::Long),
+                "vSlot" => Some(VSlotStyle::VSlot),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "default.vSlotStyle".into(),
+                        message: "invalid value for config `default.vSlotStyle`".into(),
+                    });
+                    Default::default()
+                }
+            }),
+            named_v_slot_style: get_nullable_value::<String>(
+                &mut config,
+                "named.vSlotStyle",
+                &mut diagnostics,
+            )
+            .as_deref()
+            .and_then(|option_value| match option_value {
+                "short" => Some(VSlotStyle::Short),
+                "long" => Some(VSlotStyle::Long),
+                "vSlot" => Some(VSlotStyle::VSlot),
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "named.vSlotStyle".into(),
+                        message: "invalid value for config `named.vSlotStyle`".into(),
                     });
                     Default::default()
                 }

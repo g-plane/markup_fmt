@@ -112,6 +112,13 @@ pub struct LanguageOptions {
     pub v_bind_style: Option<VBindStyle>,
     pub v_on_style: Option<VOnStyle>,
     pub v_for_delimiter_style: Option<VForDelimiterStyle>,
+    pub v_slot_style: Option<VSlotStyle>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "component.vSlotStyle"))]
+    pub component_v_slot_style: Option<VSlotStyle>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "default.vSlotStyle"))]
+    pub default_v_slot_style: Option<VSlotStyle>,
+    #[cfg_attr(feature = "config_serde", serde(rename = "named.vSlotStyle"))]
+    pub named_v_slot_style: Option<VSlotStyle>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -168,4 +175,14 @@ pub enum VForDelimiterStyle {
     #[default]
     In,
     Of,
+}
+
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase"))]
+pub enum VSlotStyle {
+    #[default]
+    Short,
+    Long,
+    VSlot,
 }
