@@ -214,14 +214,15 @@ impl<'s> DocGen<'s> for Element<'s> {
                         })
                         .unwrap_or("js"),
                 );
-                let doc = Doc::hard_line()
-                    .concat(reflow_raw_owned(formatted.trim()))
-                    .append(Doc::hard_line());
-                docs.push(if ctx.script_indent() {
-                    doc.nest_with_ctx(ctx)
-                } else {
-                    doc
-                });
+                let doc = Doc::hard_line().concat(reflow_raw_owned(formatted.trim()));
+                docs.push(
+                    if ctx.script_indent() {
+                        doc.nest_with_ctx(ctx)
+                    } else {
+                        doc
+                    }
+                    .append(Doc::hard_line()),
+                );
             }
         } else if tag_name.eq_ignore_ascii_case("style") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
@@ -239,14 +240,15 @@ impl<'s> DocGen<'s> for Element<'s> {
                         })
                         .unwrap_or("css"),
                 );
-                let doc = Doc::hard_line()
-                    .concat(reflow_raw_owned(formatted.trim()))
-                    .append(Doc::hard_line());
-                docs.push(if ctx.style_indent() {
-                    doc.nest_with_ctx(ctx)
-                } else {
-                    doc
-                });
+                let doc = Doc::hard_line().concat(reflow_raw_owned(formatted.trim()));
+                docs.push(
+                    if ctx.style_indent() {
+                        doc.nest_with_ctx(ctx)
+                    } else {
+                        doc
+                    }
+                    .append(Doc::hard_line()),
+                );
             }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {
