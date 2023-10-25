@@ -16,6 +16,7 @@ where
     pub(crate) print_width: usize,
     pub(crate) options: &'b LanguageOptions,
     pub(crate) current_tag_name: Option<&'s str>,
+    pub(crate) is_root: bool,
     pub(crate) in_svg: bool,
     pub(crate) indent_level: usize,
     pub(crate) external_formatter: F,

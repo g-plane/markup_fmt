@@ -4,7 +4,7 @@ use crate::{
     ctx::{Ctx, NestWithCtx},
     helpers, Language,
 };
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, mem, path::Path};
 use tiny_pretty::Doc;
 
 pub(super) trait DocGen<'s> {
@@ -151,7 +151,10 @@ impl<'s> DocGen<'s> for Element<'s> {
             );
         }
 
-        let is_whitespace_sensitive = ctx.is_whitespace_sensitive(tag_name);
+        let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue)
+            && ctx.is_root
+            && self.tag_name.eq_ignore_ascii_case("template"))
+            && ctx.is_whitespace_sensitive(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
             [Node::TextNode(text_node)] => {
@@ -226,6 +229,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::line_or_nil()
         };
 
+        let is_root = mem::replace(&mut ctx.is_root, false);
         if tag_name.eq_ignore_ascii_case("script") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
                 let formatted = ctx.format_script(
@@ -346,6 +350,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         );
         ctx.current_tag_name = None;
         ctx.in_svg = false;
+        ctx.is_root = is_root;
 
         Doc::list(docs).group()
     }
