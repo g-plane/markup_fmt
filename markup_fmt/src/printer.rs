@@ -61,21 +61,16 @@ impl<'s> DocGen<'s> for Element<'s> {
             .unwrap_or(self.tag_name);
         ctx.current_tag_name = Some(tag_name);
         ctx.in_svg = tag_name.eq_ignore_ascii_case("svg");
-        let should_lower_cased = css_dataset::tags::STANDARD_HTML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
+        let should_lower_cased = matches!(ctx.language, Language::Html)
+            && css_dataset::tags::STANDARD_HTML_TAGS
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
-        let self_closing = if helpers::is_void_element(tag_name) {
+        let self_closing = if helpers::is_void_element(tag_name, ctx.language.clone()) {
             ctx.options
                 .html_void_self_closing
                 .unwrap_or(self.self_closing)
-        } else if css_dataset::tags::STANDARD_HTML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(tag_name))
-            || css_dataset::tags::NON_STANDARD_HTML_TAGS
-                .iter()
-                .any(|tag| tag.eq_ignore_ascii_case(tag_name))
-        {
+        } else if helpers::is_html_tag(tag_name, ctx.language.clone()) {
             ctx.options
                 .html_normal_self_closing
                 .unwrap_or(self.self_closing)
@@ -85,15 +80,9 @@ impl<'s> DocGen<'s> for Element<'s> {
             ctx.options
                 .component_self_closing
                 .unwrap_or(self.self_closing)
-        } else if css_dataset::tags::SVG_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
-        {
+        } else if helpers::is_svg_tag(self.tag_name, ctx.language.clone()) {
             ctx.options.svg_self_closing.unwrap_or(self.self_closing)
-        } else if css_dataset::tags::MATH_ML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
-        {
+        } else if helpers::is_mathml_tag(self.tag_name, ctx.language.clone()) {
             ctx.options.mathml_self_closing.unwrap_or(self.self_closing)
         } else {
             self.self_closing

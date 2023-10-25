@@ -211,7 +211,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectElement));
         };
         let tag_name = self.parse_tag_name()?;
-        let void_element = helpers::is_void_element(tag_name);
+        let void_element = helpers::is_void_element(tag_name, self.language.clone());
 
         let mut attrs = vec![];
         loop {
