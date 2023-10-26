@@ -660,6 +660,7 @@ impl<'s> Parser<'s> {
         {
             self.skip_ws();
             let binding = self.parse_svelte_binding()?;
+            self.skip_ws();
             if self.chars.next_if(|(_, c)| *c == '}').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteThenBlock));
             }
@@ -686,6 +687,7 @@ impl<'s> Parser<'s> {
         {
             self.skip_ws();
             let binding = self.parse_svelte_binding()?;
+            self.skip_ws();
             if self.chars.next_if(|(_, c)| *c == '}').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteCatchBlock));
             }
@@ -704,7 +706,10 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
+            .and_then(|_| {
+                self.skip_ws();
+                self.chars.next_if(|(_, c)| *c == '}')
+            })
             .is_some()
         {
             Ok(SvelteAwaitBlock {
@@ -833,7 +838,10 @@ impl<'s> Parser<'s> {
                     .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'l'))
                     .and_then(|_| parser.chars.next_if(|(_, c)| *c == 's'))
                     .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == '}'))
+                    .and_then(|_| {
+                        parser.skip_ws();
+                        parser.chars.next_if(|(_, c)| *c == '}')
+                    })
                     .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteEachBlock))
             })
             .is_ok()
@@ -851,7 +859,10 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
+            .and_then(|_| {
+                self.skip_ws();
+                self.chars.next_if(|(_, c)| *c == '}')
+            })
             .is_some()
         {
             Ok(SvelteEachBlock {
@@ -958,7 +969,10 @@ impl<'s> Parser<'s> {
             .chars
             .next_if(|(_, c)| *c == 'i')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
+            .and_then(|_| {
+                self.skip_ws();
+                self.chars.next_if(|(_, c)| *c == '}')
+            })
             .is_some()
         {
             Ok(SvelteIfBlock {
@@ -1005,7 +1019,10 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'y'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
+            .and_then(|_| {
+                self.skip_ws();
+                self.chars.next_if(|(_, c)| *c == '}')
+            })
             .is_some()
         {
             Ok(SvelteKeyBlock { expr, children })
