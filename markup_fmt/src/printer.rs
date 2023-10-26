@@ -1062,7 +1062,7 @@ fn format_svelte_block_children<'s, E, F>(
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
-    match &children[..] {
+    match children {
         [Node::TextNode(text_node)] if is_all_ascii_whitespace(text_node.raw) => {
             Doc::line_or_space()
         }
