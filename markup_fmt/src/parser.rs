@@ -959,16 +959,16 @@ impl<'s> Parser<'s> {
             .next_if(|(_, c)| *c == 'i')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
-            .is_none()
+            .is_some()
         {
-            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
-        } else {
             Ok(SvelteIfBlock {
                 expr,
                 children,
                 else_if_blocks,
                 else_children,
             })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
         }
     }
 
