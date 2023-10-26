@@ -771,7 +771,8 @@ impl<'s> Parser<'s> {
             let mut end = start;
             loop {
                 match self.chars.peek() {
-                    Some((_, c)) if c.is_ascii_whitespace() => {
+                    Some((i, c)) if c.is_ascii_whitespace() => {
+                        end = *i;
                         self.skip_ws();
                         let mut chars = self.chars.clone();
                         if chars
@@ -798,6 +799,7 @@ impl<'s> Parser<'s> {
 
         self.skip_ws();
         let index = if self.chars.next_if(|(_, c)| *c == ',').is_some() {
+            self.skip_ws();
             Some(self.parse_identifier()?)
         } else {
             None
