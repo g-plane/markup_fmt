@@ -819,6 +819,26 @@ impl<'s> Parser<'s> {
 
         let children = self.parse_svelte_block_children()?;
 
+        let else_children = if self
+            .try_parse(|parser| {
+                parser
+                    .chars
+                    .next_if(|(_, c)| *c == '{')
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == ':'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'l'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 's'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == '}'))
+                    .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteEachBlock))
+            })
+            .is_ok()
+        {
+            Some(self.parse_svelte_block_children()?)
+        } else {
+            None
+        };
+
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
@@ -836,6 +856,7 @@ impl<'s> Parser<'s> {
                 index,
                 key,
                 children,
+                else_children,
             })
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))

@@ -80,6 +80,7 @@ pub struct SvelteEachBlock<'s> {
     pub index: Option<&'s str>,
     pub key: Option<&'s str>,
     pub children: Vec<Node<'s>>,
+    pub else_children: Option<Vec<Node<'s>>>,
 }
 
 #[derive(Clone, Debug)]
