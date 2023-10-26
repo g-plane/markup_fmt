@@ -498,7 +498,14 @@ impl<'s> Parser<'s> {
     }
 
     /// This will consume `}`.
-    fn parse_svelte_expr(&mut self, start: usize) -> PResult<&'s str> {
+    fn parse_svelte_expr(&mut self) -> PResult<&'s str> {
+        self.skip_ws();
+
+        let start = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
         let mut end = start;
         let mut braces_stack = 0u8;
         loop {
@@ -522,25 +529,64 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_if_block(&mut self) -> PResult<SvelteIfBlock<'s>> {
-        let Some((start, _)) = self
+        if self
             .chars
             .next_if(|(_, c)| *c == '{')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
             .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
-        else {
+            .is_none()
+        {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
 
-        let expr = self.parse_svelte_expr(start)?;
+        let expr = self.parse_svelte_expr()?;
         let children = self.parse_svelte_block_children()?;
 
+        let mut else_if_blocks = vec![];
+        let mut else_children = None;
+        loop {
+            if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd));
+            }
+            match self.chars.next() {
+                Some((_, ':')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == 'e')
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+                        .is_none()
+                    {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock));
+                    }
+                    self.skip_ws();
+                    match self.chars.next() {
+                        Some((_, 'i')) => {
+                            if self.chars.next_if(|(_, c)| *c == 'f').is_none() {
+                                return Err(
+                                    self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock)
+                                );
+                            }
+                            let expr = self.parse_svelte_expr()?;
+                            let children = self.parse_svelte_block_children()?;
+                            else_if_blocks.push(SvelteElseIfBlock { expr, children });
+                        }
+                        Some((_, '}')) => {
+                            else_children = Some(self.parse_svelte_block_children()?);
+                        }
+                        _ => return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock)),
+                    }
+                }
+                Some((_, '/')) => break,
+                _ => return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd)),
+            }
+        }
         if self
             .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .next_if(|(_, c)| *c == 'i')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_none()
@@ -550,17 +596,18 @@ impl<'s> Parser<'s> {
             Ok(SvelteIfBlock {
                 expr,
                 children,
-                else_children: None,
+                else_if_blocks,
+                else_children,
             })
         }
     }
 
     fn parse_svelte_interpolation(&mut self) -> PResult<SvelteInterpolation<'s>> {
-        let Some((i, _)) = self.chars.next_if(|(_, c)| *c == '{') else {
+        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteInterpolation));
         };
         Ok(SvelteInterpolation {
-            expr: self.parse_svelte_expr(i + 1)?,
+            expr: self.parse_svelte_expr()?,
         })
     }
 

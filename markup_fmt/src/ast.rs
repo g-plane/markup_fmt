@@ -56,9 +56,16 @@ pub struct SvelteAttribute<'s> {
 }
 
 #[derive(Clone, Debug)]
+pub struct SvelteElseIfBlock<'s> {
+    pub expr: &'s str,
+    pub children: Vec<Node<'s>>,
+}
+
+#[derive(Clone, Debug)]
 pub struct SvelteIfBlock<'s> {
     pub expr: &'s str,
     pub children: Vec<Node<'s>>,
+    pub else_if_blocks: Vec<SvelteElseIfBlock<'s>>,
     pub else_children: Option<Vec<Node<'s>>>,
 }
 
