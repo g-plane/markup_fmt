@@ -446,28 +446,6 @@ impl<'s> Parser<'s> {
         Ok(Root { children })
     }
 
-    fn parse_svelte_block_children(&mut self) -> PResult<Vec<Node<'s>>> {
-        let mut children = vec![];
-        loop {
-            match self.chars.peek() {
-                Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars.next_if(|(_, c)| *c == '/' || *c == ':').is_some() {
-                        break;
-                    } else {
-                        children.push(self.parse_node()?);
-                    }
-                }
-                Some(..) => {
-                    children.push(self.parse_node()?);
-                }
-                None => return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd)),
-            }
-        }
-        Ok(children)
-    }
-
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {
         let name = self.parse_attr_name()?;
         self.skip_ws();
@@ -495,6 +473,28 @@ impl<'s> Parser<'s> {
             name,
             expr: unsafe { self.source.get_unchecked(start..end) },
         })
+    }
+
+    fn parse_svelte_block_children(&mut self) -> PResult<Vec<Node<'s>>> {
+        let mut children = vec![];
+        loop {
+            match self.chars.peek() {
+                Some((_, '{')) => {
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if chars.next_if(|(_, c)| *c == '/' || *c == ':').is_some() {
+                        break;
+                    } else {
+                        children.push(self.parse_node()?);
+                    }
+                }
+                Some(..) => {
+                    children.push(self.parse_node()?);
+                }
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd)),
+            }
+        }
+        Ok(children)
     }
 
     /// This will consume `}`.
