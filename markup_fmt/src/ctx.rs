@@ -108,6 +108,25 @@ where
         }
     }
 
+    pub(crate) fn format_binding(&mut self, code: &str) -> String {
+        if code.trim().is_empty() {
+            String::new()
+        } else {
+            let wrapped = format!("let {} = 0", code.trim());
+            let formatted = self.format_with_external_formatter(
+                Path::new("binding.ts"),
+                &wrapped,
+                self.print_width - self.indent_level - 2, // this is technically wrong, just workaround
+            );
+            let formatted = formatted.trim().trim_matches(';');
+            formatted
+                .strip_prefix("let ")
+                .and_then(|s| s.strip_suffix(" = 0"))
+                .unwrap_or(formatted)
+                .to_owned()
+        }
+    }
+
     pub(crate) fn format_type_params(&mut self, code: &str) -> String {
         if code.trim().is_empty() {
             String::new()

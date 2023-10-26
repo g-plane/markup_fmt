@@ -169,19 +169,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
 
         let leading_ws = if is_whitespace_sensitive {
-            if let Some(Node::TextNode(text_node)) = self.children.first() {
-                if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
-                    if text_node.line_breaks > 0 {
-                        Doc::hard_line()
-                    } else {
-                        Doc::line_or_space()
-                    }
-                } else {
-                    Doc::nil()
-                }
-            } else {
-                Doc::nil()
-            }
+            format_ws_sensitive_leading_ws(&self.children)
         } else if has_two_more_non_text_children
             || self
                 .children
@@ -199,19 +187,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::line_or_nil()
         };
         let trailing_ws = if is_whitespace_sensitive {
-            if let Some(Node::TextNode(text_node)) = self.children.last() {
-                if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
-                    if text_node.line_breaks > 0 {
-                        Doc::hard_line()
-                    } else {
-                        Doc::line_or_space()
-                    }
-                } else {
-                    Doc::nil()
-                }
-            } else {
-                Doc::nil()
-            }
+            format_ws_sensitive_trailing_ws(&self.children)
         } else if has_two_more_non_text_children
             || self
                 .children
@@ -405,10 +381,13 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::Comment(comment) => comment.doc(ctx),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
             Node::Element(element) => element.doc(ctx),
+            Node::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx),
+            Node::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx),
+            Node::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx),
             Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx),
+            Node::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx),
             Node::TextNode(text_node) => text_node.doc(ctx),
             Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx),
-            _ => todo!(),
         }
     }
 }
@@ -460,6 +439,142 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut head = Vec::with_capacity(5);
+        head.push(Doc::text("{#await "));
+        head.push(Doc::text(ctx.format_expr(self.expr)));
+
+        if let Some(then_binding) = self.then_binding {
+            head.push(Doc::line_or_space());
+            head.push(Doc::text("then "));
+            head.push(Doc::text(ctx.format_binding(then_binding)));
+        }
+
+        if let Some(catch_binding) = self.catch_binding {
+            head.push(Doc::line_or_space());
+            head.push(Doc::text("catch "));
+            head.push(Doc::text(ctx.format_binding(catch_binding)));
+        }
+
+        let mut docs = Vec::with_capacity(5);
+        docs.push(
+            Doc::list(head)
+                .nest_with_ctx(ctx)
+                .append(Doc::line_or_nil())
+                .append(Doc::text("}"))
+                .group(),
+        );
+        docs.push(format_svelte_block_children(&self.children, ctx));
+
+        if let Some(then_block) = &self.then_block {
+            docs.push(then_block.doc(ctx));
+        }
+
+        if let Some(catch_block) = &self.catch_block {
+            docs.push(catch_block.doc(ctx));
+        }
+
+        docs.push(Doc::text("{/await}"));
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{:catch ")
+            .append(Doc::text(ctx.format_binding(self.binding)))
+            .append(Doc::text("}"))
+            .append(format_svelte_block_children(&self.children, ctx))
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut head = Vec::with_capacity(5);
+        head.push(Doc::text("{#each "));
+        head.push(Doc::text(ctx.format_expr(self.expr)));
+        head.push(Doc::text(" as"));
+        head.push(Doc::line_or_space());
+        head.push(Doc::text(ctx.format_binding(self.binding)));
+
+        if let Some(index) = self.index {
+            head.push(Doc::text(","));
+            head.push(Doc::line_or_space());
+            head.push(Doc::text(ctx.format_binding(index)));
+        }
+
+        if let Some(key) = self.key {
+            head.push(Doc::line_or_space());
+            head.push(Doc::text("("));
+            head.push(Doc::text(ctx.format_expr(key)));
+            head.push(Doc::text(")"));
+        }
+
+        let mut docs = Vec::with_capacity(5);
+        docs.push(
+            Doc::list(head)
+                .nest_with_ctx(ctx)
+                .append(Doc::line_or_nil())
+                .append(Doc::text("}"))
+                .group(),
+        );
+        docs.push(format_svelte_block_children(&self.children, ctx));
+
+        if let Some(children) = &self.else_children {
+            docs.push(Doc::text("{:else}"));
+            docs.push(format_svelte_block_children(children, ctx));
+        }
+
+        docs.push(Doc::text("{/each}"));
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteElseIfBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{:else if ")
+            .append(Doc::text(ctx.format_expr(self.expr)))
+            .append(Doc::text("}"))
+            .append(format_svelte_block_children(&self.children, ctx))
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteIfBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("{#if "));
+        docs.push(Doc::text(ctx.format_expr(self.expr)));
+        docs.push(Doc::text("}"));
+        docs.push(format_svelte_block_children(&self.children, ctx));
+
+        docs.extend(self.else_if_blocks.iter().map(|block| block.doc(ctx)));
+
+        if let Some(children) = &self.else_children {
+            docs.push(Doc::text("{:else}"));
+            docs.push(format_svelte_block_children(children, ctx));
+        }
+
+        docs.push(Doc::text("{/if}"));
+        Doc::list(docs)
+    }
+}
+
 impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
     where
@@ -474,6 +589,31 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
             .append(Doc::line_or_nil())
             .append(Doc::text("}"))
             .group()
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteKeyBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{#key ")
+            .append(Doc::text(ctx.format_expr(self.expr)))
+            .append(Doc::text("}"))
+            .append(format_svelte_block_children(&self.children, ctx))
+            .append(Doc::text("{/key}"))
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{:then ")
+            .append(Doc::text(ctx.format_binding(self.binding)))
+            .append(Doc::text("}"))
+            .append(format_svelte_block_children(&self.children, ctx))
     }
 }
 
@@ -880,5 +1020,59 @@ fn format_v_slot(style: VSlotStyle, slot: &str) -> Doc<'_> {
         VSlotStyle::Short => Doc::text(format!("#{slot}")),
         VSlotStyle::Long => Doc::text(format!("v-slot:{slot}")),
         VSlotStyle::VSlot => Doc::text("v-slot"),
+    }
+}
+
+fn format_ws_sensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
+    if let Some(Node::TextNode(text_node)) = children.first() {
+        if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
+            if text_node.line_breaks > 0 {
+                Doc::hard_line()
+            } else {
+                Doc::line_or_space()
+            }
+        } else {
+            Doc::nil()
+        }
+    } else {
+        Doc::nil()
+    }
+}
+
+fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
+    if let Some(Node::TextNode(text_node)) = children.last() {
+        if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
+            if text_node.line_breaks > 0 {
+                Doc::hard_line()
+            } else {
+                Doc::line_or_space()
+            }
+        } else {
+            Doc::nil()
+        }
+    } else {
+        Doc::nil()
+    }
+}
+
+fn format_svelte_block_children<'s, E, F>(
+    children: &[Node<'s>],
+    ctx: &mut Ctx<'_, 's, E, F>,
+) -> Doc<'s>
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    match &children[..] {
+        [Node::TextNode(text_node)] if is_all_ascii_whitespace(text_node.raw) => {
+            Doc::line_or_space()
+        }
+        _ => format_ws_sensitive_leading_ws(children)
+            .append(format_children_without_inserting_linebreak(
+                children,
+                has_two_more_non_text_children(children),
+                ctx,
+            ))
+            .nest_with_ctx(ctx)
+            .append(format_ws_sensitive_trailing_ws(children)),
     }
 }

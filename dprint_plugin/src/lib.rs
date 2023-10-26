@@ -75,7 +75,9 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
             let mut additional_config = ConfigKeyMap::new();
             additional_config.insert("lineWidth".into(), (print_width as i32).into());
             additional_config.insert("printWidth".into(), (print_width as i32).into());
-            if let Some("expr.ts" | "type_params.ts") = path.file_name().and_then(|s| s.to_str()) {
+            if let Some("expr.ts" | "binding.ts" | "type_params.ts") =
+                path.file_name().and_then(|s| s.to_str())
+            {
                 additional_config.insert("semiColons".into(), "asi".into());
             }
 
