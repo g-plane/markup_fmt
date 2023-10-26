@@ -38,6 +38,7 @@ pub enum Node<'s> {
     Comment(Comment<'s>),
     Doctype,
     Element(Element<'s>),
+    SvelteEachBlock(SvelteEachBlock<'s>),
     SvelteIfBlock(SvelteIfBlock<'s>),
     SvelteInterpolation(SvelteInterpolation<'s>),
     TextNode(TextNode<'s>),
@@ -53,6 +54,15 @@ pub struct Root<'s> {
 pub struct SvelteAttribute<'s> {
     pub name: &'s str,
     pub expr: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct SvelteEachBlock<'s> {
+    pub expr: &'s str,
+    pub binding: &'s str,
+    pub index: Option<&'s str>,
+    pub key: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
 }
 
 #[derive(Clone, Debug)]

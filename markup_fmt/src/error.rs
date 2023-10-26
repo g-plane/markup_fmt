@@ -1,4 +1,4 @@
-use std::{error::Error, fmt};
+use std::{borrow::Cow, error::Error, fmt};
 
 #[derive(Clone, Debug)]
 pub struct SyntaxError {
@@ -10,14 +10,17 @@ pub struct SyntaxError {
 pub enum SyntaxErrorKind {
     ExpectAttrName,
     ExpectAttrValue,
+    ExpectChar(char),
     ExpectCloseTag,
     ExpectComment,
     ExpectDoctype,
     ExpectElement,
     ExpectIdentifier,
+    ExpectKeyword(&'static str),
     ExpectSelfCloseTag,
     ExpectSvelteAttr,
     ExpectSvelteBlockEnd,
+    ExpectSvelteEachBlock,
     ExpectSvelteElseIfBlock,
     ExpectSvelteIfBlock,
     ExpectSvelteInterpolation,
@@ -30,25 +33,30 @@ pub enum SyntaxErrorKind {
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let reason = match self.kind {
-            SyntaxErrorKind::ExpectAttrName => "expect attribute name",
-            SyntaxErrorKind::ExpectAttrValue => "expect attribute value",
-            SyntaxErrorKind::ExpectCloseTag => "expect close tag",
-            SyntaxErrorKind::ExpectComment => "expect comment",
-            SyntaxErrorKind::ExpectDoctype => "expect HTML doctype",
-            SyntaxErrorKind::ExpectElement => "expect element",
-            SyntaxErrorKind::ExpectIdentifier => "expect identifier",
-            SyntaxErrorKind::ExpectSelfCloseTag => "expect self close tag",
-            SyntaxErrorKind::ExpectSvelteAttr => "expect Svelte attribute",
-            SyntaxErrorKind::ExpectSvelteBlockEnd => "expect end of Svelte block",
-            SyntaxErrorKind::ExpectSvelteElseIfBlock => "expect Svelte else if block",
-            SyntaxErrorKind::ExpectSvelteIfBlock => "expect Svelte if block",
-            SyntaxErrorKind::ExpectSvelteInterpolation => "expect Svelte interpolation",
-            SyntaxErrorKind::ExpectTagName => "expect tag name",
-            SyntaxErrorKind::ExpectTextNode => "expect text node",
-            SyntaxErrorKind::ExpectVueDirective => "expect Vue directive",
-            SyntaxErrorKind::ExpectVueInterpolation => "expect Vue interpolation",
-            SyntaxErrorKind::UnknownSvelteBlock => "unknown Svelte block",
+        let reason: Cow<_> = match self.kind {
+            SyntaxErrorKind::ExpectAttrName => "expect attribute name".into(),
+            SyntaxErrorKind::ExpectAttrValue => "expect attribute value".into(),
+            SyntaxErrorKind::ExpectChar(c) => format!("expect char '{c}'").into(),
+            SyntaxErrorKind::ExpectCloseTag => "expect close tag".into(),
+            SyntaxErrorKind::ExpectComment => "expect comment".into(),
+            SyntaxErrorKind::ExpectDoctype => "expect HTML doctype".into(),
+            SyntaxErrorKind::ExpectElement => "expect element".into(),
+            SyntaxErrorKind::ExpectIdentifier => "expect identifier".into(),
+            SyntaxErrorKind::ExpectKeyword(keyword) => {
+                format!("expect keyword '{}'", keyword).into()
+            }
+            SyntaxErrorKind::ExpectSelfCloseTag => "expect self close tag".into(),
+            SyntaxErrorKind::ExpectSvelteAttr => "expect Svelte attribute".into(),
+            SyntaxErrorKind::ExpectSvelteBlockEnd => "expect end of Svelte block".into(),
+            SyntaxErrorKind::ExpectSvelteEachBlock => "expect Svelte each block".into(),
+            SyntaxErrorKind::ExpectSvelteElseIfBlock => "expect Svelte else if block".into(),
+            SyntaxErrorKind::ExpectSvelteIfBlock => "expect Svelte if block".into(),
+            SyntaxErrorKind::ExpectSvelteInterpolation => "expect Svelte interpolation".into(),
+            SyntaxErrorKind::ExpectTagName => "expect tag name".into(),
+            SyntaxErrorKind::ExpectTextNode => "expect text node".into(),
+            SyntaxErrorKind::ExpectVueDirective => "expect Vue directive".into(),
+            SyntaxErrorKind::ExpectVueInterpolation => "expect Vue interpolation".into(),
+            SyntaxErrorKind::UnknownSvelteBlock => "unknown Svelte block".into(),
         };
 
         write!(f, "syntax error '{reason}' at position {}", self.pos)
