@@ -410,6 +410,10 @@ impl<'s> Parser<'s> {
                             self.try_parse(Parser::parse_svelte_each_block)
                                 .map(Node::SvelteEachBlock)
                         })
+                        .or_else(|_| {
+                            self.try_parse(Parser::parse_svelte_await_block)
+                                .map(Node::SvelteAwaitBlock)
+                        })
                         .map_err(|_| SyntaxError {
                             kind: SyntaxErrorKind::UnknownSvelteBlock,
                             pos,
@@ -514,6 +518,202 @@ impl<'s> Parser<'s> {
             name,
             expr: unsafe { self.source.get_unchecked(start..end) },
         })
+    }
+
+    fn parse_svelte_await_block(&mut self) -> PResult<SvelteAwaitBlock<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
+        };
+        self.skip_ws();
+
+        let expr = {
+            let start = self
+                .chars
+                .peek()
+                .map(|(i, _)| *i)
+                .unwrap_or(self.source.len());
+            let mut end = start;
+            let mut braces_stack = 0u8;
+            loop {
+                match self.chars.peek() {
+                    Some((i, c)) if c.is_ascii_whitespace() => {
+                        let i = *i;
+                        self.skip_ws();
+                        let mut chars = self.chars.clone();
+                        match chars.next() {
+                            Some((_, 't')) => {
+                                if chars
+                                    .next_if(|(_, c)| *c == 'h')
+                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
+                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'n'))
+                                    .is_some()
+                                {
+                                    end = i;
+                                    break;
+                                }
+                            }
+                            Some((_, 'c')) => {
+                                if chars
+                                    .next_if(|(_, c)| *c == 'a')
+                                    .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
+                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'c'))
+                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'h'))
+                                    .is_some()
+                                {
+                                    end = i;
+                                    break;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    Some((i, '{')) => {
+                        braces_stack += 1;
+                        end = *i;
+                        self.chars.next();
+                    }
+                    Some((i, '}')) => {
+                        end = *i;
+                        if braces_stack == 0 {
+                            break;
+                        } else {
+                            self.chars.next();
+                            braces_stack -= 1;
+                        }
+                    }
+                    Some((i, _)) => {
+                        end = *i;
+                        self.chars.next();
+                    }
+                    None => break,
+                }
+            }
+            unsafe { self.source.get_unchecked(start..end) }
+        };
+
+        self.skip_ws();
+        let then_binding = if self
+            .chars
+            .next_if(|(_, c)| *c == 't')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
+            .is_some()
+        {
+            self.skip_ws();
+            Some(self.parse_svelte_binding()?)
+        } else {
+            None
+        };
+
+        self.skip_ws();
+        let catch_binding = if self
+            .chars
+            .next_if(|(_, c)| *c == 'c')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .is_some()
+        {
+            self.skip_ws();
+            Some(self.parse_svelte_binding()?)
+        } else {
+            None
+        };
+
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '}').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}')));
+        }
+
+        let children = self.parse_svelte_block_children()?;
+
+        let then_block = if self
+            .try_parse(|parser| {
+                parser
+                    .chars
+                    .next_if(|(_, c)| *c == '{')
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == ':'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 't'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'h'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'n'))
+                    .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteThenBlock))
+            })
+            .is_ok()
+        {
+            self.skip_ws();
+            let binding = self.parse_svelte_binding()?;
+            if self.chars.next_if(|(_, c)| *c == '}').is_none() {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteThenBlock));
+            }
+            let children = self.parse_svelte_block_children()?;
+            Some(SvelteThenBlock { binding, children })
+        } else {
+            None
+        };
+
+        let catch_block = if self
+            .try_parse(|parser| {
+                parser
+                    .chars
+                    .next_if(|(_, c)| *c == '{')
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == ':'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'c'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'a'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 't'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'c'))
+                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'h'))
+                    .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteCatchBlock))
+            })
+            .is_ok()
+        {
+            self.skip_ws();
+            let binding = self.parse_svelte_binding()?;
+            if self.chars.next_if(|(_, c)| *c == '}').is_none() {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteCatchBlock));
+            }
+            let children = self.parse_svelte_block_children()?;
+            Some(SvelteCatchBlock { binding, children })
+        } else {
+            None
+        };
+
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
+            .is_some()
+        {
+            Ok(SvelteAwaitBlock {
+                expr,
+                then_binding,
+                catch_binding,
+                children,
+                then_block,
+                catch_block,
+            })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
+        }
     }
 
     fn parse_svelte_binding(&mut self) -> PResult<&'s str> {
