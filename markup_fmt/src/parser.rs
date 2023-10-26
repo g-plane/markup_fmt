@@ -414,10 +414,14 @@ impl<'s> Parser<'s> {
                             kind: SyntaxErrorKind::UnknownSvelteBlock,
                             pos,
                         }),
-                    _ if matches!(self.language, Language::Svelte) => self
-                        .parse_svelte_interpolation()
-                        .map(Node::SvelteInterpolation),
-                    _ => self.parse_text_node().map(Node::TextNode),
+                    _ => {
+                        if matches!(self.language, Language::Svelte) {
+                            self.parse_svelte_interpolation()
+                                .map(Node::SvelteInterpolation)
+                        } else {
+                            self.parse_text_node().map(Node::TextNode)
+                        }
+                    }
                 }
             }
             Some(..) => self.parse_text_node().map(Node::TextNode),
