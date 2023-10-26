@@ -2,6 +2,7 @@
 
 #[cfg(feature = "config_serde")]
 use serde::{Deserialize, Serialize};
+use std::num::NonZeroUsize;
 
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
@@ -89,7 +90,7 @@ pub struct LanguageOptions {
 
     pub closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty,
 
-    pub max_attrs_per_line: Option<usize>,
+    pub max_attrs_per_line: Option<NonZeroUsize>,
 
     #[cfg_attr(feature = "config_serde", serde(rename = "html.normal.selfClosing"))]
     pub html_normal_self_closing: Option<bool>,

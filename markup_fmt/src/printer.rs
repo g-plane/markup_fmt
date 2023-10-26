@@ -100,7 +100,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
             Doc::line_or_space()
                 .concat(itertools::intersperse(
-                    self.attrs.chunks(max).map(|chunk| {
+                    self.attrs.chunks(max.into()).map(|chunk| {
                         Doc::list(
                             itertools::intersperse(
                                 chunk.iter().map(|attr| attr.doc(ctx)),
