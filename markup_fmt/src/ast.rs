@@ -42,6 +42,7 @@ pub enum Node<'s> {
     SvelteEachBlock(SvelteEachBlock<'s>),
     SvelteIfBlock(SvelteIfBlock<'s>),
     SvelteInterpolation(SvelteInterpolation<'s>),
+    SvelteKeyBlock(SvelteKeyBlock<'s>),
     TextNode(TextNode<'s>),
     VueInterpolation(VueInterpolation<'s>),
 }
@@ -100,6 +101,12 @@ pub struct SvelteIfBlock<'s> {
 #[derive(Clone, Debug)]
 pub struct SvelteInterpolation<'s> {
     pub expr: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct SvelteKeyBlock<'s> {
+    pub expr: &'s str,
+    pub children: Vec<Node<'s>>,
 }
 
 #[derive(Clone, Debug)]

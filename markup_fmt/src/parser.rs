@@ -414,6 +414,10 @@ impl<'s> Parser<'s> {
                             self.try_parse(Parser::parse_svelte_await_block)
                                 .map(Node::SvelteAwaitBlock)
                         })
+                        .or_else(|_| {
+                            self.try_parse(Parser::parse_svelte_key_block)
+                                .map(Node::SvelteKeyBlock)
+                        })
                         .map_err(|_| SyntaxError {
                             kind: SyntaxErrorKind::UnknownSvelteBlock,
                             pos,
@@ -975,6 +979,39 @@ impl<'s> Parser<'s> {
         Ok(SvelteInterpolation {
             expr: self.parse_svelte_expr()?,
         })
+    }
+
+    fn parse_svelte_key_block(&mut self) -> PResult<SvelteKeyBlock<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'y'))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteKeyBlock));
+        };
+
+        let expr = self.parse_svelte_expr()?;
+        let children = self.parse_svelte_block_children()?;
+
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'y'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
+            .is_some()
+        {
+            Ok(SvelteKeyBlock { expr, children })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
+        }
     }
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
