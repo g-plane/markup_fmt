@@ -70,7 +70,7 @@ pub struct SvelteAwaitBlock<'s> {
 
 #[derive(Clone, Debug)]
 pub struct SvelteCatchBlock<'s> {
-    pub binding: &'s str,
+    pub binding: Option<&'s str>,
     pub children: Vec<Node<'s>>,
 }
 

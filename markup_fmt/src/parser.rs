@@ -687,7 +687,10 @@ impl<'s> Parser<'s> {
             .is_ok()
         {
             self.skip_ws();
-            let binding = self.parse_svelte_binding()?;
+            let binding = match self.chars.peek() {
+                Some((_, '}')) => None,
+                _ => Some(self.parse_svelte_binding()?),
+            };
             self.skip_ws();
             if self.chars.next_if(|(_, c)| *c == '}').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteCatchBlock));

@@ -525,10 +525,15 @@ impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        Doc::text("{:catch ")
-            .append(Doc::text(ctx.format_binding(self.binding)))
-            .append(Doc::text("}"))
-            .append(format_svelte_block_children(&self.children, ctx))
+        let children = format_svelte_block_children(&self.children, ctx);
+        if let Some(binding) = self.binding {
+            Doc::text("{:catch ")
+                .append(Doc::text(ctx.format_binding(binding)))
+                .append(Doc::text("}"))
+                .append(children)
+        } else {
+            Doc::text("{:catch}").append(children)
+        }
     }
 }
 
