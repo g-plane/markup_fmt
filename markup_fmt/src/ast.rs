@@ -39,7 +39,7 @@ pub enum Node<'s> {
     Doctype,
     Element(Element<'s>),
     SvelteAtTag(SvelteAtTag<'s>),
-    SvelteAwaitBlock(SvelteAwaitBlock<'s>),
+    SvelteAwaitBlock(Box<SvelteAwaitBlock<'s>>),
     SvelteEachBlock(SvelteEachBlock<'s>),
     SvelteIfBlock(SvelteIfBlock<'s>),
     SvelteInterpolation(SvelteInterpolation<'s>),

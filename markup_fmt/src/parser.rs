@@ -541,7 +541,7 @@ impl<'s> Parser<'s> {
         })
     }
 
-    fn parse_svelte_await_block(&mut self) -> PResult<SvelteAwaitBlock<'s>> {
+    fn parse_svelte_await_block(&mut self) -> PResult<Box<SvelteAwaitBlock<'s>>> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
@@ -730,14 +730,14 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
-            Ok(SvelteAwaitBlock {
+            Ok(Box::new(SvelteAwaitBlock {
                 expr,
                 then_binding,
                 catch_binding,
                 children,
                 then_block,
                 catch_block,
-            })
+            }))
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
         }
