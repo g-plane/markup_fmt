@@ -7,10 +7,45 @@ mod parser;
 mod printer;
 
 use crate::{config::FormatOptions, ctx::Ctx, parser::Parser, printer::DocGen};
-pub use crate::{error::FormatError, parser::Language};
+pub use crate::{error::*, parser::Language};
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::{IndentKind, PrintOptions};
 
+/// Format the given source code.
+///
+/// An external formatter is required for formatting code
+/// inside `<script>` or `<style>` tag.
+/// If you don't need to format them or you don't have available formatters,
+/// you can pass a closure that returns the original code. (see example below)
+///
+/// ```
+/// use markup_fmt::{format_text, Language};
+///
+/// let code = r#"
+/// <html>
+///    <head>
+///      <title>Example</title>
+///      <style>button { outline: none; }</style>
+///   </head>
+///   <body><script>const a = 1;</script></body>
+/// </html>"#;
+///
+/// let formatted = format_text(
+///     code,
+///     Language::Html,
+///     &Default::default(),
+///     |_, code, _| Ok::<_, ()>(code.into()),
+/// ).unwrap();
+/// ```
+///
+/// For the external formatter closure,
+///
+/// - The first argument is file path.
+/// Either script code or style code will be passed to this closure,
+/// so you need to check file extension with the file path.
+/// - The second argument is code that needs formatting.
+/// - The third argument is print width that you may need to pass to formatter
+/// if they support such option.
 pub fn format_text<E, F>(
     code: &str,
     language: Language,

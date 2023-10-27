@@ -1,6 +1,7 @@
 use std::{borrow::Cow, error::Error, fmt};
 
 #[derive(Clone, Debug)]
+/// Syntax error when parsing tags, not `<script>` or `<style>` tag.
 pub struct SyntaxError {
     pub kind: SyntaxErrorKind,
     pub pos: usize,
@@ -76,8 +77,12 @@ impl fmt::Display for SyntaxError {
 impl Error for SyntaxError {}
 
 #[derive(Debug)]
+/// The error type for markup_fmt.
 pub enum FormatError<E> {
+    /// Syntax error when parsing tags.
     Syntax(SyntaxError),
+    /// Error from external formatter, for example,
+    /// there're errors when formatting the `<script>` or `<style>` tag.
     External(E),
 }
 

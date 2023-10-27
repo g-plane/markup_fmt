@@ -15,6 +15,7 @@ use crate::{
 use std::{iter::Peekable, str::CharIndices};
 
 #[derive(Clone, Debug)]
+/// Supported languages.
 pub enum Language {
     Html,
     Vue,
