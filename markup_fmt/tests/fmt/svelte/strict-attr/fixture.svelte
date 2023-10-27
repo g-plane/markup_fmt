@@ -1,0 +1,28 @@
+<input value />
+<input value="string" />
+<input {value} />
+<input value={value} />
+<input value="{value}" />
+<input bind:value />
+<input bind:value={value} />
+<input bind:value="{value}" />
+<input class:value />
+<input class:value={value} />
+<input class:value="{value}" />
+<input style:value />
+<input style:value={value} />
+<input style:value="{value}" />
+
+<input value="{foo}" />
+<input value={foo} />
+<input bind:value="{foo}" />
+<input bind:value={foo} />
+<input class:value="{foo}" />
+<input class:value={foo} />
+<input style:value="{foo}" />
+<input style:value={foo} />
+
+<div />
+<div></div>
+<Component />
+<Component></Component>

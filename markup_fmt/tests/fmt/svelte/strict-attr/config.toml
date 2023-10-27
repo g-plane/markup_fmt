@@ -1,0 +1,5 @@
+[enabled]
+strictSvelteAttr = true
+
+[disabled]
+strictSvelteAttr = false

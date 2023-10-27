@@ -1,0 +1,9 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<input value />
+<input value="string" />
+<input {value} />
+<input {value} />
+<input {value} />
+

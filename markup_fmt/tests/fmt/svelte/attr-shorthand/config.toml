@@ -1,0 +1,7 @@
+[default]
+
+[enabled]
+svelteAttrShorthand = true
+
+[disabled]
+svelteAttrShorthand = false
