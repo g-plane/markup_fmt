@@ -120,6 +120,8 @@ pub struct LanguageOptions {
     pub default_v_slot_style: Option<VSlotStyle>,
     #[cfg_attr(feature = "config_serde", serde(rename = "named.vSlotStyle"))]
     pub named_v_slot_style: Option<VSlotStyle>,
+
+    pub strict_svelte_attr: bool,
 }
 
 #[derive(Clone, Debug, Default)]

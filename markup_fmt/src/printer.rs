@@ -352,7 +352,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         Cow::from(value)
                     }
                 }
-                Language::Svelte => {
+                Language::Svelte if !ctx.options.strict_svelte_attr => {
                     if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
                         return name
                             .append(Doc::text("={"))

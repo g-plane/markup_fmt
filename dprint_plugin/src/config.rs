@@ -296,6 +296,7 @@ pub(crate) fn resolve_config(
                     Default::default()
                 }
             }),
+            strict_svelte_attr: get_value(&mut config, "strictSvelteAttr", false, &mut diagnostics),
         },
     };
 
