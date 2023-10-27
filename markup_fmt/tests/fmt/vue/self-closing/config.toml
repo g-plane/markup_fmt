@@ -1,0 +1,8 @@
+[default]
+# self closing or not is untouched
+
+[component-enabled]
+"component.selfClosing" = true
+
+[component-disabled]
+"component.selfClosing" = false

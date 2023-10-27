@@ -1,0 +1,2 @@
+<MyComponent></MyComponent>
+<MyComponent />

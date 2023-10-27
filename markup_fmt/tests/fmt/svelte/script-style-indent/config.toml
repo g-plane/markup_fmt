@@ -1,0 +1,17 @@
+[script]
+scriptIndent = true
+
+[style]
+styleIndent = true
+
+[override-script]
+scriptIndent = false
+"svelte.scriptIndent" = true
+
+[override-style]
+styleIndent = false
+"svelte.styleIndent" = true
+
+[both]
+scriptIndent = true
+styleIndent = true
