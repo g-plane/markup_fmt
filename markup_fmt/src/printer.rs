@@ -452,10 +452,24 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
             if matches!(ctx.options.svelte_attr_shorthand, Some(true)) && name == expr_code {
                 expr
             } else {
-                Doc::text(name).append(Doc::text("=")).append(expr)
+                let name = Doc::text(name).append(Doc::text("="));
+                if ctx.options.strict_svelte_attr {
+                    name.append(Doc::text("\""))
+                        .append(expr)
+                        .append(Doc::text("\""))
+                } else {
+                    name.append(expr)
+                }
             }
         } else if matches!(ctx.options.svelte_attr_shorthand, Some(false)) {
-            Doc::text(expr_code).append(Doc::text("=")).append(expr)
+            let name = Doc::text(expr_code).append(Doc::text("="));
+            if ctx.options.strict_svelte_attr {
+                name.append(Doc::text("\""))
+                    .append(expr)
+                    .append(Doc::text("\""))
+            } else {
+                name.append(expr)
+            }
         } else {
             expr
         }
