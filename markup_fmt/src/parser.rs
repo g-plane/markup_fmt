@@ -491,14 +491,19 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {
-        let name = self.parse_attr_name()?;
-        self.skip_ws();
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '=')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
-        else {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttr));
+        let (name, start) = if let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '{') {
+            (None, start)
+        } else {
+            let name = self.parse_attr_name()?;
+            self.skip_ws();
+            let Some((start, _)) = self
+                .chars
+                .next_if(|(_, c)| *c == '=')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
+            else {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttr));
+            };
+            (Some(name), start)
         };
 
         let start = start + 1;

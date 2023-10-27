@@ -432,10 +432,14 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let name = Doc::text(self.name.to_owned());
-        name.append(Doc::text("={"))
+        let expr = Doc::text("{")
             .concat(reflow_raw_owned(&ctx.format_expr(self.expr)))
-            .append(Doc::text("}"))
+            .append(Doc::text("}"));
+        if let Some(name) = self.name {
+            Doc::text(name).append(Doc::text("=")).append(expr)
+        } else {
+            expr
+        }
     }
 }
 

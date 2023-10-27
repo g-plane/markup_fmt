@@ -54,7 +54,7 @@ pub struct Root<'s> {
 
 #[derive(Clone, Debug)]
 pub struct SvelteAttribute<'s> {
-    pub name: &'s str,
+    pub name: Option<&'s str>,
     pub expr: &'s str,
 }
 
