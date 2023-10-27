@@ -355,17 +355,19 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 Language::Svelte if !ctx.options.strict_svelte_attr => {
                     if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
                         let formatted_expr = ctx.format_expr(expr);
-                        return if matches!(ctx.options.svelte_attr_shorthand, Some(true))
-                            && self.name == formatted_expr
-                        {
-                            Doc::text("{")
-                                .concat(reflow_raw_owned(&formatted_expr))
-                                .append(Doc::text("}"))
+                        return if matches!(ctx.options.svelte_attr_shorthand, Some(true)) {
+                            match self.name.split_once(':') {
+                                Some((_, name)) if name == formatted_expr => Doc::text(self.name),
+                                None if self.name == formatted_expr => Doc::text("{")
+                                    .concat(reflow_raw_owned(&formatted_expr))
+                                    .append(Doc::text("}")),
+                                _ => Doc::text(self.name.to_owned())
+                                    .append(Doc::text("={"))
+                                    .concat(reflow_raw_owned(&formatted_expr))
+                                    .append(Doc::text("}")),
+                            }
                         } else {
-                            Doc::text(self.name.to_owned())
-                                .append(Doc::text("={"))
-                                .concat(reflow_raw_owned(&formatted_expr))
-                                .append(Doc::text("}"))
+                            name.append(Doc::text("=")).append(Doc::text(value))
                         };
                     } else {
                         Cow::from(value)
@@ -378,6 +380,14 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 &ctx.options.quotes,
                 self.name.eq_ignore_ascii_case("class"),
             ))
+        } else if matches!(ctx.language, Language::Svelte)
+            && matches!(ctx.options.svelte_attr_shorthand, Some(false))
+        {
+            if let Some((_, binding_name)) = self.name.split_once(':') {
+                name.append(Doc::text(format!("={{{binding_name}}}")))
+            } else {
+                name
+            }
         } else {
             name
         }
@@ -463,16 +473,21 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
             .concat(reflow_raw_owned(&expr_code))
             .append(Doc::text("}"));
         if let Some(name) = self.name {
-            if matches!(ctx.options.svelte_attr_shorthand, Some(true)) && name == expr_code {
-                expr
-            } else {
-                let name = Doc::text(name).append(Doc::text("="));
-                if ctx.options.strict_svelte_attr {
-                    name.append(Doc::text("\""))
-                        .append(expr)
-                        .append(Doc::text("\""))
-                } else {
-                    name.append(expr)
+            let shorthand_enabled = matches!(ctx.options.svelte_attr_shorthand, Some(true));
+            match name.split_once(':') {
+                Some((_, binding_name)) if shorthand_enabled && binding_name == expr_code => {
+                    Doc::text(name)
+                }
+                None if shorthand_enabled && name == expr_code => expr,
+                _ => {
+                    let name = Doc::text(name).append(Doc::text("="));
+                    if ctx.options.strict_svelte_attr {
+                        name.append(Doc::text("\""))
+                            .append(expr)
+                            .append(Doc::text("\""))
+                    } else {
+                        name.append(expr)
+                    }
                 }
             }
         } else if matches!(ctx.options.svelte_attr_shorthand, Some(false)) {

@@ -7,3 +7,19 @@ source: markup_fmt/tests/fmt.rs
 <input {value} />
 <input {value} />
 
+<input bind:value>
+<input bind:value>
+<input bind:value>
+<input class:active>
+<input class:active>
+<input class:active>
+<Widget let:foo></Widget>
+<Widget let:foo></Widget>
+<Widget let:foo></Widget>
+<div style:background="green"></div>
+<div style:background={color}></div>
+<div style:background="prefix{color}suffix"></div>
+<div style:background></div>
+<div style:background></div>
+<div style:background></div>
+

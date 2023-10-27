@@ -3,3 +3,19 @@
 <input {value} />
 <input value="{value}" />
 <input value={value} />
+
+<input bind:value>
+<input bind:value={value}>
+<input bind:value="{value}">
+<input class:active>
+<input class:active={active}>
+<input class:active="{active}">
+<Widget let:foo></Widget>
+<Widget let:foo={foo}></Widget>
+<Widget let:foo="{foo}"></Widget>
+<div style:background=green></div>
+<div style:background="{color}"></div>
+<div style:background='prefix{color}suffix'></div>
+<div style:background></div>
+<div style:background={background}></div>
+<div style:background="{background}"></div>
