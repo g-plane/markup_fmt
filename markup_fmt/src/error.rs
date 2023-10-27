@@ -18,6 +18,7 @@ pub enum SyntaxErrorKind {
     ExpectIdentifier,
     ExpectKeyword(&'static str),
     ExpectSelfCloseTag,
+    ExpectSvelteAtTag,
     ExpectSvelteAttr,
     ExpectSvelteAwaitBlock,
     ExpectSvelteBlockEnd,
@@ -50,6 +51,7 @@ impl fmt::Display for SyntaxError {
                 format!("expect keyword '{}'", keyword).into()
             }
             SyntaxErrorKind::ExpectSelfCloseTag => "expect self close tag".into(),
+            SyntaxErrorKind::ExpectSvelteAtTag => "expect Svelte `{@` tag".into(),
             SyntaxErrorKind::ExpectSvelteAttr => "expect Svelte attribute".into(),
             SyntaxErrorKind::ExpectSvelteAwaitBlock => "expect Svelte await block".into(),
             SyntaxErrorKind::ExpectSvelteBlockEnd => "expect end of Svelte block".into(),

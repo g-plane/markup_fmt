@@ -38,6 +38,7 @@ pub enum Node<'s> {
     Comment(Comment<'s>),
     Doctype,
     Element(Element<'s>),
+    SvelteAtTag(SvelteAtTag<'s>),
     SvelteAwaitBlock(SvelteAwaitBlock<'s>),
     SvelteEachBlock(SvelteEachBlock<'s>),
     SvelteIfBlock(SvelteIfBlock<'s>),
@@ -50,6 +51,12 @@ pub enum Node<'s> {
 #[derive(Clone, Debug)]
 pub struct Root<'s> {
     pub children: Vec<Node<'s>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct SvelteAtTag<'s> {
+    pub name: &'s str,
+    pub expr: &'s str,
 }
 
 #[derive(Clone, Debug)]

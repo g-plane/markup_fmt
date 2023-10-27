@@ -417,6 +417,7 @@ impl<'s> Parser<'s> {
                             kind: SyntaxErrorKind::UnknownSvelteBlock,
                             pos,
                         }),
+                    Some((_, '@')) => self.parse_svelte_at_tag().map(Node::SvelteAtTag),
                     _ => {
                         if matches!(self.language, Language::Svelte) {
                             self.parse_svelte_interpolation()
@@ -488,6 +489,21 @@ impl<'s> Parser<'s> {
         }
 
         Ok(Root { children })
+    }
+
+    fn parse_svelte_at_tag(&mut self) -> PResult<SvelteAtTag<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '@'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAtTag));
+        };
+        let name = self.parse_identifier()?;
+        self.skip_ws();
+        let expr = self.parse_svelte_expr()?;
+        Ok(SvelteAtTag { name, expr })
     }
 
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {

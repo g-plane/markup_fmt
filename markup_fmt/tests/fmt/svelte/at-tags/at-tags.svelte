@@ -1,0 +1,24 @@
+{#each [1, 2] as foo}
+    {@const bar =
+        foo}
+    {foo}{bar}
+{/each}
+
+{#await aPromise then result}
+    {@const bar = result ? 'some super long text which will force the ternary to break' : 'etc etc'}
+{/await}
+
+<div class="blog-post">
+	<h1>{post.title}</h1>
+	{@html post.content}
+</div>
+
+<!-- Compiles -->
+{@debug user}
+{@debug user1, user2, user3}
+
+<!-- WON'T compile -->
+{@debug user.firstname}
+{@debug myArray[0]}
+{@debug !isReady}
+{@debug typeof user === 'object'}

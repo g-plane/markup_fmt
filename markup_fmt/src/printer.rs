@@ -393,6 +393,7 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::Comment(comment) => comment.doc(ctx),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
             Node::Element(element) => element.doc(ctx),
+            Node::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx),
             Node::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx),
             Node::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx),
             Node::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx),
@@ -436,6 +437,19 @@ impl<'s> DocGen<'s> for Root<'s> {
             )
             .append(Doc::hard_line())
         }
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteAtTag<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{@")
+            .append(Doc::text(self.name))
+            .append(Doc::space())
+            .append(Doc::text(ctx.format_expr(self.expr)))
+            .append(Doc::text("}"))
     }
 }
 
