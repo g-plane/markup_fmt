@@ -354,10 +354,19 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 }
                 Language::Svelte if !ctx.options.strict_svelte_attr => {
                     if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                        return name
-                            .append(Doc::text("={"))
-                            .append(Doc::text(expr))
-                            .append(Doc::text("}"));
+                        let formatted_expr = ctx.format_expr(expr);
+                        return if matches!(ctx.options.svelte_attr_shorthand, Some(true))
+                            && self.name == formatted_expr
+                        {
+                            Doc::text("{")
+                                .concat(reflow_raw_owned(&formatted_expr))
+                                .append(Doc::text("}"))
+                        } else {
+                            Doc::text(self.name.to_owned())
+                                .append(Doc::text("={"))
+                                .concat(reflow_raw_owned(&formatted_expr))
+                                .append(Doc::text("}"))
+                        };
                     } else {
                         Cow::from(value)
                     }
