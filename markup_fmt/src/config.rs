@@ -122,6 +122,7 @@ pub struct LanguageOptions {
     pub named_v_slot_style: Option<VSlotStyle>,
 
     pub strict_svelte_attr: bool,
+    pub svelte_attr_shorthand: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default)]

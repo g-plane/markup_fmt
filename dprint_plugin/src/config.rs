@@ -297,6 +297,11 @@ pub(crate) fn resolve_config(
                 }
             }),
             strict_svelte_attr: get_value(&mut config, "strictSvelteAttr", false, &mut diagnostics),
+            svelte_attr_shorthand: get_nullable_value(
+                &mut config,
+                "svelteAttrShorthand",
+                &mut diagnostics,
+            ),
         },
     };
 

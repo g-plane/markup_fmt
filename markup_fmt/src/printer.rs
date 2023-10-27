@@ -432,11 +432,18 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
+        let expr_code = ctx.format_expr(self.expr);
         let expr = Doc::text("{")
-            .concat(reflow_raw_owned(&ctx.format_expr(self.expr)))
+            .concat(reflow_raw_owned(&expr_code))
             .append(Doc::text("}"));
         if let Some(name) = self.name {
-            Doc::text(name).append(Doc::text("=")).append(expr)
+            if matches!(ctx.options.svelte_attr_shorthand, Some(true)) && name == expr_code {
+                expr
+            } else {
+                Doc::text(name).append(Doc::text("=")).append(expr)
+            }
+        } else if matches!(ctx.options.svelte_attr_shorthand, Some(false)) {
+            Doc::text(expr_code).append(Doc::text("=")).append(expr)
         } else {
             expr
         }
