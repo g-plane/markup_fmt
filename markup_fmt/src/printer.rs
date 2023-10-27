@@ -373,8 +373,11 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 }
                 _ => Cow::from(value),
             };
-            name.append(Doc::text("="))
-                .append(format_attr_value(value, &ctx.options.quotes))
+            name.append(Doc::text("=")).append(format_attr_value(
+                value,
+                &ctx.options.quotes,
+                self.name.eq_ignore_ascii_case("class"),
+            ))
         } else {
             name
         }
@@ -771,7 +774,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             } else {
                 ctx.format_expr(value)
             };
-            docs.push(format_attr_value(value, &ctx.options.quotes));
+            docs.push(format_attr_value(value, &ctx.options.quotes, false));
         }
 
         Doc::list(docs)
@@ -880,7 +883,11 @@ fn has_two_more_non_text_children(children: &[Node]) -> bool {
         > 1
 }
 
-fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
+fn format_attr_value(
+    value: impl AsRef<str>,
+    quotes: &Quotes,
+    split_whitespaces: bool,
+) -> Doc<'static> {
     let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::text("'")
@@ -891,7 +898,19 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'static> {
     } else {
         Doc::text("'")
     };
-    quote.clone().concat(reflow_raw_owned(value)).append(quote)
+    if split_whitespaces {
+        quote
+            .clone()
+            .concat(itertools::intersperse(
+                value
+                    .split_ascii_whitespace()
+                    .map(|s| Doc::text(s.to_owned())),
+                Doc::soft_line(),
+            ))
+            .append(quote)
+    } else {
+        quote.clone().concat(reflow_raw_owned(value)).append(quote)
+    }
 }
 
 fn format_children_with_inserting_linebreak<'s, E, F>(
