@@ -1,0 +1,5 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<div>{count}</div>
+
