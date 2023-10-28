@@ -1,0 +1,11 @@
+[default]
+
+[enabled]
+svelteDirectiveShorthand = true
+
+[disabled]
+svelteDirectiveShorthand = false
+
+[strict]
+svelteDirectiveShorthand = false
+strictSvelteAttr = true

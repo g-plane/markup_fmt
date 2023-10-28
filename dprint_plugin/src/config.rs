@@ -302,6 +302,11 @@ pub(crate) fn resolve_config(
                 "svelteAttrShorthand",
                 &mut diagnostics,
             ),
+            svelte_directive_shorthand: get_nullable_value(
+                &mut config,
+                "svelteDirectiveShorthand",
+                &mut diagnostics,
+            ),
         },
     };
 

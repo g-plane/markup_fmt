@@ -123,6 +123,7 @@ pub struct LanguageOptions {
 
     pub strict_svelte_attr: bool,
     pub svelte_attr_shorthand: Option<bool>,
+    pub svelte_directive_shorthand: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default)]
