@@ -9,3 +9,8 @@ svelteDirectiveShorthand = false
 [strict]
 svelteDirectiveShorthand = false
 strictSvelteAttr = true
+
+[single-quote]
+svelteDirectiveShorthand = false
+strictSvelteAttr = true
+quotes = "single"
