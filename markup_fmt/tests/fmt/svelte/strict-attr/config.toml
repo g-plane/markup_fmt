@@ -3,3 +3,7 @@ strictSvelteAttr = true
 
 [disabled]
 strictSvelteAttr = false
+
+[single-quote]
+strictSvelteAttr = true
+quotes = "single"
