@@ -72,6 +72,31 @@
       "enum": ["always", "fit", "never"],
       "default": "fit"
     },
+    "maxAttrsPerLine": {
+      "type": ["integer", "null"],
+      "default": null,
+      "minimum": 1
+    },
+    "html.normal.selfClosing": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "html.void.selfClosing": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "component.selfClosing": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "svg.selfClosing": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "mathml.selfClosing": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
     "whitespaceSensitivity": {
       "type": "string",
       "enum": ["css", "strict", "ignore"],
@@ -95,6 +120,38 @@
     "vForDelimiterStyle": {
       "type": ["string", "null"],
       "enum": ["in", "of", null],
+      "default": null
+    },
+    "vSlotStyle": {
+      "type": ["string", "null"],
+      "enum": ["short", "long", "vSlot", null],
+      "default": null
+    },
+    "component.vSlotStyle": {
+      "type": ["string", "null"],
+      "enum": ["short", "long", "vSlot", null],
+      "default": null
+    },
+    "default.vSlotStyle": {
+      "type": ["string", "null"],
+      "enum": ["short", "long", "vSlot", null],
+      "default": null
+    },
+    "named.vSlotStyle": {
+      "type": ["string", "null"],
+      "enum": ["short", "long", "vSlot", null],
+      "default": null
+    },
+    "strictSvelteAttr": {
+      "type": "boolean",
+      "default": false
+    },
+    "svelteAttrShorthand": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "svelteDirectiveShorthand": {
+      "type": ["boolean", "null"],
       "default": null
     }
   }
