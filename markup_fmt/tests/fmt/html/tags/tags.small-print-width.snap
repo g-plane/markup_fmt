@@ -510,19 +510,13 @@ source: markup_fmt/tests/fmt.rs
 <span
 >
   <i
-    class="fa
-    fa-refresh
-    fa-spin"
+    class="fa fa-refresh fa-spin"
   />
   <i
-    class="fa
-    fa-refresh
-    fa-spin"
+    class="fa fa-refresh fa-spin"
   />
   <i
-    class="fa
-    fa-refresh
-    fa-spin"
+    class="fa fa-refresh fa-spin"
   />
 </span
 >

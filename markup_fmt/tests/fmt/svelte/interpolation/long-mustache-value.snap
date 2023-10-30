@@ -3,8 +3,7 @@ source: markup_fmt/tests/fmt.rs
 ---
 <input
   type="password"
-  class="attributes are not broken up by default which is the prettier behavior
-  but {'breakable' + 'mustache tags'} can be broken up"
+  class="attributes are not broken up by default which is the prettier behavior but {'breakable' + 'mustache tags'} can be broken up"
 />
 
 <p>

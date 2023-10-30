@@ -5,8 +5,7 @@ source: markup_fmt/tests/fmt.rs
   <div class="news__tabs">
     <h1 class="news__tab-wrapper news__head-item">
       <a
-        class="home-link home-link_blue_yes news__tab news__tab_selected_yes
-        mix-tabber__tab mix-tabber__tab_selected_yes"
+        class="home-link home-link_blue_yes news__tab news__tab_selected_yes mix-tabber__tab mix-tabber__tab_selected_yes"
         tabindex="0"
         aria-selected="true"
         aria-controls="news_panel_news"

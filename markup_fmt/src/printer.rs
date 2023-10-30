@@ -4,6 +4,7 @@ use crate::{
     ctx::{Ctx, NestWithCtx},
     helpers, Language,
 };
+use itertools::Itertools;
 use std::{borrow::Cow, mem, path::Path};
 use tiny_pretty::Doc;
 
@@ -970,12 +971,7 @@ fn format_attr_value(
     if split_whitespaces {
         quote
             .clone()
-            .concat(itertools::intersperse(
-                value
-                    .split_ascii_whitespace()
-                    .map(|s| Doc::text(s.to_owned())),
-                Doc::soft_line(),
-            ))
+            .append(Doc::text(value.split_ascii_whitespace().join(" ")))
             .append(quote)
     } else {
         quote.clone().concat(reflow_raw_owned(value)).append(quote)
