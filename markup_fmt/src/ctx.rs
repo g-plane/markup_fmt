@@ -208,6 +208,8 @@ impl NestWithCtx for Doc<'_> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         ctx.indent_level += ctx.indent_width;
-        self.nest(ctx.indent_width)
+        let doc = self.nest(ctx.indent_width);
+        ctx.indent_level -= ctx.indent_width;
+        doc
     }
 }
