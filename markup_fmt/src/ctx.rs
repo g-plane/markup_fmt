@@ -97,7 +97,9 @@ where
             let formatted = self.format_with_external_formatter(
                 Path::new("expr.ts"),
                 &wrapped,
-                self.print_width - self.indent_level - 2, // this is technically wrong, just workaround
+                self.print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(2), // this is technically wrong, just workaround
             );
             let formatted = formatted.trim().trim_matches(';');
             formatted
@@ -116,7 +118,9 @@ where
             let formatted = self.format_with_external_formatter(
                 Path::new("binding.ts"),
                 &wrapped,
-                self.print_width - self.indent_level - 2, // this is technically wrong, just workaround
+                self.print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(2), // this is technically wrong, just workaround
             );
             let formatted = formatted.trim().trim_matches(';');
             formatted
@@ -135,7 +139,9 @@ where
             let formatted = self.format_with_external_formatter(
                 Path::new("type_params.ts"),
                 &wrapped,
-                self.print_width - self.indent_level - TYPE_PARAMS_INDENT, // this is technically wrong, just workaround
+                self.print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
             );
             let formatted = formatted.trim().trim_matches(';');
             formatted
