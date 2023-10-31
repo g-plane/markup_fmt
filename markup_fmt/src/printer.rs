@@ -772,13 +772,15 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 }
             }
             "on" => {
-                docs.push(if let Some(VOnStyle::Short) = ctx.options.v_on_style {
-                    Doc::text("@")
-                } else {
-                    Doc::text("v-on:")
-                });
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(if let Some(VOnStyle::Short) = ctx.options.v_on_style {
+                        Doc::text("@")
+                    } else {
+                        Doc::text("v-on:")
+                    });
                     docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
+                } else {
+                    docs.push(Doc::text("v-on"));
                 }
             }
             "#" => {
