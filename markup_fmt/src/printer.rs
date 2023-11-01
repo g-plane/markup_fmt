@@ -223,7 +223,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         })
                         .unwrap_or("js"),
                 );
-                let doc = Doc::hard_line().concat(reflow_raw_owned(formatted.trim()));
+                let doc = Doc::hard_line().concat(reflow_raw_with_indent(formatted.trim()));
                 docs.push(
                     if ctx.script_indent() {
                         doc.nest_with_ctx(ctx)
@@ -249,7 +249,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         })
                         .unwrap_or("css"),
                 );
-                let doc = Doc::hard_line().concat(reflow_raw_owned(formatted.trim()));
+                let doc = Doc::hard_line().concat(reflow_raw_with_indent(formatted.trim()));
                 docs.push(
                     if ctx.style_indent() {
                         doc.nest_with_ctx(ctx)
@@ -893,6 +893,7 @@ fn reflow_raw_with_indent(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     let indent = s
         .lines()
         .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
+        .filter(|line| !line.trim().is_empty())
         .map(|line| {
             line.as_bytes()
                 .iter()
@@ -901,18 +902,25 @@ fn reflow_raw_with_indent(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
         })
         .min()
         .unwrap_or_default();
-    itertools::intersperse(
-        s.split('\n').map(move |s| {
-            let s = s.strip_suffix('\r').unwrap_or(s);
-            let s = if s.starts_with([' ', '\t']) {
-                &s[indent..]
+    s.split('\n').enumerate().flat_map(move |(i, s)| {
+        let s = s.strip_suffix('\r').unwrap_or(s);
+        let s = if s.starts_with([' ', '\t']) {
+            &s[indent..]
+        } else {
+            s
+        };
+        [
+            if i == 0 {
+                Doc::nil()
+            } else if s.trim().is_empty() {
+                Doc::empty_line()
             } else {
-                s
-            };
-            Doc::text(s.to_owned())
-        }),
-        Doc::hard_line(),
-    )
+                Doc::hard_line()
+            },
+            Doc::text(s.to_owned()),
+        ]
+        .into_iter()
+    })
 }
 
 fn is_all_ascii_whitespace(s: &str) -> bool {

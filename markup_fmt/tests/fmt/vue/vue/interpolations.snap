@@ -12,10 +12,10 @@ source: markup_fmt/tests/fmt.rs
       some_variable
     }} Eum quia nihil nulla esse. Dolorem asperiores vero est error {{
       preserve
-      
-                          invalid
-                          
-                          interpolation
+
+      invalid
+
+      interpolation
     }} reprehenderit voluptates minus {{ console.log(  short_interpolation ) }}
     nemo.
   </div>
