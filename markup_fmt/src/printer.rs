@@ -826,11 +826,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         } else {
                             "in"
                         };
-                    format!(
-                        "{} {delimiter} {}",
-                        ctx.format_expr(left),
-                        ctx.format_expr(right)
-                    )
+                    format_v_for(left, delimiter, right, ctx)
                 } else if let Some((left, right)) = value.split_once(" of ") {
                     let delimiter =
                         if let Some(VForDelimiterStyle::In) = ctx.options.v_for_delimiter_style {
@@ -838,11 +834,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         } else {
                             "of"
                         };
-                    format!(
-                        "{} {delimiter} {}",
-                        ctx.format_expr(left),
-                        ctx.format_expr(right)
-                    )
+                    format_v_for(left, delimiter, right, ctx)
                 } else {
                     ctx.format_expr(value)
                 }
@@ -1195,6 +1187,24 @@ fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
         }
     } else {
         Doc::nil()
+    }
+}
+
+fn format_v_for<'s, E, F>(
+    left: &str,
+    delimiter: &'static str,
+    right: &str,
+    ctx: &mut Ctx<'_, 's, E, F>,
+) -> String
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    let left = ctx.format_expr(left);
+    let right = ctx.format_expr(right);
+    if left.contains(',') && !left.contains('(') {
+        format!("({left}) {delimiter} {right}")
+    } else {
+        format!("{left} {delimiter} {right}")
     }
 }
 
