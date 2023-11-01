@@ -37,7 +37,7 @@ After adding the dprint plugins, update your `dprint.json` and add configuration
   // ...
   "plugins": [
     // ... other plugins URL
-    "https://plugins.dprint.dev/g-plane/markup_fmt-v0.0.0.wasm"
+    "https://plugins.dprint.dev/g-plane/markup_fmt-v0.1.0.wasm"
   ],
   "markup": { // <-- the key name here is "markup", not "markup_fmt"
     // config comes here
