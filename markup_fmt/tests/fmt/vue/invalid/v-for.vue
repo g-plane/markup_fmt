@@ -3,7 +3,6 @@
     <div
       v-for="    _       in          "
       v-for="            in _        "
-      v-for="            in          "
       v-for="    _,      in a        "
       v-for="    ,_      in a        "
 
