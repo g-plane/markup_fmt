@@ -6,5 +6,6 @@ source: markup_fmt/tests/fmt.rs
   <button @click.prevent=""></button>
   <button @click=""></button>
   <button @click.prevent=""></button>
+  <button v-on></button>
 </template>
 
