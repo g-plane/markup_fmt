@@ -1,3 +1,4 @@
 **/*.html linguist-detectable=false
 **/*.vue linguist-detectable=false
 **/*.svelte linguist-detectable=false
+**/*.jinja linguist-detectable=false
