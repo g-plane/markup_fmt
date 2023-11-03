@@ -6,7 +6,7 @@ use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration, ResolveConfigurationResult},
     plugins::{FileMatchingInfo, PluginInfo, SyncPluginHandler, SyncPluginInfo},
 };
-use markup_fmt::{config::FormatOptions, format_text, FormatError, Language};
+use markup_fmt::{config::FormatOptions, detect_language, format_text, FormatError};
 use std::path::Path;
 
 mod config;
@@ -34,7 +34,10 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 ),
             },
             file_matching: FileMatchingInfo {
-                file_extensions: vec!["html".into(), "vue".into(), "svelte".into()],
+                file_extensions: ["html", "vue", "svelte", "jinja", "jinja2", "twig"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
                 file_names: vec![],
             },
         }
@@ -59,16 +62,11 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         config: &FormatOptions,
         mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<Option<String>>,
     ) -> Result<Option<String>> {
-        let language = match file_path.extension().and_then(|s| s.to_str()) {
-            Some(ext) if ext.eq_ignore_ascii_case("html") => Language::Html,
-            Some(ext) if ext.eq_ignore_ascii_case("vue") => Language::Vue,
-            Some(ext) if ext.eq_ignore_ascii_case("svelte") => Language::Svelte,
-            _ => {
-                return Err(anyhow::anyhow!(
-                    "unknown file extension of file: {}",
-                    file_path.display()
-                ));
-            }
+        let Some(language) = detect_language(file_path) else {
+            return Err(anyhow::anyhow!(
+                "unknown file extension of file: {}",
+                file_path.display()
+            ));
         };
 
         let format_result = format_text(file_text, language, config, |path, code, print_width| {

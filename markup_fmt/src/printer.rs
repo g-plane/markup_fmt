@@ -62,7 +62,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             .unwrap_or(self.tag_name);
         ctx.current_tag_name = Some(tag_name);
         ctx.in_svg = tag_name.eq_ignore_ascii_case("svg");
-        let should_lower_cased = matches!(ctx.language, Language::Html)
+        let should_lower_cased = matches!(ctx.language, Language::Html | Language::Jinja)
             && css_dataset::tags::STANDARD_HTML_TAGS
                 .iter()
                 .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
@@ -298,7 +298,10 @@ impl<'s> DocGen<'s> for Element<'s> {
             if self.children.iter().all(|child| {
                 matches!(
                     child,
-                    Node::VueInterpolation(..) | Node::SvelteInterpolation(..) | Node::Comment(..)
+                    Node::VueInterpolation(..)
+                        | Node::SvelteInterpolation(..)
+                        | Node::Comment(..)
+                        | Node::JinjaInterpolation(..)
                 )
             }) {
                 // This lets it format like this:
@@ -330,6 +333,76 @@ impl<'s> DocGen<'s> for Element<'s> {
         ctx.is_root = is_root;
 
         Doc::list(docs).group()
+    }
+}
+
+impl<'s> DocGen<'s> for JinjaBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::list(
+            self.body
+                .iter()
+                .map(|child| match child {
+                    JinjaTagOrChildren::Tag(tag) => tag.doc(ctx),
+                    JinjaTagOrChildren::Children(children) => {
+                        format_control_structure_block_children(children, ctx)
+                    }
+                })
+                .collect(),
+        )
+    }
+}
+
+impl<'s> DocGen<'s> for JinjaComment<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        if ctx.options.format_comments {
+            Doc::text("{#")
+                .append(
+                    Doc::line_or_space()
+                        .concat(reflow(self.raw.trim()))
+                        .nest_with_ctx(ctx),
+                )
+                .append(Doc::line_or_space())
+                .append(Doc::text("#}"))
+                .group()
+        } else {
+            Doc::text("{#")
+                .concat(reflow_raw(self.raw))
+                .append(Doc::text("#}"))
+        }
+    }
+}
+
+impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{")
+            .append(
+                Doc::line_or_space()
+                    .append(Doc::text(self.expr.trim()))
+                    .nest(ctx.indent_width),
+            )
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for JinjaTag<'s> {
+    fn doc<E, F>(&self, _: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{%")
+            .append(Doc::text(self.content))
+            .append(Doc::text("%}"))
     }
 }
 
@@ -416,6 +489,10 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::Comment(comment) => comment.doc(ctx),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
             Node::Element(element) => element.doc(ctx),
+            Node::JinjaBlock(jinja_block) => jinja_block.doc(ctx),
+            Node::JinjaComment(jinja_comment) => jinja_comment.doc(ctx),
+            Node::JinjaInterpolation(jinja_interpolation) => jinja_interpolation.doc(ctx),
+            Node::JinjaTag(jinja_tag) => jinja_tag.doc(ctx),
             Node::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx),
             Node::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx),
             Node::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx),
@@ -559,7 +636,7 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
                 .append(Doc::text("}"))
                 .group(),
         );
-        docs.push(format_svelte_block_children(&self.children, ctx));
+        docs.push(format_control_structure_block_children(&self.children, ctx));
 
         if let Some(then_block) = &self.then_block {
             docs.push(then_block.doc(ctx));
@@ -579,7 +656,7 @@ impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let children = format_svelte_block_children(&self.children, ctx);
+        let children = format_control_structure_block_children(&self.children, ctx);
         if let Some(binding) = self.binding {
             Doc::text("{:catch ")
                 .append(Doc::text(ctx.format_binding(binding)))
@@ -624,11 +701,11 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
                 .append(Doc::text("}"))
                 .group(),
         );
-        docs.push(format_svelte_block_children(&self.children, ctx));
+        docs.push(format_control_structure_block_children(&self.children, ctx));
 
         if let Some(children) = &self.else_children {
             docs.push(Doc::text("{:else}"));
-            docs.push(format_svelte_block_children(children, ctx));
+            docs.push(format_control_structure_block_children(children, ctx));
         }
 
         docs.push(Doc::text("{/each}"));
@@ -644,7 +721,7 @@ impl<'s> DocGen<'s> for SvelteElseIfBlock<'s> {
         Doc::text("{:else if ")
             .append(Doc::text(ctx.format_expr(self.expr)))
             .append(Doc::text("}"))
-            .append(format_svelte_block_children(&self.children, ctx))
+            .append(format_control_structure_block_children(&self.children, ctx))
     }
 }
 
@@ -657,13 +734,13 @@ impl<'s> DocGen<'s> for SvelteIfBlock<'s> {
         docs.push(Doc::text("{#if "));
         docs.push(Doc::text(ctx.format_expr(self.expr)));
         docs.push(Doc::text("}"));
-        docs.push(format_svelte_block_children(&self.children, ctx));
+        docs.push(format_control_structure_block_children(&self.children, ctx));
 
         docs.extend(self.else_if_blocks.iter().map(|block| block.doc(ctx)));
 
         if let Some(children) = &self.else_children {
             docs.push(Doc::text("{:else}"));
-            docs.push(format_svelte_block_children(children, ctx));
+            docs.push(format_control_structure_block_children(children, ctx));
         }
 
         docs.push(Doc::text("{/if}"));
@@ -696,7 +773,7 @@ impl<'s> DocGen<'s> for SvelteKeyBlock<'s> {
         Doc::text("{#key ")
             .append(Doc::text(ctx.format_expr(self.expr)))
             .append(Doc::text("}"))
-            .append(format_svelte_block_children(&self.children, ctx))
+            .append(format_control_structure_block_children(&self.children, ctx))
             .append(Doc::text("{/key}"))
     }
 }
@@ -709,7 +786,7 @@ impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
         Doc::text("{:then ")
             .append(Doc::text(ctx.format_binding(self.binding)))
             .append(Doc::text("}"))
-            .append(format_svelte_block_children(&self.children, ctx))
+            .append(format_control_structure_block_children(&self.children, ctx))
     }
 }
 
@@ -1075,7 +1152,8 @@ where
                         match child {
                             Node::TextNode(..)
                             | Node::VueInterpolation(..)
-                            | Node::SvelteInterpolation(..) => true,
+                            | Node::SvelteInterpolation(..)
+                            | Node::JinjaInterpolation(..) => true,
                             Node::Element(element) => {
                                 element.tag_name.eq_ignore_ascii_case("label")
                             }
@@ -1216,7 +1294,7 @@ where
     }
 }
 
-fn format_svelte_block_children<'s, E, F>(
+fn format_control_structure_block_children<'s, E, F>(
     children: &[Node<'s>],
     ctx: &mut Ctx<'_, 's, E, F>,
 ) -> Doc<'s>

@@ -1,17 +1,12 @@
 use insta::{assert_snapshot, glob, Settings};
-use markup_fmt::{config::FormatOptions, format_text, Language};
+use markup_fmt::{config::FormatOptions, detect_language, format_text, Language};
 use std::{collections::HashMap, fs, path::Path};
 
 #[test]
 fn fmt_snapshot() {
-    glob!("fmt/**/*.{html,vue,svelte}", |path| {
+    glob!("fmt/**/*.{html,vue,svelte,jinja}", |path| {
         let input = fs::read_to_string(path).unwrap();
-        let language = match path.extension().unwrap().to_str().unwrap() {
-            "html" => Language::Html,
-            "vue" => Language::Vue,
-            "svelte" => Language::Svelte,
-            _ => unreachable!("unknown file extension"),
-        };
+        let language = detect_language(path).unwrap();
 
         let options = fs::read_to_string(path.with_file_name("config.toml"))
             .map(|config_file| {

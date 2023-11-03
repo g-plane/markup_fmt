@@ -1,0 +1,58 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{% if true %}
+  <span>text</span>
+{% endif %}
+
+<dl>
+  {% for key, value in my_dict | dictsort %}
+    <dt>{{ key|e }}</dt>
+    <dd>{{ value|e }}</dd>
+  {% endfor %}
+</dl>
+
+<ul>
+  {% for user in users %}
+    <li>{{ user.username|e }}</li>
+  {% else %}
+    <li><em>no users found</em></li>
+  {% endfor %}
+</ul>
+
+{% if users %}
+  <ul>
+    {% for user in users %}
+      <li>{{ user.username|e }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if kenny.sick %}
+  Kenny is sick.
+{% elif kenny.dead %}
+  You killed Kenny! You bastard!!!
+{% else %}
+  Kenny looks okay --- so far
+{% endif %}
+
+{% if product.stock > 10 %}
+  Available
+{% elseif product.stock > 0 %}
+  Only {{ product.stock }} left!
+{% else %}
+  Sold-out!
+{% endif %}
+
+{% macro input(name, value='', type='text', size=20) -%}
+  <input
+    type="{{ type }}"
+    name="{{ name }}"
+    value="{{
+        value|e }}"
+    size="{{ size }}"
+  >
+{%- endmacro %}
+
+<title>{% block title %}{% endblock %}</title>
+

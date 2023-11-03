@@ -17,7 +17,10 @@ pub enum SyntaxErrorKind {
     ExpectDoctype,
     ExpectElement,
     ExpectIdentifier,
+    ExpectJinjaBlockEnd,
+    ExpectJinjaTag,
     ExpectKeyword(&'static str),
+    ExpectMustacheInterpolation,
     ExpectSelfCloseTag,
     ExpectSvelteAtTag,
     ExpectSvelteAttr,
@@ -33,7 +36,6 @@ pub enum SyntaxErrorKind {
     ExpectTagName,
     ExpectTextNode,
     ExpectVueDirective,
-    ExpectVueInterpolation,
     UnknownSvelteBlock,
 }
 
@@ -48,8 +50,13 @@ impl fmt::Display for SyntaxError {
             SyntaxErrorKind::ExpectDoctype => "expect HTML doctype".into(),
             SyntaxErrorKind::ExpectElement => "expect element".into(),
             SyntaxErrorKind::ExpectIdentifier => "expect identifier".into(),
+            SyntaxErrorKind::ExpectJinjaBlockEnd => "expect Jinja block end".into(),
+            SyntaxErrorKind::ExpectJinjaTag => "expect Jinja tag".into(),
             SyntaxErrorKind::ExpectKeyword(keyword) => {
                 format!("expect keyword '{}'", keyword).into()
+            }
+            SyntaxErrorKind::ExpectMustacheInterpolation => {
+                "expect mustache-like interpolation".into()
             }
             SyntaxErrorKind::ExpectSelfCloseTag => "expect self close tag".into(),
             SyntaxErrorKind::ExpectSvelteAtTag => "expect Svelte `{@` tag".into(),
@@ -66,7 +73,6 @@ impl fmt::Display for SyntaxError {
             SyntaxErrorKind::ExpectTagName => "expect tag name".into(),
             SyntaxErrorKind::ExpectTextNode => "expect text node".into(),
             SyntaxErrorKind::ExpectVueDirective => "expect Vue directive".into(),
-            SyntaxErrorKind::ExpectVueInterpolation => "expect Vue interpolation".into(),
             SyntaxErrorKind::UnknownSvelteBlock => "unknown Svelte block".into(),
         };
 

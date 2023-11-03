@@ -1,0 +1,5 @@
+[enabled]
+formatComments = true
+
+[disabled]
+formatComments = false

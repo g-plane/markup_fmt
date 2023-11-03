@@ -28,6 +28,32 @@ pub struct Element<'s> {
 }
 
 #[derive(Clone, Debug)]
+pub struct JinjaBlock<'s> {
+    pub body: Vec<JinjaTagOrChildren<'s>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct JinjaComment<'s> {
+    pub raw: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct JinjaInterpolation<'s> {
+    pub expr: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct JinjaTag<'s> {
+    pub content: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub enum JinjaTagOrChildren<'s> {
+    Tag(JinjaTag<'s>),
+    Children(Vec<Node<'s>>),
+}
+
+#[derive(Clone, Debug)]
 pub struct NativeAttribute<'s> {
     pub name: &'s str,
     pub value: Option<&'s str>,
@@ -38,6 +64,10 @@ pub enum Node<'s> {
     Comment(Comment<'s>),
     Doctype,
     Element(Element<'s>),
+    JinjaBlock(JinjaBlock<'s>),
+    JinjaComment(JinjaComment<'s>),
+    JinjaInterpolation(JinjaInterpolation<'s>),
+    JinjaTag(JinjaTag<'s>),
     SvelteAtTag(SvelteAtTag<'s>),
     SvelteAwaitBlock(Box<SvelteAwaitBlock<'s>>),
     SvelteEachBlock(SvelteEachBlock<'s>),

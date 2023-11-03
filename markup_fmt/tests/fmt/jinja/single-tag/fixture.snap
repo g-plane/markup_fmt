@@ -1,0 +1,7 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{% include "sidebar.html" without context %}
+{% include "sidebar.html" ignore missing %}
+{% import 'forms.html' as forms %}
+

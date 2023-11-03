@@ -20,6 +20,7 @@ pub enum Language {
     Html,
     Vue,
     Svelte,
+    Jinja,
 }
 
 pub struct Parser<'s> {
@@ -70,7 +71,9 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html => self.parse_native_attr().map(Attribute::NativeAttribute),
+            Language::Html | Language::Jinja => {
+                self.parse_native_attr().map(Attribute::NativeAttribute)
+            }
             Language::Vue => self
                 .try_parse(Parser::parse_vue_directive)
                 .map(Attribute::VueDirective)
@@ -358,6 +361,177 @@ impl<'s> Parser<'s> {
         Ok(unsafe { self.source.get_unchecked(start..end) })
     }
 
+    fn parse_jinja_block_children(&mut self) -> PResult<Vec<Node<'s>>> {
+        let mut children = vec![];
+        loop {
+            match self.chars.peek() {
+                Some((_, '{')) => {
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if chars.next_if(|(_, c)| *c == '%').is_some() {
+                        break;
+                    } else {
+                        children.push(self.parse_node()?);
+                    }
+                }
+                Some(..) => {
+                    children.push(self.parse_node()?);
+                }
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectJinjaBlockEnd)),
+            }
+        }
+        Ok(children)
+    }
+
+    fn parse_jinja_comment(&mut self) -> PResult<JinjaComment<'s>> {
+        let Some((start, _)) = self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectComment));
+        };
+        let start = start + 1;
+
+        let mut end = start;
+        loop {
+            match self.chars.next() {
+                Some((i, '#')) => {
+                    let mut chars = self.chars.clone();
+                    if chars.next_if(|(_, c)| *c == '}').is_some() {
+                        end = i;
+                        self.chars = chars;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        Ok(JinjaComment {
+            raw: unsafe { self.source.get_unchecked(start..end) },
+        })
+    }
+
+    fn parse_jinja_tag(&mut self) -> PResult<JinjaTag<'s>> {
+        let Some((start, _)) = self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '%'))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectJinjaTag));
+        };
+        let start = start + 1;
+
+        let mut end = start;
+        loop {
+            match self.chars.next() {
+                Some((i, '%')) => {
+                    if self.chars.next_if(|(_, c)| *c == '}').is_some() {
+                        end = i;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        Ok(JinjaTag {
+            content: unsafe { self.source.get_unchecked(start..end) },
+        })
+    }
+
+    fn parse_jinja_tag_or_block(&mut self, first_tag: Option<JinjaTag<'s>>) -> PResult<Node<'s>> {
+        let first_tag = if let Some(first_tag) = first_tag {
+            first_tag
+        } else {
+            self.parse_jinja_tag()?
+        };
+        let tag_name = parse_jinja_tag_name(&first_tag);
+
+        if matches!(
+            tag_name,
+            "for"
+                | "if"
+                | "macro"
+                | "call"
+                | "filter"
+                | "block"
+                | "apply"
+                | "autoescape"
+                | "embed"
+                | "with"
+        ) {
+            let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
+
+            loop {
+                let children = self.parse_jinja_block_children()?;
+                if !children.is_empty() {
+                    body.push(JinjaTagOrChildren::Children(children));
+                }
+                if let Ok(next_tag) = self.parse_jinja_tag() {
+                    let next_tag_name = parse_jinja_tag_name(&next_tag);
+                    if next_tag_name
+                        .strip_prefix("end")
+                        .map(|name| name == tag_name)
+                        .unwrap_or_default()
+                    {
+                        body.push(JinjaTagOrChildren::Tag(next_tag));
+                        break;
+                    } else if (tag_name == "if" || tag_name == "for")
+                        && matches!(next_tag_name, "elif" | "elseif" | "else")
+                    {
+                        body.push(JinjaTagOrChildren::Tag(next_tag));
+                    } else {
+                        body.push(JinjaTagOrChildren::Children(vec![
+                            self.parse_jinja_tag_or_block(Some(next_tag))?
+                        ]));
+                    }
+                } else {
+                    break;
+                }
+            }
+            Ok(Node::JinjaBlock(JinjaBlock { body }))
+        } else {
+            Ok(Node::JinjaTag(first_tag))
+        }
+    }
+
+    fn parse_mustache_interpolation(&mut self) -> PResult<&'s str> {
+        let Some((start, _)) = self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectMustacheInterpolation));
+        };
+        let start = start + 1;
+
+        let mut end = start;
+        loop {
+            match self.chars.next() {
+                Some((i, '}')) => {
+                    if self.chars.next_if(|(_, c)| *c == '}').is_some() {
+                        end = i;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        Ok(unsafe { self.source.get_unchecked(start..end) })
+    }
+
     fn parse_native_attr(&mut self) -> PResult<NativeAttribute<'s>> {
         let name = self.parse_attr_name()?;
         self.skip_ws();
@@ -378,7 +552,7 @@ impl<'s> Parser<'s> {
                 match chars.next() {
                     Some((_, c)) if is_tag_name_char(c) => self.parse_element().map(Node::Element),
                     Some((_, '!')) => {
-                        if let Language::Html = self.language {
+                        if matches!(self.language, Language::Html | Language::Jinja) {
                             self.try_parse(Parser::parse_comment)
                                 .map(Node::Comment)
                                 .or_else(|_| {
@@ -396,8 +570,15 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, '{')) if matches!(self.language, Language::Vue) => {
-                        self.parse_vue_interpolation().map(Node::VueInterpolation)
+                    Some((_, '{')) if matches!(self.language, Language::Vue | Language::Jinja) => {
+                        self.parse_mustache_interpolation()
+                            .map(|expr| match self.language {
+                                Language::Vue => Node::VueInterpolation(VueInterpolation { expr }),
+                                Language::Jinja => {
+                                    Node::JinjaInterpolation(JinjaInterpolation { expr })
+                                }
+                                _ => unreachable!(),
+                            })
                     }
                     Some((pos, '#')) if matches!(self.language, Language::Svelte) => self
                         .try_parse(Parser::parse_svelte_if_block)
@@ -418,7 +599,13 @@ impl<'s> Parser<'s> {
                             kind: SyntaxErrorKind::UnknownSvelteBlock,
                             pos,
                         }),
+                    Some((_, '#')) if matches!(self.language, Language::Jinja) => {
+                        self.parse_jinja_comment().map(Node::JinjaComment)
+                    }
                     Some((_, '@')) => self.parse_svelte_at_tag().map(Node::SvelteAtTag),
+                    Some((_, '%')) if matches!(self.language, Language::Jinja) => {
+                        self.parse_jinja_tag_or_block(None)
+                    }
                     _ => {
                         if matches!(self.language, Language::Svelte) {
                             self.parse_svelte_interpolation()
@@ -1080,6 +1267,9 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((i, '{')) => match self.language {
+                    Language::Html => {
+                        self.chars.next();
+                    }
                     Language::Vue => {
                         let i = *i;
                         let mut chars = self.chars.clone();
@@ -1095,8 +1285,19 @@ impl<'s> Parser<'s> {
                         end = *i;
                         break;
                     }
-                    _ => {
-                        self.chars.next();
+                    Language::Jinja => {
+                        let i = *i;
+                        let mut chars = self.chars.clone();
+                        chars.next();
+                        if chars
+                            .next_if(|(_, c)| *c == '%' || *c == '{' || *c == '#')
+                            .is_some()
+                        {
+                            end = i;
+                            break;
+                        } else {
+                            self.chars.next();
+                        }
                     }
                 },
                 Some((i, '<')) => {
@@ -1185,37 +1386,6 @@ impl<'s> Parser<'s> {
             value,
         })
     }
-
-    fn parse_vue_interpolation(&mut self) -> PResult<VueInterpolation<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
-        else {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectVueInterpolation));
-        };
-        let start = start + 1;
-
-        let mut end = start;
-        loop {
-            match self.chars.next() {
-                Some((i, '}')) => {
-                    if self.chars.next_if(|(_, c)| *c == '}').is_some() {
-                        end = i;
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                Some(..) => continue,
-                None => break,
-            }
-        }
-
-        Ok(VueInterpolation {
-            expr: unsafe { self.source.get_unchecked(start..end) },
-        })
-    }
 }
 
 fn is_tag_name_char(c: char) -> bool {
@@ -1230,6 +1400,14 @@ fn is_tag_name_char(c: char) -> bool {
 
 fn is_attr_name_char(c: char) -> bool {
     !matches!(c, '"' | '\'' | '>' | '/' | '=') && !c.is_ascii_whitespace()
+}
+
+fn parse_jinja_tag_name<'s>(tag: &JinjaTag<'s>) -> &'s str {
+    let trimmed = tag.content.trim_start_matches(['+', '-']).trim_start();
+    trimmed
+        .split_once(|c: char| c.is_ascii_whitespace())
+        .map(|(name, _)| name)
+        .unwrap_or(trimmed)
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;

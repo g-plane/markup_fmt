@@ -1,4 +1,4 @@
-markup_fmt is a configurable HTML/Vue/Svelte formatter.
+markup_fmt is a configurable HTML/Vue/Svelte/Jinja/Twig formatter.
 
 ## Basic Usage
 
