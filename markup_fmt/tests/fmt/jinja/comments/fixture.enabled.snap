@@ -12,6 +12,13 @@ source: markup_fmt/tests/fmt.rs
     {#
       This is a very very very very very very very very very very very very long comment
     #}
+
+    {#
+      note: commented-out template because we no longer use this
+      {% for user in users %}
+          ...
+      {% endfor %}
+    #}
   </body>
 </html>
 

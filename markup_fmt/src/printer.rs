@@ -36,7 +36,7 @@ impl<'s> DocGen<'s> for Comment<'s> {
             Doc::text("<!--")
                 .append(
                     Doc::line_or_space()
-                        .concat(reflow(self.raw.trim()))
+                        .concat(reflow_with_indent(self.raw.trim()))
                         .nest_with_ctx(ctx),
                 )
                 .append(Doc::line_or_space())
@@ -223,7 +223,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         })
                         .unwrap_or("js"),
                 );
-                let doc = Doc::hard_line().concat(reflow_raw_with_indent(formatted.trim()));
+                let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
                 docs.push(
                     if ctx.script_indent() {
                         doc.nest_with_ctx(ctx)
@@ -249,7 +249,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         })
                         .unwrap_or("css"),
                 );
-                let doc = Doc::hard_line().concat(reflow_raw_with_indent(formatted.trim()));
+                let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
                 docs.push(
                     if ctx.style_indent() {
                         doc.nest_with_ctx(ctx)
@@ -364,7 +364,7 @@ impl<'s> DocGen<'s> for JinjaComment<'s> {
             Doc::text("{#")
                 .append(
                     Doc::line_or_space()
-                        .concat(reflow(self.raw.trim()))
+                        .concat(reflow_with_indent(self.raw.trim()))
                         .nest_with_ctx(ctx),
                 )
                 .append(Doc::line_or_space())
@@ -440,12 +440,12 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                                 && self.name == formatted_expr =>
                             {
                                 Doc::text("{")
-                                    .concat(reflow_raw_with_indent(&formatted_expr))
+                                    .concat(reflow_with_indent(&formatted_expr))
                                     .append(Doc::text("}"))
                             }
                             _ => Doc::text(self.name.to_owned())
                                 .append(Doc::text("={"))
-                                .concat(reflow_raw_with_indent(&formatted_expr))
+                                .concat(reflow_with_indent(&formatted_expr))
                                 .append(Doc::text("}")),
                         };
                     } else {
@@ -560,7 +560,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     {
         let expr_code = ctx.format_expr(self.expr);
         let expr = Doc::text("{")
-            .concat(reflow_raw_with_indent(&expr_code))
+            .concat(reflow_with_indent(&expr_code))
             .append(Doc::text("}"));
         if let Some(name) = self.name {
             match name.split_once(':') {
@@ -756,7 +756,7 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
         Doc::text("{")
             .append(
                 Doc::line_or_nil()
-                    .concat(reflow_raw_with_indent(&ctx.format_expr(self.expr)))
+                    .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
                     .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_nil())
@@ -933,21 +933,13 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
         Doc::text("{{")
             .append(
                 Doc::line_or_space()
-                    .concat(reflow_raw_with_indent(&ctx.format_expr(self.expr)))
+                    .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
                     .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
             .group()
     }
-}
-
-fn reflow(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
-    itertools::intersperse(
-        s.split('\n')
-            .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
-        Doc::hard_line(),
-    )
 }
 
 fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'_>> {
@@ -958,7 +950,7 @@ fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'_>> {
     )
 }
 
-fn reflow_raw_owned(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
+fn reflow_owned(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     itertools::intersperse(
         s.split('\n')
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
@@ -966,7 +958,7 @@ fn reflow_raw_owned(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     )
 }
 
-fn reflow_raw_with_indent(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
+fn reflow_with_indent(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     let indent = s
         .lines()
         .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
@@ -1086,9 +1078,9 @@ fn format_attr_value(
         quote
             .clone()
             .append(if indent {
-                Doc::list(reflow_raw_with_indent(value).collect())
+                Doc::list(reflow_with_indent(value).collect())
             } else {
-                Doc::list(reflow_raw_owned(value).collect())
+                Doc::list(reflow_owned(value).collect())
             })
             .append(quote)
     }
