@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://plugins.dprint.dev/g-plane/markup_fmt/v0.1.1/schema.json",
+  "$id": "https://plugins.dprint.dev/g-plane/markup_fmt/v0.2.0/schema.json",
   "type": "object",
   "properties": {
     "printWidth": {
