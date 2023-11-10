@@ -24,3 +24,7 @@
 
 [mathml-disabled]
 "mathml.selfClosing" = false
+
+[with-max-attrs-per-line]
+"html.normal.selfClosing" = true
+maxAttrsPerLine = 1

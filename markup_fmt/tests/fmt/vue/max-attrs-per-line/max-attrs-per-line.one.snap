@@ -1,7 +1,7 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<template >
+<template>
   <div data-a="1">
     Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   </div>

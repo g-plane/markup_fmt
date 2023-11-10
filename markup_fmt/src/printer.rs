@@ -99,21 +99,26 @@ impl<'s> DocGen<'s> for Element<'s> {
         }));
 
         let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
-            Doc::line_or_space()
-                .concat(itertools::intersperse(
-                    self.attrs.chunks(max.into()).map(|chunk| {
-                        Doc::list(
-                            itertools::intersperse(
-                                chunk.iter().map(|attr| attr.doc(ctx)),
-                                Doc::line_or_space(),
-                            )
-                            .collect(),
+            // fix #2
+            if self.attrs.is_empty() {
+                Doc::line_or_nil()
+            } else {
+                Doc::line_or_space()
+            }
+            .concat(itertools::intersperse(
+                self.attrs.chunks(max.into()).map(|chunk| {
+                    Doc::list(
+                        itertools::intersperse(
+                            chunk.iter().map(|attr| attr.doc(ctx)),
+                            Doc::line_or_space(),
                         )
-                        .group()
-                    }),
-                    Doc::hard_line(),
-                ))
-                .nest_with_ctx(ctx)
+                        .collect(),
+                    )
+                    .group()
+                }),
+                Doc::hard_line(),
+            ))
+            .nest_with_ctx(ctx)
         } else {
             Doc::list(
                 self.attrs
