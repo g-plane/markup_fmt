@@ -24,3 +24,7 @@ jobs:
           files: |
             dprint_plugin/deployment/plugin.wasm
             dprint_plugin/deployment/schema.json
+      - name: Publish crates
+        run: cargo publish -p markup_fmt
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
