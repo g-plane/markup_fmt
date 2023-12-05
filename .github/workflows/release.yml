@@ -29,6 +29,9 @@ jobs:
         run: cargo publish -p markup_fmt
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - uses: actions/setup-node@v3
+        with:
+          registry-url: "https://registry.npmjs.org"
       - name: Setup pnpm
         uses: pnpm/action-setup@v2.4.0
         with:
