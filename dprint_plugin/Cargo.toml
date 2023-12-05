@@ -13,7 +13,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 anyhow = "1.0"
-dprint-core = { version = "0.63", default-features = false, features = [
+dprint-core = { version = "0.65", default-features = false, features = [
     "wasm",
 ] }
 markup_fmt = { path = "../markup_fmt", features = ["config_serde"] }

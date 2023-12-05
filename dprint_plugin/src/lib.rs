@@ -58,30 +58,39 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
     fn format(
         &mut self,
         file_path: &Path,
-        file_text: &str,
+        file_text: Vec<u8>,
         config: &FormatOptions,
-        mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<Option<String>>,
-    ) -> Result<Option<String>> {
+        mut format_with_host: impl FnMut(&Path, Vec<u8>, &ConfigKeyMap) -> Result<Option<Vec<u8>>>,
+    ) -> Result<Option<Vec<u8>>> {
         // falling back to HTML allows to format files with unknown extensions, such as .svg
         let language = detect_language(file_path).unwrap_or(markup_fmt::Language::Html);
 
-        let format_result = format_text(file_text, language, config, |path, code, print_width| {
-            let mut additional_config = ConfigKeyMap::new();
-            additional_config.insert("lineWidth".into(), (print_width as i32).into());
-            additional_config.insert("printWidth".into(), (print_width as i32).into());
-            if let Some("expr.ts" | "binding.ts" | "type_params.ts") =
-                path.file_name().and_then(|s| s.to_str())
-            {
-                additional_config.insert("semiColons".into(), "asi".into());
-            }
+        let format_result = format_text(
+            std::str::from_utf8(&file_text)?,
+            language,
+            config,
+            |path, code, print_width| {
+                let mut additional_config = ConfigKeyMap::new();
+                additional_config.insert("lineWidth".into(), (print_width as i32).into());
+                additional_config.insert("printWidth".into(), (print_width as i32).into());
+                if let Some("expr.ts" | "binding.ts" | "type_params.ts") =
+                    path.file_name().and_then(|s| s.to_str())
+                {
+                    additional_config.insert("semiColons".into(), "asi".into());
+                }
 
-            format_with_host(path, code.into(), &additional_config).map(|result| match result {
-                Some(code) => code.into(),
-                None => code.into(),
-            })
-        });
+                format_with_host(path, code.into(), &additional_config).and_then(|result| {
+                    match result {
+                        Some(code) => String::from_utf8(code)
+                            .map(|s| s.into())
+                            .map_err(anyhow::Error::from),
+                        None => Ok(code.into()),
+                    }
+                })
+            },
+        );
         match format_result {
-            Ok(code) => Ok(Some(code)),
+            Ok(code) => Ok(Some(code.into_bytes())),
             Err(FormatError::Syntax(err)) => Err(err.into()),
             Err(FormatError::External(err)) => Err(err),
         }
