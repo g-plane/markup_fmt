@@ -62,12 +62,8 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         config: &FormatOptions,
         mut format_with_host: impl FnMut(&Path, String, &ConfigKeyMap) -> Result<Option<String>>,
     ) -> Result<Option<String>> {
-        let Some(language) = detect_language(file_path) else {
-            return Err(anyhow::anyhow!(
-                "unknown file extension of file: {}",
-                file_path.display()
-            ));
-        };
+        // falling back to HTML allows to format files with unknown extensions, such as .svg
+        let language = detect_language(file_path).unwrap_or(markup_fmt::Language::Html);
 
         let format_result = format_text(file_text, language, config, |path, code, print_width| {
             let mut additional_config = ConfigKeyMap::new();
