@@ -37,6 +37,7 @@ jobs:
       - name: Publish to npm
         run: |
           cp target/wasm32-unknown-unknown/release/dprint_plugin_markup.wasm dprint_plugin/deployment/npm/plugin.wasm
-          pnpm -F dprint-plugin-markup publish --no-git-checks --provenance --access public
+          cd dprint_plugin/deployment/npm
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
