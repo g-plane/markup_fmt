@@ -101,7 +101,7 @@ where
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
             );
-            let formatted = formatted.trim().trim_matches(';');
+            let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
                 .strip_prefix("let e = ")
                 .unwrap_or(formatted)
@@ -121,7 +121,7 @@ where
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
             );
-            let formatted = formatted.trim().trim_matches(';');
+            let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
                 .strip_prefix("let ")
                 .and_then(|s| s.strip_suffix(" = 0"))
@@ -142,7 +142,7 @@ where
                     .saturating_sub(self.indent_level)
                     .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
             );
-            let formatted = formatted.trim().trim_matches(';');
+            let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
                 .strip_prefix("type T<")
                 .and_then(|s| s.strip_suffix("> = 0"))

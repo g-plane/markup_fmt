@@ -36,7 +36,7 @@ source: markup_fmt/tests/fmt.rs
     @click="/* hello */"
     @click="/* 1 */ $emit( /* 2 */ 'click' /* 3 */ ) /* 4 */ ; /* 5 */"
     @click="$emit(   'click'   )"
-    @click="$emit(   'click'   )  ;"
+    @click="$emit(   'click'   )"
     @click="$emit(   'click'   )  ;if(something){for(let i=j;i<100;i++){}}else{}"
     slot-scope="     foo"
     slot-scope="     {row   }"
@@ -59,11 +59,11 @@ source: markup_fmt/tests/fmt.rs
       console.log(test);
     }"
     @click="doSomething()"
-    @click="doSomething;"
-    @click="a.b;"
-    @click="a[1];"
-    @click="a['b'];"
-    @click="a[null];"
+    @click="doSomething"
+    @click="a.b"
+    @click="a[1]"
+    @click="a['b']"
+    @click="a[null]"
     #default="{foo:{bar:{baz}}}"
   >
   </div>
