@@ -899,29 +899,33 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
         if let Some(value) = self.value {
             docs.push(Doc::text("="));
 
-            let value = if self.name == "for" {
-                use crate::config::VForDelimiterStyle;
-                if let Some((left, right)) = value.split_once(" in ") {
-                    let delimiter =
-                        if let Some(VForDelimiterStyle::Of) = ctx.options.v_for_delimiter_style {
+            let value = match self.name {
+                "for" => {
+                    use crate::config::VForDelimiterStyle;
+                    if let Some((left, right)) = value.split_once(" in ") {
+                        let delimiter = if let Some(VForDelimiterStyle::Of) =
+                            ctx.options.v_for_delimiter_style
+                        {
                             "of"
                         } else {
                             "in"
                         };
-                    format_v_for(left, delimiter, right, ctx)
-                } else if let Some((left, right)) = value.split_once(" of ") {
-                    let delimiter =
-                        if let Some(VForDelimiterStyle::In) = ctx.options.v_for_delimiter_style {
+                        format_v_for(left, delimiter, right, ctx)
+                    } else if let Some((left, right)) = value.split_once(" of ") {
+                        let delimiter = if let Some(VForDelimiterStyle::In) =
+                            ctx.options.v_for_delimiter_style
+                        {
                             "in"
                         } else {
                             "of"
                         };
-                    format_v_for(left, delimiter, right, ctx)
-                } else {
-                    ctx.format_expr(value)
+                        format_v_for(left, delimiter, right, ctx)
+                    } else {
+                        ctx.format_expr(value)
+                    }
                 }
-            } else {
-                ctx.format_expr(value)
+                "#" | "slot" => ctx.format_binding(value),
+                _ => ctx.format_expr(value),
             };
             docs.push(format_attr_value(value, &ctx.options.quotes, false, true));
         }
