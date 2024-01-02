@@ -674,6 +674,63 @@ Output:
 <template #header></template>
 ```
 
+## `vBindSameNameShortHand`
+
+Control whether Vue attribute should be written in short-hand form or not if attribute name and value are same.
+If this option is unset, attribute won't be changed.
+
+> Available since v0.3.0.
+
+Default value is `null`.
+
+### Example for `null`
+
+Input:
+
+```vue
+<MyComponent :value />
+<MyComponent :value="value" />
+```
+
+Output:
+
+```vue
+<MyComponent :value />
+<MyComponent :value="value" />
+```
+
+### Example for `true`
+
+Input:
+
+```vue
+<MyComponent :value />
+<MyComponent :value="value" />
+```
+
+Output:
+
+```vue
+<MyComponent :value />
+<MyComponent :value />
+```
+
+### Example for `false`
+
+Input:
+
+```vue
+<MyComponent :value />
+<MyComponent :value="value" />
+```
+
+Output:
+
+```vue
+<MyComponent :value="value" />
+<MyComponent :value="value" />
+```
+
 ## `strictSvelteAttr`
 
 Control whether Svelte attribute value should be in strict mode or not.

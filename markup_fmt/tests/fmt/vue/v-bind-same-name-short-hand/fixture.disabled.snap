@@ -1,0 +1,10 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <div :title="title"></div>
+  <div :title="title"></div>
+  <div :title="myTitle"></div>
+  <div @click="click"></div>
+</template>
+

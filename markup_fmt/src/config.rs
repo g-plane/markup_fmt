@@ -147,6 +147,8 @@ pub struct LanguageOptions {
     #[cfg_attr(feature = "config_serde", serde(rename = "named.vSlotStyle"))]
     /// See [`vSlotStyle`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#vslotstyle) on GitHub
     pub named_v_slot_style: Option<VSlotStyle>,
+    /// See [`vBindSameNameShortHand`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#vbindsamenameshorthand) on GitHub
+    pub v_bind_same_name_short_hand: Option<bool>,
 
     /// See [`strictSvelteAttr`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#strictsvelteattr) on GitHub
     pub strict_svelte_attr: bool,

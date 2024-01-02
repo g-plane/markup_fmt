@@ -144,6 +144,10 @@
       "enum": ["short", "long", "vSlot", null],
       "default": null
     },
+    "vBindSameNameShortHand": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
     "strictSvelteAttr": {
       "type": "boolean",
       "default": false

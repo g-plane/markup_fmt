@@ -296,6 +296,11 @@ pub(crate) fn resolve_config(
                     Default::default()
                 }
             }),
+            v_bind_same_name_short_hand: get_nullable_value(
+                &mut config,
+                "vBindSameNameShortHand",
+                &mut diagnostics,
+            ),
             strict_svelte_attr: get_value(&mut config, "strictSvelteAttr", false, &mut diagnostics),
             svelte_attr_shorthand: get_nullable_value(
                 &mut config,

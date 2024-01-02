@@ -822,9 +822,11 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
         use crate::config::{VBindStyle, VOnStyle};
 
         let mut docs = Vec::with_capacity(5);
+        let mut is_v_bind = false;
 
         match self.name {
             ":" => {
+                is_v_bind = true;
                 docs.push(if let Some(VBindStyle::Long) = ctx.options.v_bind_style {
                     Doc::text("v-bind:")
                 } else {
@@ -835,6 +837,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 }
             }
             "bind" => {
+                is_v_bind = true;
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {
                     docs.push(if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
                         Doc::text(":")
@@ -897,8 +900,6 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
         };
 
         if let Some(value) = self.value {
-            docs.push(Doc::text("="));
-
             let value = match self.name {
                 "for" => {
                     use crate::config::VForDelimiterStyle;
@@ -927,7 +928,23 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 "#" | "slot" => ctx.format_binding(value),
                 _ => ctx.format_expr(value),
             };
-            docs.push(format_attr_value(value, &ctx.options.quotes, false, true));
+            if !(matches!(ctx.options.v_bind_same_name_short_hand, Some(true))
+                && is_v_bind
+                && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
+            {
+                docs.push(Doc::text("="));
+                docs.push(format_attr_value(value, &ctx.options.quotes, false, true));
+            }
+        } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false)) && is_v_bind {
+            if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                docs.push(Doc::text("="));
+                docs.push(format_attr_value(
+                    arg_and_modifiers.to_owned(),
+                    &ctx.options.quotes,
+                    false,
+                    true,
+                ));
+            }
         }
 
         Doc::list(docs)

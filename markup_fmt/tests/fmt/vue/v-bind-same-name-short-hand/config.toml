@@ -1,0 +1,7 @@
+[default]
+
+[enabled]
+vBindSameNameShortHand = true
+
+[disabled]
+vBindSameNameShortHand = false
