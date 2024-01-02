@@ -93,7 +93,7 @@ where
             // Trim original code before sending it to the external formatter.
             // This makes sure the code will be trimmed
             // though external formatter isn't available.
-            let wrapped = format!("({})", code.trim());
+            let wrapped = format!("let e = {}", code.trim());
             let formatted = self.format_with_external_formatter(
                 Path::new("expr.ts"),
                 &wrapped,
@@ -103,8 +103,7 @@ where
             );
             let formatted = formatted.trim().trim_matches(';');
             formatted
-                .strip_prefix('(')
-                .and_then(|s| s.strip_suffix(')'))
+                .strip_prefix("let e = ")
                 .unwrap_or(formatted)
                 .to_owned()
         }

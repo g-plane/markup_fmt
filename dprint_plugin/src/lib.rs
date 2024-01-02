@@ -76,7 +76,10 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 if let Some("expr.ts" | "binding.ts" | "type_params.ts") =
                     path.file_name().and_then(|s| s.to_str())
                 {
+                    // dprint-plugin-typescript
                     additional_config.insert("semiColons".into(), "asi".into());
+                    // Biome
+                    additional_config.insert("semicolons".into(), "asNeeded".into());
                 }
 
                 format_with_host(path, code.into(), &additional_config).and_then(|result| {
