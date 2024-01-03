@@ -73,8 +73,8 @@ where
     };
 
     let doc = ast.doc(&mut ctx);
-    if let Some(error) = ctx.external_formatter_error {
-        return Err(FormatError::External(error));
+    if let Some((error, code)) = ctx.external_formatter_error {
+        return Err(FormatError::External(error, code));
     }
 
     Ok(tiny_pretty::print(

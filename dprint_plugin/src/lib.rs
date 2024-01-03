@@ -95,7 +95,9 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         match format_result {
             Ok(code) => Ok(Some(code.into_bytes())),
             Err(FormatError::Syntax(err)) => Err(err.into()),
-            Err(FormatError::External(err)) => Err(err),
+            Err(FormatError::External(err, code)) => Err(anyhow::anyhow!(
+                "[markup_fmt] failed to format code with external formatter: `{code}`:\n{err}"
+            )),
         }
     }
 }

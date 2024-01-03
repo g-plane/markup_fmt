@@ -20,7 +20,7 @@ where
     pub(crate) in_svg: bool,
     pub(crate) indent_level: usize,
     pub(crate) external_formatter: F,
-    pub(crate) external_formatter_error: Option<E>,
+    pub(crate) external_formatter_error: Option<(E, String)>,
 }
 
 impl<'b, 's, E, F> Ctx<'b, 's, E, F>
@@ -101,7 +101,8 @@ where
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
             );
-            let formatted = formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
+            let formatted =
+                formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
                 .strip_prefix("let e =")
                 .unwrap_or(formatted)
@@ -189,7 +190,7 @@ where
         match (self.external_formatter)(path, code, print_width) {
             Ok(code) => code,
             Err(e) => {
-                self.external_formatter_error = Some(e);
+                self.external_formatter_error = Some((e, code.to_owned()));
                 code.into()
             }
         }
