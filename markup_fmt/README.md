@@ -52,6 +52,6 @@ assert!(matches!(
         &options,
         |_, _, _| Err(ExternalFormatterError),
     ).unwrap_err(),
-    FormatError::External(ExternalFormatterError)
+    FormatError::External(ExternalFormatterError, _)
 ));
 ```
