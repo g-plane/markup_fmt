@@ -695,38 +695,26 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {
-        let (name, start) = if let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '{') {
-            (None, start)
+        let name = if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+            None
         } else {
             let name = self.parse_attr_name()?;
             self.skip_ws();
-            let Some((start, _)) = self
+            if self
                 .chars
                 .next_if(|(_, c)| *c == '=')
                 .map(|_| self.skip_ws())
                 .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
-            else {
+                .is_some()
+            {
+                Some(name)
+            } else {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttr));
-            };
-            (Some(name), start)
+            }
         };
 
-        let start = start + 1;
-        let mut end = start;
-        loop {
-            match self.chars.next() {
-                Some((i, '}')) => {
-                    end = i;
-                    break;
-                }
-                Some(..) => continue,
-                None => break,
-            }
-        }
-        Ok(SvelteAttribute {
-            name,
-            expr: unsafe { self.source.get_unchecked(start..end) },
-        })
+        self.parse_svelte_expr()
+            .map(|expr| SvelteAttribute { name, expr })
     }
 
     fn parse_svelte_await_block(&mut self) -> PResult<Box<SvelteAwaitBlock<'s>>> {
