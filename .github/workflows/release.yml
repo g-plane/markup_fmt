@@ -14,7 +14,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: rustup target add wasm32-unknown-unknown
       - run: |
           cargo build --release -p dprint_plugin_markup --target wasm32-unknown-unknown

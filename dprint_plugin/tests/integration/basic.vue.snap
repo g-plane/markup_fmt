@@ -1,0 +1,25 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<script setup lang="ts" generic="T extends string">
+const props = defineProps<{ name: T }>();
+
+function greet(msg: string) {
+  alert(msg);
+}
+</script>
+
+<template>
+  <span v-if='name != ""'>{{ ":" + name }}</span>
+  <button @click="greet(name)">Click</button>
+
+  <ul>
+    <li v-for="{ value } in data.list"></li>
+    <li v-for="({ value }, index) of data.list"></li>
+  </ul>
+
+  <template
+    #default="{ item: value }: { item: Record<string, number> }"
+  ></template>
+</template>
+

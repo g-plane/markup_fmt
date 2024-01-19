@@ -15,7 +15,15 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: true
+      - run: rustup target add wasm32-unknown-unknown
+      - run: |
+          cargo build -p dprint_plugin_markup --target wasm32-unknown-unknown
+          cp target/wasm32-unknown-unknown/release/dprint_plugin_markup.wasm dprint_plugin/deployment/plugin.wasm
       - uses: actions/cache@v3
         with:
           path: |
