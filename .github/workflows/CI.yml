@@ -21,9 +21,7 @@ jobs:
           version: 8
           run_install: true
       - run: rustup target add wasm32-unknown-unknown
-      - run: |
-          cargo build -p dprint_plugin_markup --target wasm32-unknown-unknown
-          cp target/wasm32-unknown-unknown/release/dprint_plugin_markup.wasm dprint_plugin/deployment/plugin.wasm
+      - run: cargo build -p dprint_plugin_markup --target wasm32-unknown-unknown
       - uses: actions/cache@v3
         with:
           path: |
