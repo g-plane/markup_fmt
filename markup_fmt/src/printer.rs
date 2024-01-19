@@ -939,7 +939,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             if let Some(arg_and_modifiers) = self.arg_and_modifiers {
                 docs.push(Doc::text("="));
                 docs.push(format_attr_value(
-                    arg_and_modifiers.to_owned(),
+                    arg_and_modifiers,
                     &ctx.options.quotes,
                     false,
                     true,
