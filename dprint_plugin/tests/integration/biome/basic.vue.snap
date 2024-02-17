@@ -5,7 +5,7 @@ source: dprint_plugin/tests/integration.rs
 const props = defineProps<{ name: T }>();
 
 function greet(msg: string) {
-  alert(msg);
+	alert(msg);
 }
 </script>
 
@@ -21,5 +21,7 @@ function greet(msg: string) {
   <template
     #default="{ item: value }: { item: Record<string, number> }"
   ></template>
+
+  <button @click="(e) => console.log(e)"></button>
 </template>
 

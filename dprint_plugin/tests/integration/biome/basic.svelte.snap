@@ -1,0 +1,32 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<script lang="ts">
+export let msg: string = "";
+
+function generateHtml(data: unknown) {
+	return "";
+}
+</script>
+
+<div class={`123`} title={`456`}>{msg}</div>
+
+<div>
+  {@html generateHtml({ key: "value" })}
+</div>
+
+{#await fetch("", {})}...{:then { status }}...{:catch error}...{/await}
+{#await fetch("", {}) then name}...{/await}
+{#await fetch("", {}) catch { message }}...{/await}
+
+{#each [{ value: 1 }, { value: 2 }] as item, index (item.value)}...{/each}
+{#each [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }] as
+  { value },
+  index
+  (value)
+}...{/each}
+
+{#if Math.random() > 0.5}...{:else if Date.now() > 0}...{/if}
+
+{#key 1 + 2}s{/key}
+

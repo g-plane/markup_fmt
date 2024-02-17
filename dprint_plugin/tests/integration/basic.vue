@@ -15,4 +15,6 @@ function greet(msg:string){alert(msg)}
   </ul>
 
   <template #default="{item:value}:{item:Record<string,number>}"></template>
+
+  <button @click="e=>console.log(e)"></button>
 </template>
