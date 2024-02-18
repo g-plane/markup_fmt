@@ -49,6 +49,10 @@
       "type": ["boolean", "null"],
       "default": null
     },
+    "astro.scriptIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
     "styleIndent": {
       "type": "boolean",
       "default": false
@@ -62,6 +66,10 @@
       "default": null
     },
     "svelte.styleIndent": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "astro.styleIndent": {
       "type": ["boolean", "null"],
       "default": null
     },
@@ -157,6 +165,10 @@
       "default": null
     },
     "svelteDirectiveShorthand": {
+      "type": ["boolean", "null"],
+      "default": null
+    },
+    "astroAttrShorthand": {
       "type": ["boolean", "null"],
       "default": null
     }
