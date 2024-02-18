@@ -14,6 +14,62 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
+impl<'s> DocGen<'s> for AstroAttribute<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let expr_code = ctx.format_expr(self.expr);
+        let expr = Doc::text("{")
+            .concat(reflow_with_indent(&expr_code))
+            .append(Doc::text("}"));
+        if let Some(name) = self.name {
+            if (matches!(ctx.options.astro_attr_shorthand, Some(true))) && name == expr_code {
+                expr
+            } else {
+                Doc::text(name).append(Doc::text("=")).append(expr)
+            }
+        } else if matches!(ctx.options.astro_attr_shorthand, Some(false)) {
+            Doc::text(expr_code.clone())
+                .append(Doc::text("="))
+                .append(expr)
+        } else {
+            expr
+        }
+    }
+}
+
+impl<'s> DocGen<'s> for AstroInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{")
+            .append(
+                Doc::line_or_nil()
+                    .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
+                    .nest_with_ctx(ctx),
+            )
+            .append(Doc::line_or_nil())
+            .append(Doc::text("}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for AstroScriptBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let formatted = ctx.format_script(self.raw, "tsx");
+        Doc::text("---")
+            .append(Doc::hard_line())
+            .concat(reflow_with_indent(formatted.trim()))
+            .append(Doc::hard_line())
+            .append(Doc::text("---"))
+    }
+}
+
 impl<'s> DocGen<'s> for Attribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
@@ -23,6 +79,7 @@ impl<'s> DocGen<'s> for Attribute<'s> {
             Attribute::NativeAttribute(native_attribute) => native_attribute.doc(ctx),
             Attribute::SvelteAttribute(svelte_attribute) => svelte_attribute.doc(ctx),
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx),
+            Attribute::AstroAttribute(astro_attribute) => astro_attribute.doc(ctx),
         }
     }
 }
@@ -306,6 +363,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     Node::VueInterpolation(..)
                         | Node::SvelteInterpolation(..)
                         | Node::Comment(..)
+                        | Node::AstroInterpolation(..)
                         | Node::JinjaInterpolation(..)
                 )
             }) {
@@ -491,6 +549,8 @@ impl<'s> DocGen<'s> for Node<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
+            Node::AstroInterpolation(astro_interpolation) => astro_interpolation.doc(ctx),
+            Node::AstroScriptBlock(astro_script_block) => astro_script_block.doc(ctx),
             Node::Comment(comment) => comment.doc(ctx),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
             Node::Element(element) => element.doc(ctx),
@@ -1171,6 +1231,7 @@ where
                             Node::TextNode(..)
                             | Node::VueInterpolation(..)
                             | Node::SvelteInterpolation(..)
+                            | Node::AstroInterpolation(..)
                             | Node::JinjaInterpolation(..) => true,
                             Node::Element(element) => {
                                 element.tag_name.eq_ignore_ascii_case("label")

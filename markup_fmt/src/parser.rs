@@ -20,6 +20,7 @@ pub enum Language {
     Html,
     Vue,
     Svelte,
+    Astro,
     Jinja,
 }
 
@@ -27,6 +28,12 @@ pub struct Parser<'s> {
     source: &'s str,
     language: Language,
     chars: Peekable<CharIndices<'s>>,
+    state: ParserState,
+}
+
+#[derive(Default)]
+struct ParserState {
+    has_astro_script_block: bool,
 }
 
 impl<'s> Parser<'s> {
@@ -35,6 +42,7 @@ impl<'s> Parser<'s> {
             source,
             language,
             chars: source.char_indices().peekable(),
+            state: Default::default(),
         }
     }
 
@@ -69,6 +77,91 @@ impl<'s> Parser<'s> {
         {}
     }
 
+    fn parse_astro_attr(&mut self) -> PResult<AstroAttribute<'s>> {
+        let name = if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+            None
+        } else {
+            let name = self.parse_attr_name()?;
+            self.skip_ws();
+            if self
+                .chars
+                .next_if(|(_, c)| *c == '=')
+                .map(|_| self.skip_ws())
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
+                .is_some()
+            {
+                Some(name)
+            } else {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectAstroAttr));
+            }
+        };
+
+        self.parse_svelte_or_astro_expr()
+            .map(|expr| AstroAttribute { name, expr })
+    }
+
+    fn parse_astro_interpolation(&mut self) -> PResult<AstroInterpolation<'s>> {
+        if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+            Ok(AstroInterpolation {
+                expr: self.parse_svelte_or_astro_expr()?,
+            })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectAstroInterpolation))
+        }
+    }
+
+    fn parse_astro_script_block(&mut self) -> PResult<AstroScriptBlock<'s>> {
+        let Some((start, _)) = self
+            .chars
+            .next_if(|(_, c)| *c == '-')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAstroScriptBlock));
+        };
+        let start = start + 1;
+
+        let mut string_stack = vec![];
+        let mut end = start;
+        loop {
+            match self.chars.next() {
+                Some((i, '-')) if string_stack.is_empty() => {
+                    let mut chars = self.chars.clone();
+                    if chars
+                        .next_if(|(_, c)| *c == '-')
+                        .and_then(|_| chars.next_if(|(_, c)| *c == '-'))
+                        .is_some()
+                    {
+                        end = i;
+                        self.chars = chars;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
+                    if string_stack
+                        .last()
+                        .map(|last| *last == c)
+                        .unwrap_or_default()
+                    {
+                        string_stack.pop();
+                    } else {
+                        string_stack.push(c);
+                    }
+                    continue;
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        self.state.has_astro_script_block = true;
+        Ok(AstroScriptBlock {
+            raw: unsafe { self.source.get_unchecked(start..end) },
+        })
+    }
+
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
             Language::Html | Language::Jinja => {
@@ -81,6 +174,10 @@ impl<'s> Parser<'s> {
             Language::Svelte => self
                 .try_parse(Parser::parse_svelte_attr)
                 .map(Attribute::SvelteAttribute)
+                .or_else(|_| self.parse_native_attr().map(Attribute::NativeAttribute)),
+            Language::Astro => self
+                .try_parse(Parser::parse_astro_attr)
+                .map(Attribute::AstroAttribute)
                 .or_else(|_| self.parse_native_attr().map(Attribute::NativeAttribute)),
         }
     }
@@ -552,7 +649,10 @@ impl<'s> Parser<'s> {
                 match chars.next() {
                     Some((_, c)) if is_tag_name_char(c) => self.parse_element().map(Node::Element),
                     Some((_, '!')) => {
-                        if matches!(self.language, Language::Html | Language::Jinja) {
+                        if matches!(
+                            self.language,
+                            Language::Html | Language::Astro | Language::Jinja
+                        ) {
                             self.try_parse(Parser::parse_comment)
                                 .map(Node::Comment)
                                 .or_else(|_| {
@@ -562,6 +662,9 @@ impl<'s> Parser<'s> {
                         } else {
                             self.parse_comment().map(Node::Comment)
                         }
+                    }
+                    Some((_, '>')) if matches!(self.language, Language::Astro) => {
+                        self.parse_element().map(Node::Element)
                     }
                     _ => self.parse_text_node().map(Node::TextNode),
                 }
@@ -606,14 +709,27 @@ impl<'s> Parser<'s> {
                     Some((_, '%')) if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_tag_or_block(None)
                     }
-                    _ => {
-                        if matches!(self.language, Language::Svelte) {
-                            self.parse_svelte_interpolation()
-                                .map(Node::SvelteInterpolation)
-                        } else {
-                            self.parse_text_node().map(Node::TextNode)
-                        }
-                    }
+                    _ => match self.language {
+                        Language::Svelte => self
+                            .parse_svelte_interpolation()
+                            .map(Node::SvelteInterpolation),
+                        Language::Astro => self
+                            .parse_astro_interpolation()
+                            .map(Node::AstroInterpolation),
+                        _ => self.parse_text_node().map(Node::TextNode),
+                    },
+                }
+            }
+            Some((_, '-'))
+                if matches!(self.language, Language::Astro)
+                    && !self.state.has_astro_script_block =>
+            {
+                let mut chars = self.chars.clone();
+                chars.next();
+                if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
+                    self.parse_astro_script_block().map(Node::AstroScriptBlock)
+                } else {
+                    self.parse_text_node().map(Node::TextNode)
                 }
             }
             Some(..) => self.parse_text_node().map(Node::TextNode),
@@ -690,7 +806,7 @@ impl<'s> Parser<'s> {
         };
         let name = self.parse_identifier()?;
         self.skip_ws();
-        let expr = self.parse_svelte_expr()?;
+        let expr = self.parse_svelte_or_astro_expr()?;
         Ok(SvelteAtTag { name, expr })
     }
 
@@ -713,7 +829,7 @@ impl<'s> Parser<'s> {
             }
         };
 
-        self.parse_svelte_expr()
+        self.parse_svelte_or_astro_expr()
             .map(|expr| SvelteAttribute { name, expr })
     }
 
@@ -1070,37 +1186,6 @@ impl<'s> Parser<'s> {
         }
     }
 
-    /// This will consume `}`.
-    fn parse_svelte_expr(&mut self) -> PResult<&'s str> {
-        self.skip_ws();
-
-        let start = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
-        let mut end = start;
-        let mut braces_stack = 0u8;
-        loop {
-            match self.chars.next() {
-                Some((_, '{')) => {
-                    braces_stack += 1;
-                }
-                Some((i, '}')) => {
-                    if braces_stack == 0 {
-                        end = i;
-                        break;
-                    } else {
-                        braces_stack -= 1;
-                    }
-                }
-                Some(..) => continue,
-                None => break,
-            }
-        }
-        Ok(unsafe { self.source.get_unchecked(start..end) })
-    }
-
     fn parse_svelte_if_block(&mut self) -> PResult<SvelteIfBlock<'s>> {
         if self
             .chars
@@ -1114,7 +1199,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
 
-        let expr = self.parse_svelte_expr()?;
+        let expr = self.parse_svelte_or_astro_expr()?;
         let children = self.parse_svelte_block_children()?;
 
         let mut else_if_blocks = vec![];
@@ -1143,7 +1228,7 @@ impl<'s> Parser<'s> {
                                     self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock)
                                 );
                             }
-                            let expr = self.parse_svelte_expr()?;
+                            let expr = self.parse_svelte_or_astro_expr()?;
                             let children = self.parse_svelte_block_children()?;
                             else_if_blocks.push(SvelteElseIfBlock { expr, children });
                         }
@@ -1177,12 +1262,13 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_interpolation(&mut self) -> PResult<SvelteInterpolation<'s>> {
-        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteInterpolation));
-        };
-        Ok(SvelteInterpolation {
-            expr: self.parse_svelte_expr()?,
-        })
+        if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+            Ok(SvelteInterpolation {
+                expr: self.parse_svelte_or_astro_expr()?,
+            })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteInterpolation))
+        }
     }
 
     fn parse_svelte_key_block(&mut self) -> PResult<SvelteKeyBlock<'s>> {
@@ -1199,7 +1285,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteKeyBlock));
         };
 
-        let expr = self.parse_svelte_expr()?;
+        let expr = self.parse_svelte_or_astro_expr()?;
         let children = self.parse_svelte_block_children()?;
 
         if self
@@ -1219,9 +1305,49 @@ impl<'s> Parser<'s> {
         }
     }
 
+    /// This will consume `}`.
+    fn parse_svelte_or_astro_expr(&mut self) -> PResult<&'s str> {
+        self.skip_ws();
+
+        let start = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
+        let mut end = start;
+        let mut braces_stack = 0u8;
+        loop {
+            match self.chars.next() {
+                Some((_, '{')) => {
+                    braces_stack += 1;
+                }
+                Some((i, '}')) => {
+                    if braces_stack == 0 {
+                        end = i;
+                        break;
+                    } else {
+                        braces_stack -= 1;
+                    }
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+        Ok(unsafe { self.source.get_unchecked(start..end) })
+    }
+
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
-        let Some((start, _)) = self.chars.next_if(|(_, c)| is_tag_name_char(*c)) else {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectTagName));
+        let start = match self.chars.peek() {
+            Some((i, c)) if is_tag_name_char(*c) => {
+                let start = *i;
+                self.chars.next();
+                start
+            }
+            Some((_, '>')) if matches!(self.language, Language::Astro) => {
+                // Astro allows fragment
+                return Ok("");
+            }
+            _ => return Err(self.emit_error(SyntaxErrorKind::ExpectTagName)),
         };
         let mut end = start;
 
@@ -1269,7 +1395,7 @@ impl<'s> Parser<'s> {
                             self.chars.next();
                         }
                     }
-                    Language::Svelte => {
+                    Language::Svelte | Language::Astro => {
                         end = *i;
                         break;
                     }
@@ -1293,13 +1419,32 @@ impl<'s> Parser<'s> {
                     let mut chars = self.chars.clone();
                     chars.next();
                     match chars.next() {
-                        Some((_, c)) if is_tag_name_char(c) || c == '/' || c == '!' => {
+                        Some((_, c))
+                            if is_tag_name_char(c)
+                                || c == '/'
+                                || c == '!'
+                                || c == '>' && matches!(self.language, Language::Astro) =>
+                        {
                             end = i;
                             break;
                         }
                         _ => {
                             self.chars.next();
                         }
+                    }
+                }
+                Some((i, '-'))
+                    if matches!(self.language, Language::Astro)
+                        && !self.state.has_astro_script_block =>
+                {
+                    let i = *i;
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
+                        end = i;
+                        break;
+                    } else {
+                        self.chars.next();
                     }
                 }
                 Some((_, c)) => {

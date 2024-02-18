@@ -1,0 +1,10 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+---
+import Comp from "./comp.astro"
+---
+<Comp options={options} />
+<Comp options={options} />
+<Comp options={options} />
+

@@ -1,0 +1,8 @@
+[default]
+
+[enabled]
+astroAttrShorthand = true
+
+[disabled]
+astroAttrShorthand = false
+

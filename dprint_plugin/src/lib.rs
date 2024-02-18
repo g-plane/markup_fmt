@@ -34,7 +34,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 ),
             },
             file_matching: FileMatchingInfo {
-                file_extensions: ["html", "vue", "svelte", "jinja", "jinja2", "twig"]
+                file_extensions: ["html", "vue", "svelte", "astro", "jinja", "jinja2", "twig"]
                     .into_iter()
                     .map(String::from)
                     .collect(),

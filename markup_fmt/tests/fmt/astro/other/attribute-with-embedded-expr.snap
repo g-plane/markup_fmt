@@ -1,0 +1,10 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+---
+export let post
+export let author
+---
+
+<a class="author" href={`/author/${post.author}`}>{author.name}</a>
+

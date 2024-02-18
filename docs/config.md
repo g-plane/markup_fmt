@@ -122,6 +122,7 @@ This global option can be overridden for individual languages by the following o
 - `html.scriptIndent`
 - `vue.scriptIndent`
 - `svelte.scriptIndent`
+- `astro.scriptIndent`
 
 ### Example for `false`
 
@@ -150,6 +151,7 @@ This global option can be overridden for individual languages by the following o
 - `html.styleIndent`
 - `vue.styleIndent`
 - `svelte.styleIndent`
+- `astro.styleIndent`
 
 ### Example for `false`
 
@@ -269,7 +271,7 @@ There're several options:
 
 - `html.normal.selfClosing`: This option affects on HTML normal elements.
 - `html.void.selfClosing`: This option affects on HTML void elements.
-- `component.selfClosing`: This option affects on Vue/Svelte components.
+- `component.selfClosing`: This option affects on Vue/Svelte/Astro components.
 - `svg.selfClosing`: This option affects on SVG elements.
 - `mathml.selfClosing`: This option affects on MathML elements.
 
@@ -342,7 +344,7 @@ Possible options:
 
 Default option is `"css"`.
 
-This option can be overridden for Vue/Svelte components by the following option:
+This option can be overridden for Vue/Svelte/Astro components by the following option:
 
 - `component.whitespaceSensitivity`
 
@@ -857,4 +859,59 @@ Output:
 ```svelte
 <MyComponent bind:value={value} />
 <MyComponent bind:value={value} />
+```
+
+## `astroAttrShorthand`
+
+Control whether Astro attribute should be written in short-hand form or not when possible.
+If this option is unset, attribute won't be changed.
+
+Default value is `null`.
+
+### Example for `null`
+
+Input:
+
+```astro
+<MyComponent {value} />
+<MyComponent value={value} />
+```
+
+Output:
+
+```astro
+<MyComponent {value} />
+<MyComponent value={value} />
+```
+
+### Example for `true`
+
+Input:
+
+```astro
+<MyComponent {value} />
+<MyComponent value={value} />
+```
+
+Output:
+
+```astro
+<MyComponent {value} />
+<MyComponent {value} />
+```
+
+### Example for `false`
+
+Input:
+
+```astro
+<MyComponent {value} />
+<MyComponent value={value} />
+```
+
+Output:
+
+```astro
+<MyComponent value={value} />
+<MyComponent value={value} />
 ```

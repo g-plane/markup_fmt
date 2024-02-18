@@ -1,0 +1,11 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+---
+const content = "lorem"
+---
+
+<h1 set:html={content}></h1>
+
+<Component set:html={content}></Component>
+

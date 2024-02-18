@@ -1,0 +1,18 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{// Hello}
+
+{
+  // Hey
+  // Hello
+}
+
+{/*   Hello */}
+
+{
+  /*
+  	Hello
+  */
+}
+

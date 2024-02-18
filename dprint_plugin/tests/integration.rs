@@ -3,7 +3,7 @@ use std::{fs, path::Path, process::Command};
 
 #[test]
 fn integration_with_dprint_ts_snapshot() {
-    glob!("integration/**/*.{html,vue,svelte,jinja}", |path| {
+    glob!("integration/**/*.{html,vue,svelte,astro,jinja}", |path| {
         let file = fs::File::open(path).unwrap();
 
         let output = Command::new("../node_modules/.bin/dprint")

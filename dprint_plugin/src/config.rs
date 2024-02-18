@@ -88,6 +88,11 @@ pub(crate) fn resolve_config(
                 "svelte.scriptIndent",
                 &mut diagnostics,
             ),
+            astro_script_indent: get_nullable_value(
+                &mut config,
+                "astro.scriptIndent",
+                &mut diagnostics,
+            ),
             style_indent: get_value(&mut config, "styleIndent", false, &mut diagnostics),
             html_style_indent: get_nullable_value(
                 &mut config,
@@ -98,6 +103,11 @@ pub(crate) fn resolve_config(
             svelte_style_indent: get_nullable_value(
                 &mut config,
                 "svelte.styleIndent",
+                &mut diagnostics,
+            ),
+            astro_style_indent: get_nullable_value(
+                &mut config,
+                "astro.styleIndent",
                 &mut diagnostics,
             ),
             closing_bracket_same_line: get_value(
@@ -310,6 +320,11 @@ pub(crate) fn resolve_config(
             svelte_directive_shorthand: get_nullable_value(
                 &mut config,
                 "svelteDirectiveShorthand",
+                &mut diagnostics,
+            ),
+            astro_attr_shorthand: get_nullable_value(
+                &mut config,
+                "astroAttrShorthand",
                 &mut diagnostics,
             ),
         },

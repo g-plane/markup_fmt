@@ -1,6 +1,23 @@
+#[derive(Clone, Debug)]
+pub struct AstroAttribute<'s> {
+    pub name: Option<&'s str>,
+    pub expr: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct AstroInterpolation<'s> {
+    pub expr: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct AstroScriptBlock<'s> {
+    pub raw: &'s str,
+}
+
 #[allow(clippy::enum_variant_names)]
 #[derive(Clone, Debug)]
 pub enum Attribute<'s> {
+    AstroAttribute(AstroAttribute<'s>),
     NativeAttribute(NativeAttribute<'s>),
     SvelteAttribute(SvelteAttribute<'s>),
     VueDirective(VueDirective<'s>),
@@ -61,6 +78,8 @@ pub struct NativeAttribute<'s> {
 
 #[derive(Clone, Debug)]
 pub enum Node<'s> {
+    AstroInterpolation(AstroInterpolation<'s>),
+    AstroScriptBlock(AstroScriptBlock<'s>),
     Comment(Comment<'s>),
     Doctype,
     Element(Element<'s>),

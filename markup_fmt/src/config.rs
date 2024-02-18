@@ -104,6 +104,12 @@ pub struct LanguageOptions {
     )]
     /// See [`scriptIndent`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#scriptindent) on GitHub
     pub svelte_script_indent: Option<bool>,
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(rename = "astro.script_indent", alias = "astro.scriptIndent")
+    )]
+    /// See [`scriptIndent`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#scriptindent) on GitHub
+    pub astro_script_indent: Option<bool>,
 
     #[cfg_attr(feature = "config_serde", serde(alias = "styleIndent"))]
     /// See [`styleIndent`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#styleindent) on GitHub
@@ -126,6 +132,12 @@ pub struct LanguageOptions {
     )]
     /// See [`styleIndent`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#styleindent) on GitHub
     pub svelte_style_indent: Option<bool>,
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(rename = "astro.style_indent", alias = "astro.styleIndent")
+    )]
+    /// See [`styleIndent`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#styleindent) on GitHub
+    pub astro_style_indent: Option<bool>,
 
     #[cfg_attr(feature = "config_serde", serde(alias = "closingBracketSameLine"))]
     /// See [`closingBracketSameLine`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#closingbracketsameline) on GitHub
@@ -226,6 +238,10 @@ pub struct LanguageOptions {
     #[cfg_attr(feature = "config_serde", serde(alias = "svelteDirectiveShorthand"))]
     /// See [`svelteDirectiveShorthand`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#sveltedirectiveshorthand) on GitHub
     pub svelte_directive_shorthand: Option<bool>,
+
+    #[cfg_attr(feature = "config_serde", serde(alias = "astroAttrShorthand"))]
+    /// See [`astroAttrShorthand`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#astroattrshorthand) on GitHub
+    pub astro_attr_shorthand: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default)]

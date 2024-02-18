@@ -41,6 +41,10 @@ where
                 .options
                 .svelte_script_indent
                 .unwrap_or(self.options.script_indent),
+            Language::Astro => self
+                .options
+                .astro_script_indent
+                .unwrap_or(self.options.script_indent),
         }
     }
 
@@ -58,6 +62,10 @@ where
                 .options
                 .svelte_style_indent
                 .unwrap_or(self.options.style_indent),
+            Language::Astro => self
+                .options
+                .astro_style_indent
+                .unwrap_or(self.options.style_indent),
         }
     }
 
@@ -67,7 +75,9 @@ where
         }
 
         match self.language {
-            Language::Vue | Language::Svelte if helpers::is_component(tag_name) => {
+            Language::Vue | Language::Svelte | Language::Astro
+                if helpers::is_component(tag_name) =>
+            {
                 matches!(
                     self.options
                         .component_whitespace_sensitivity
@@ -103,12 +113,17 @@ where
             );
             let formatted =
                 formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
-            formatted
-                .strip_prefix("<>{")
-                .and_then(|s| s.strip_suffix("}</>"))
+            let formatted = formatted
+                .strip_prefix("<>")
+                .and_then(|s| s.strip_suffix("</>"))
                 .unwrap_or(formatted)
-                .trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';')
+                .trim();
+            formatted
+                .strip_prefix('{')
+                .and_then(|s| s.strip_suffix('}'))
+                .unwrap_or(formatted)
                 .trim_start()
+                .trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';')
                 .to_owned()
         }
     }
