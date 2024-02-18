@@ -1,0 +1,66 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+---
+import Color from "../components/Color.jsx";
+
+let title = "My Site";
+
+`
+---
+`;
+
+const colors = ["red", "yellow", "blue"];
+---
+
+{
+  [].map((item: string) => (
+  	<div>{item}</div>
+  ))
+}
+
+<div class={[].map((item: string) => item).join()}></div>
+
+<span class="class">{
+  [
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"long",
+  	"expression",
+  ].join("")
+}</span>
+
+{/*   Hello */}
+{
+  /*
+  	Hello
+  */
+}
+
+<script>
+function handleClick() {
+	console.log("button clicked!");
+}
+document.getElementById("button").addEventListener("click", handleClick);
+</script>
+
+<style lang="scss">
+.hello {
+  color: red;
+  p {
+    background-color: white;
+  }
+}
+</style>
+
+<!-- Below should be treated as text node. -->
+--- let title = 'My Site'; ---
+
