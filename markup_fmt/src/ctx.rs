@@ -93,9 +93,9 @@ where
             // Trim original code before sending it to the external formatter.
             // This makes sure the code will be trimmed
             // though external formatter isn't available.
-            let wrapped = format!("let e = {}", code.trim());
+            let wrapped = format!("<>{{{}}}</>", code.trim());
             let formatted = self.format_with_external_formatter(
-                Path::new("expr.ts"),
+                Path::new("expr.tsx"),
                 &wrapped,
                 self.print_width
                     .saturating_sub(self.indent_level)
@@ -104,8 +104,10 @@ where
             let formatted =
                 formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
-                .strip_prefix("let e =")
+                .strip_prefix("<>{")
+                .and_then(|s| s.strip_suffix("}</>"))
                 .unwrap_or(formatted)
+                .trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';')
                 .trim_start()
                 .to_owned()
         }

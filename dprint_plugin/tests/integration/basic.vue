@@ -17,4 +17,5 @@ function greet(msg:string){alert(msg)}
   <template #default="{item:value}:{item:Record<string,number>}"></template>
 
   <button @click="e=>console.log(e)"></button>
+  <button :class="" @click="">{{}}{{/**/}}</button>
 </template>

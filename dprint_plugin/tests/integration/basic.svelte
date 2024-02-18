@@ -22,3 +22,5 @@ function generateHtml(data:unknown) {
 {#if    Math.random(  )>0.5}...{:else if Date.now(   )>0    }...{/if}
 
 {#key 1+2}s{/key}
+
+<button class="{}" on:click={}>{}{/**/}</button>
