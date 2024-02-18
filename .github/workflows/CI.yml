@@ -16,13 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
           run_install: true
       - run: rustup target add wasm32-unknown-unknown
-      - run: cargo build -p dprint_plugin_markup --target wasm32-unknown-unknown
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -31,4 +30,5 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo build -p dprint_plugin_markup --target wasm32-unknown-unknown
       - run: cargo test
