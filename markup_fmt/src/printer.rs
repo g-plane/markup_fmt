@@ -80,7 +80,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
             }
         });
 
-        Doc::text("{")
+        let doc = Doc::text("{")
             .append(
                 Doc::line_or_nil()
                     .concat(
@@ -98,8 +98,12 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                     .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_nil())
-            .append(Doc::text("}"))
-            .group()
+            .append(Doc::text("}"));
+        if script.contains("//") {
+            doc
+        } else {
+            doc.group()
+        }
     }
 }
 
