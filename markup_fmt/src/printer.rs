@@ -322,24 +322,39 @@ impl<'s> DocGen<'s> for Element<'s> {
         let is_root = mem::replace(&mut ctx.is_root, false);
         if tag_name.eq_ignore_ascii_case("script") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
-                let formatted = ctx.format_script(
-                    text_node.raw,
-                    self.attrs
-                        .iter()
-                        .find_map(|attr| match attr {
-                            Attribute::NativeAttribute(native_attribute)
-                                if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                            {
-                                native_attribute.value
-                            }
-                            _ => None,
-                        })
-                        .unwrap_or(if matches!(ctx.language, Language::Astro) {
-                            "ts"
-                        } else {
-                            "js"
-                        }),
-                );
+                let is_json = self.attrs.iter().any(|attr| {
+                    if let Attribute::NativeAttribute(native_attr) = attr {
+                        native_attr.name.eq_ignore_ascii_case("type")
+                            && native_attr
+                                .value
+                                .map(|value| value == "importmap" || value == "application/json")
+                                .unwrap_or_default()
+                    } else {
+                        false
+                    }
+                });
+                let formatted = if is_json {
+                    ctx.format_json(text_node.raw)
+                } else {
+                    ctx.format_script(
+                        text_node.raw,
+                        self.attrs
+                            .iter()
+                            .find_map(|attr| match attr {
+                                Attribute::NativeAttribute(native_attribute)
+                                    if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                                {
+                                    native_attribute.value
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                                "ts"
+                            } else {
+                                "js"
+                            }),
+                    )
+                };
                 let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
                 docs.push(
                     if ctx.script_indent() {

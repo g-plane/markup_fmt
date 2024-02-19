@@ -14,6 +14,7 @@ fn integration_with_dprint_ts_snapshot() {
             .arg("../target/wasm32-unknown-unknown/debug/dprint_plugin_markup.wasm")
             .arg("https://plugins.dprint.dev/g-plane/malva-v0.1.4.wasm")
             .arg("https://plugins.dprint.dev/typescript-0.88.9.wasm")
+            .arg("https://plugins.dprint.dev/json-0.19.1.wasm")
             .stdin(file)
             .output()
             .unwrap()

@@ -198,6 +198,20 @@ where
         )
     }
 
+    pub(crate) fn format_json<'a>(&mut self, code: &'a str) -> Cow<'a, str> {
+        self.format_with_external_formatter(
+            Path::new("code.json"),
+            code,
+            self.print_width
+                .saturating_sub(self.indent_level)
+                .saturating_sub(if self.script_indent() {
+                    self.indent_width
+                } else {
+                    0
+                }),
+        )
+    }
+
     fn format_with_external_formatter<'a>(
         &mut self,
         path: &Path,
