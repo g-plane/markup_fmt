@@ -103,7 +103,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
     }
 }
 
-impl<'s> DocGen<'s> for AstroScriptBlock<'s> {
+impl<'s> DocGen<'s> for AstroFrontMatter<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
@@ -597,7 +597,7 @@ impl<'s> DocGen<'s> for Node<'s> {
     {
         match self {
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx),
-            Node::AstroScriptBlock(astro_script_block) => astro_script_block.doc(ctx),
+            Node::AstroFrontMatter(astro_front_matter) => astro_front_matter.doc(ctx),
             Node::Comment(comment) => comment.doc(ctx),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
             Node::Element(element) => element.doc(ctx),

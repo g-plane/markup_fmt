@@ -16,7 +16,7 @@ pub enum AstroExprChild<'s> {
 }
 
 #[derive(Clone, Debug)]
-pub struct AstroScriptBlock<'s> {
+pub struct AstroFrontMatter<'s> {
     pub raw: &'s str,
 }
 
@@ -85,7 +85,7 @@ pub struct NativeAttribute<'s> {
 #[derive(Clone, Debug)]
 pub enum Node<'s> {
     AstroExpr(AstroExpr<'s>),
-    AstroScriptBlock(AstroScriptBlock<'s>),
+    AstroFrontMatter(AstroFrontMatter<'s>),
     Comment(Comment<'s>),
     Doctype,
     Element(Element<'s>),

@@ -33,7 +33,7 @@ pub struct Parser<'s> {
 
 #[derive(Default)]
 struct ParserState {
-    has_astro_script_block: bool,
+    has_astro_front_matter: bool,
 }
 
 impl<'s> Parser<'s> {
@@ -183,14 +183,14 @@ impl<'s> Parser<'s> {
         Ok(AstroExpr { children })
     }
 
-    fn parse_astro_script_block(&mut self) -> PResult<AstroScriptBlock<'s>> {
+    fn parse_astro_front_matter(&mut self) -> PResult<AstroFrontMatter<'s>> {
         let Some((start, _)) = self
             .chars
             .next_if(|(_, c)| *c == '-')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
         else {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectAstroScriptBlock));
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAstroFrontMatter));
         };
         let start = start + 1;
 
@@ -229,8 +229,8 @@ impl<'s> Parser<'s> {
             }
         }
 
-        self.state.has_astro_script_block = true;
-        Ok(AstroScriptBlock {
+        self.state.has_astro_front_matter = true;
+        Ok(AstroFrontMatter {
             raw: unsafe { self.source.get_unchecked(start..end) },
         })
     }
@@ -793,12 +793,12 @@ impl<'s> Parser<'s> {
             }
             Some((_, '-'))
                 if matches!(self.language, Language::Astro)
-                    && !self.state.has_astro_script_block =>
+                    && !self.state.has_astro_front_matter =>
             {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
-                    self.parse_astro_script_block().map(Node::AstroScriptBlock)
+                    self.parse_astro_front_matter().map(Node::AstroFrontMatter)
                 } else {
                     self.parse_text_node().map(Node::TextNode)
                 }
@@ -1506,7 +1506,7 @@ impl<'s> Parser<'s> {
                 }
                 Some((i, '-'))
                     if matches!(self.language, Language::Astro)
-                        && !self.state.has_astro_script_block =>
+                        && !self.state.has_astro_front_matter =>
                 {
                     let i = *i;
                     let mut chars = self.chars.clone();
