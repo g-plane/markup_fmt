@@ -39,15 +39,62 @@ impl<'s> DocGen<'s> for AstroAttribute<'s> {
     }
 }
 
-impl<'s> DocGen<'s> for AstroInterpolation<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+impl<'s> DocGen<'s> for AstroExpr<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
+        const PLACEHOLDER: &str = "$AstroTpl$";
+        let script = self
+            .children
+            .iter()
+            .filter_map(|child| {
+                if let AstroExprChild::Script(script) = child {
+                    Some(*script)
+                } else {
+                    None
+                }
+            })
+            .join(PLACEHOLDER);
+        let formatted_script = ctx.format_expr(&script);
+
+        let templates = self.children.iter().filter_map(|child| {
+            if let AstroExprChild::Template(nodes) = child {
+                Some(
+                    Doc::flat_or_break(Doc::nil(), Doc::text("("))
+                        .append(
+                            Doc::line_or_nil()
+                                .append(format_children_without_inserting_linebreak(
+                                    &nodes,
+                                    has_two_more_non_text_children(&nodes),
+                                    ctx,
+                                ))
+                                .nest_with_ctx(ctx),
+                        )
+                        .append(Doc::line_or_nil())
+                        .append(Doc::flat_or_break(Doc::nil(), Doc::text(")")))
+                        .group(),
+                )
+            } else {
+                None
+            }
+        });
+
         Doc::text("{")
             .append(
                 Doc::line_or_nil()
-                    .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
+                    .concat(
+                        formatted_script
+                            .split(PLACEHOLDER)
+                            .map(|script| {
+                                if script.contains('\n') {
+                                    Doc::list(reflow_with_indent(script).collect())
+                                } else {
+                                    Doc::text(script.to_string())
+                                }
+                            })
+                            .interleave(templates),
+                    )
                     .nest_with_ctx(ctx),
             )
             .append(Doc::line_or_nil())
@@ -363,7 +410,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     Node::VueInterpolation(..)
                         | Node::SvelteInterpolation(..)
                         | Node::Comment(..)
-                        | Node::AstroInterpolation(..)
+                        | Node::AstroExpr(..)
                         | Node::JinjaInterpolation(..)
                 )
             }) {
@@ -549,7 +596,7 @@ impl<'s> DocGen<'s> for Node<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
-            Node::AstroInterpolation(astro_interpolation) => astro_interpolation.doc(ctx),
+            Node::AstroExpr(astro_expr) => astro_expr.doc(ctx),
             Node::AstroScriptBlock(astro_script_block) => astro_script_block.doc(ctx),
             Node::Comment(comment) => comment.doc(ctx),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
@@ -1231,7 +1278,7 @@ where
                             Node::TextNode(..)
                             | Node::VueInterpolation(..)
                             | Node::SvelteInterpolation(..)
-                            | Node::AstroInterpolation(..)
+                            | Node::AstroExpr(..)
                             | Node::JinjaInterpolation(..) => true,
                             Node::Element(element) => {
                                 element.tag_name.eq_ignore_ascii_case("label")

@@ -15,7 +15,9 @@ const colors = ["red", "yellow", "blue"];
 
 {
   [].map((item: string) => (
-  	<div>{item}</div>
+    <div>
+      {item}
+    </div>
   ))
 }
 

@@ -9,9 +9,9 @@ source: markup_fmt/tests/fmt.rs
 
 {
   [].map((value) => {
-  	console.log(value);
+  console.log(value);
 
-  	return <div></div><h1></h1>
+  return <div></div><h1></h1>
   })
 }
 

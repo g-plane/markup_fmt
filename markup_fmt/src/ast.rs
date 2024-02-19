@@ -5,8 +5,14 @@ pub struct AstroAttribute<'s> {
 }
 
 #[derive(Clone, Debug)]
-pub struct AstroInterpolation<'s> {
-    pub expr: &'s str,
+pub struct AstroExpr<'s> {
+    pub children: Vec<AstroExprChild<'s>>,
+}
+
+#[derive(Clone, Debug)]
+pub enum AstroExprChild<'s> {
+    Script(&'s str),
+    Template(Vec<Node<'s>>),
 }
 
 #[derive(Clone, Debug)]
@@ -78,7 +84,7 @@ pub struct NativeAttribute<'s> {
 
 #[derive(Clone, Debug)]
 pub enum Node<'s> {
-    AstroInterpolation(AstroInterpolation<'s>),
+    AstroExpr(AstroExpr<'s>),
     AstroScriptBlock(AstroScriptBlock<'s>),
     Comment(Comment<'s>),
     Doctype,

@@ -100,14 +100,87 @@ impl<'s> Parser<'s> {
             .map(|expr| AstroAttribute { name, expr })
     }
 
-    fn parse_astro_interpolation(&mut self) -> PResult<AstroInterpolation<'s>> {
-        if self.chars.next_if(|(_, c)| *c == '{').is_some() {
-            Ok(AstroInterpolation {
-                expr: self.parse_svelte_or_astro_expr()?,
-            })
-        } else {
-            Err(self.emit_error(SyntaxErrorKind::ExpectAstroInterpolation))
+    fn parse_astro_expr(&mut self) -> PResult<AstroExpr<'s>> {
+        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAstroExpr));
         }
+
+        let mut children = Vec::with_capacity(1);
+        let mut braces_stack = 0u8;
+        let mut pos = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
+        while let Some((i, c)) = self.chars.peek() {
+            match c {
+                '{' => {
+                    braces_stack += 1;
+                    self.chars.next();
+                }
+                '}' => {
+                    let i = *i;
+                    self.chars.next();
+                    if braces_stack == 0 {
+                        debug_assert!(matches!(
+                            children.last(),
+                            Some(AstroExprChild::Template(..)) | None
+                        ));
+                        children.push(AstroExprChild::Script(unsafe {
+                            self.source.get_unchecked(pos..i)
+                        }));
+                        break;
+                    }
+                    braces_stack -= 1;
+                }
+                '<' => {
+                    let i = *i;
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if chars
+                        .next_if(|(_, c)| is_tag_name_char(*c) || *c == '!' || *c == '>')
+                        .is_some()
+                    {
+                        let prev = unsafe { self.source.get_unchecked(pos..i) };
+                        if prev.is_empty() {
+                            // do nothing
+                        } else if prev.chars().all(|c| c.is_ascii_whitespace()) {
+                            if let Some(AstroExprChild::Template(nodes)) = children.last_mut() {
+                                nodes.push(Node::TextNode(TextNode {
+                                    raw: prev,
+                                    line_breaks: prev.chars().filter(|c| *c == '\n').count(),
+                                }));
+                            }
+                        } else {
+                            children.push(AstroExprChild::Script(prev));
+                        }
+
+                        let node = self.parse_node()?;
+                        if let Some(AstroExprChild::Template(nodes)) = children.last_mut() {
+                            nodes.push(node);
+                        } else {
+                            debug_assert!(matches!(
+                                children.last(),
+                                Some(AstroExprChild::Script(..)) | None
+                            ));
+                            children.push(AstroExprChild::Template(vec![node]));
+                        }
+                        pos = self
+                            .chars
+                            .peek()
+                            .map(|(i, _)| *i)
+                            .unwrap_or(self.source.len());
+                    } else {
+                        self.chars.next();
+                    }
+                }
+                _ => {
+                    self.chars.next();
+                }
+            }
+        }
+
+        Ok(AstroExpr { children })
     }
 
     fn parse_astro_script_block(&mut self) -> PResult<AstroScriptBlock<'s>> {
@@ -713,9 +786,7 @@ impl<'s> Parser<'s> {
                         Language::Svelte => self
                             .parse_svelte_interpolation()
                             .map(Node::SvelteInterpolation),
-                        Language::Astro => self
-                            .parse_astro_interpolation()
-                            .map(Node::AstroInterpolation),
+                        Language::Astro => self.parse_astro_expr().map(Node::AstroExpr),
                         _ => self.parse_text_node().map(Node::TextNode),
                     },
                 }
