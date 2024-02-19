@@ -330,7 +330,11 @@ impl<'s> DocGen<'s> for Element<'s> {
                             }
                             _ => None,
                         })
-                        .unwrap_or("js"),
+                        .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                            "ts"
+                        } else {
+                            "js"
+                        }),
                 );
                 let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
                 docs.push(

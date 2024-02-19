@@ -48,7 +48,7 @@ const colors = ["red", "yellow", "blue"];
 }
 
 <script>
-function handleClick() {
+function handleClick(): void {
   console.log("button clicked!");
 }
 document.getElementById("button").addEventListener("click", handleClick);
