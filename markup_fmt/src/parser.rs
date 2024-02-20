@@ -352,8 +352,6 @@ impl<'s> Parser<'s> {
                         end = i;
                         self.chars = chars;
                         break;
-                    } else {
-                        continue;
                     }
                 }
                 Some(..) => continue,
@@ -424,9 +422,8 @@ impl<'s> Parser<'s> {
                             self_closing: true,
                             void_element,
                         });
-                    } else {
-                        return Err(self.emit_error(SyntaxErrorKind::ExpectSelfCloseTag));
                     }
+                    return Err(self.emit_error(SyntaxErrorKind::ExpectSelfCloseTag));
                 }
                 Some((_, '>')) => {
                     self.chars.next();
@@ -476,12 +473,10 @@ impl<'s> Parser<'s> {
                         self.skip_ws();
                         if self.chars.next_if(|(_, c)| *c == '>').is_some() {
                             break;
-                        } else {
-                            return Err(self.emit_error(SyntaxErrorKind::ExpectCloseTag));
                         }
-                    } else {
-                        children.push(self.parse_node()?);
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectCloseTag));
                     }
+                    children.push(self.parse_node()?);
                 }
                 Some(..) => {
                     children.push(
@@ -546,9 +541,8 @@ impl<'s> Parser<'s> {
                 if stack == 0 {
                     end = if inclusive { i + close.len_utf8() } else { i };
                     break;
-                } else {
-                    stack -= 1;
                 }
+                stack -= 1;
             }
         }
         Ok(unsafe { self.source.get_unchecked(start..end) })
@@ -563,9 +557,8 @@ impl<'s> Parser<'s> {
                     chars.next();
                     if chars.next_if(|(_, c)| *c == '%').is_some() {
                         break;
-                    } else {
-                        children.push(self.parse_node()?);
                     }
+                    children.push(self.parse_node()?);
                 }
                 Some(..) => {
                     children.push(self.parse_node()?);
@@ -595,8 +588,6 @@ impl<'s> Parser<'s> {
                         end = i;
                         self.chars = chars;
                         break;
-                    } else {
-                        continue;
                     }
                 }
                 Some(..) => continue,
@@ -626,8 +617,6 @@ impl<'s> Parser<'s> {
                     if self.chars.next_if(|(_, c)| *c == '}').is_some() {
                         end = i;
                         break;
-                    } else {
-                        continue;
                     }
                 }
                 Some(..) => continue,
@@ -713,8 +702,6 @@ impl<'s> Parser<'s> {
                     if self.chars.next_if(|(_, c)| *c == '}').is_some() {
                         end = i;
                         break;
-                    } else {
-                        continue;
                     }
                 }
                 Some(..) => continue,
@@ -857,9 +844,8 @@ impl<'s> Parser<'s> {
                     {
                         end = i;
                         break;
-                    } else {
-                        self.chars.next();
                     }
+                    self.chars.next();
                 }
                 Some((_, c)) => {
                     if *c == '\n' {
@@ -994,10 +980,9 @@ impl<'s> Parser<'s> {
                         end = *i;
                         if braces_stack == 0 {
                             break;
-                        } else {
-                            self.chars.next();
-                            braces_stack -= 1;
                         }
+                        self.chars.next();
+                        braces_stack -= 1;
                     }
                     Some((i, _)) => {
                         end = *i;
@@ -1146,9 +1131,8 @@ impl<'s> Parser<'s> {
                     chars.next();
                     if chars.next_if(|(_, c)| *c == '/' || *c == ':').is_some() {
                         break;
-                    } else {
-                        children.push(self.parse_node()?);
                     }
+                    children.push(self.parse_node()?);
                 }
                 Some(..) => {
                     children.push(self.parse_node()?);
@@ -1419,9 +1403,8 @@ impl<'s> Parser<'s> {
                     if braces_stack == 0 {
                         end = i;
                         break;
-                    } else {
-                        braces_stack -= 1;
                     }
+                    braces_stack -= 1;
                 }
                 Some(..) => continue,
                 None => break,
@@ -1485,9 +1468,8 @@ impl<'s> Parser<'s> {
                         if chars.next_if(|(_, c)| *c == '{').is_some() {
                             end = i;
                             break;
-                        } else {
-                            self.chars.next();
                         }
+                        self.chars.next();
                     }
                     Language::Svelte | Language::Astro => {
                         end = *i;
@@ -1503,9 +1485,8 @@ impl<'s> Parser<'s> {
                         {
                             end = i;
                             break;
-                        } else {
-                            self.chars.next();
                         }
+                        self.chars.next();
                     }
                 },
                 Some((i, '<')) => {
@@ -1537,9 +1518,8 @@ impl<'s> Parser<'s> {
                     if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
                         end = i;
                         break;
-                    } else {
-                        self.chars.next();
                     }
+                    self.chars.next();
                 }
                 Some((_, c)) => {
                     if *c == '\n' {
