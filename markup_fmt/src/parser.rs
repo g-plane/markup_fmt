@@ -194,11 +194,11 @@ impl<'s> Parser<'s> {
         };
         let start = start + 1;
 
-        let mut string_stack = vec![];
+        let mut pair_stack = vec![];
         let mut end = start;
         loop {
             match self.chars.next() {
-                Some((i, '-')) if string_stack.is_empty() => {
+                Some((i, '-')) if pair_stack.is_empty() => {
                     let mut chars = self.chars.clone();
                     if chars
                         .next_if(|(_, c)| *c == '-')
@@ -208,21 +208,44 @@ impl<'s> Parser<'s> {
                         end = i;
                         self.chars = chars;
                         break;
-                    } else {
-                        continue;
                     }
                 }
                 Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
-                    if string_stack
-                        .last()
-                        .map(|last| *last == c)
-                        .unwrap_or_default()
-                    {
-                        string_stack.pop();
-                    } else {
-                        string_stack.push(c);
+                    if pair_stack.last().map(|last| *last == c).unwrap_or_default() {
+                        pair_stack.pop();
+                    } else if matches!(pair_stack.last(), Some('$' | '{') | None) {
+                        pair_stack.push(c);
                     }
-                    continue;
+                }
+                Some((_, '$')) if matches!(pair_stack.last(), Some('`')) => {
+                    if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+                        pair_stack.push('$');
+                    }
+                }
+                Some((_, '{')) if matches!(pair_stack.last(), Some('$' | '{') | None) => {
+                    pair_stack.push('{');
+                }
+                Some((_, '}')) if matches!(pair_stack.last(), Some('$' | '{')) => {
+                    pair_stack.pop();
+                }
+                Some((_, '/')) if matches!(pair_stack.last(), Some('$' | '}') | None) => {
+                    if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
+                        pair_stack.push(c);
+                    }
+                }
+                Some((_, '\n')) => {
+                    if let Some('/') = pair_stack.last() {
+                        pair_stack.pop();
+                    }
+                }
+                Some((_, '*')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == '/' && matches!(pair_stack.last(), Some('*')))
+                        .is_some()
+                    {
+                        pair_stack.pop();
+                    }
                 }
                 Some(..) => continue,
                 None => break,
