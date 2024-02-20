@@ -65,8 +65,8 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                         .append(
                             Doc::line_or_nil()
                                 .append(format_children_without_inserting_linebreak(
-                                    &nodes,
-                                    has_two_more_non_text_children(&nodes),
+                                    nodes,
+                                    has_two_more_non_text_children(nodes),
                                     ctx,
                                 ))
                                 .nest_with_ctx(ctx),
