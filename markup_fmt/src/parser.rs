@@ -247,6 +247,9 @@ impl<'s> Parser<'s> {
                         pair_stack.pop();
                     }
                 }
+                Some((_, '\\')) if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                    self.chars.next();
+                }
                 Some(..) => continue,
                 None => break,
             }
