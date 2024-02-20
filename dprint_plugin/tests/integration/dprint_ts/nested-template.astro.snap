@@ -31,6 +31,7 @@ source: dprint_plugin/tests/integration.rs
         </p>
       ))
     }
+    {a < b > c}
   </body>
 </html>
 
