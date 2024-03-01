@@ -2,6 +2,8 @@
 
 markup_fmt is a configurable HTML/Vue/Svelte/Astro/Jinja/Twig formatter.
 
+![GitHub Downloads](https://img.shields.io/github/downloads/g-plane/markup_fmt/latest/plugin.wasm?style=for-the-badge)
+
 ## Notes for Vue and Svelte Users
 
 This formatter provides some options such as `vBindStyle`, `vOnStyle` and more for Vue and
