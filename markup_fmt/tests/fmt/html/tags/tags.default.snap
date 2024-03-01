@@ -108,7 +108,12 @@ source: markup_fmt/tests/fmt.rs
   <div>string</div>
 </div>
 <ul>
-  123<li class="foo" id="bar">First</li>
+  123<li
+    class="foo"
+    id="bar"
+  >
+    First
+  </li>
   456<li class="baz">Second</li>
   789
 </ul>

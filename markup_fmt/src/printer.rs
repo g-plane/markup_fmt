@@ -206,6 +206,19 @@ impl<'s> DocGen<'s> for Element<'s> {
             Cow::from(self.tag_name)
         }));
 
+        let attrs_sep = if !self.first_attr_same_line
+            && !ctx.options.prefer_attrs_single_line
+            && self.attrs.len() > 1
+            && !ctx
+                .options
+                .max_attrs_per_line
+                .map(|value| value.get() > 1)
+                .unwrap_or_default()
+        {
+            Doc::hard_line()
+        } else {
+            Doc::line_or_space()
+        };
         let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
             // fix #2
             if self.attrs.is_empty() {
@@ -218,7 +231,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     Doc::list(
                         itertools::intersperse(
                             chunk.iter().map(|attr| attr.doc(ctx)),
-                            Doc::line_or_space(),
+                            attrs_sep.clone(),
                         )
                         .collect(),
                     )
@@ -231,7 +244,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::list(
                 self.attrs
                     .iter()
-                    .flat_map(|attr| [Doc::line_or_space(), attr.doc(ctx)].into_iter())
+                    .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx)].into_iter())
                     .collect(),
             )
             .nest_with_ctx(ctx)

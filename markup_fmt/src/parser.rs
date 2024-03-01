@@ -412,8 +412,8 @@ impl<'s> Parser<'s> {
         let void_element = helpers::is_void_element(tag_name, self.language.clone());
 
         let mut attrs = vec![];
+        let mut first_attr_same_line = true;
         loop {
-            self.skip_ws();
             match self.chars.peek() {
                 Some((_, '/')) => {
                     self.chars.next();
@@ -421,6 +421,7 @@ impl<'s> Parser<'s> {
                         return Ok(Element {
                             tag_name,
                             attrs,
+                            first_attr_same_line,
                             children: vec![],
                             self_closing: true,
                             void_element,
@@ -434,12 +435,22 @@ impl<'s> Parser<'s> {
                         return Ok(Element {
                             tag_name,
                             attrs,
+                            first_attr_same_line,
                             children: vec![],
                             self_closing: false,
                             void_element,
                         });
                     }
                     break;
+                }
+                Some((_, '\n')) => {
+                    if attrs.is_empty() {
+                        first_attr_same_line = false;
+                    }
+                    self.chars.next();
+                }
+                Some((_, c)) if c.is_ascii_whitespace() => {
+                    self.chars.next();
                 }
                 _ => {
                     attrs.push(self.parse_attr()?);
@@ -501,6 +512,7 @@ impl<'s> Parser<'s> {
         Ok(Element {
             tag_name,
             attrs,
+            first_attr_same_line,
             children,
             self_closing: false,
             void_element,

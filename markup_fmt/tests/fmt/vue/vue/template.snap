@@ -13,7 +13,10 @@ source: markup_fmt/tests/fmt.rs
         @load="onImgLoad"
         @click="onImgClick"
       />
-      <p v-if="renderInfo" class="file-info prepend-top-10">
+      <p
+        v-if="renderInfo"
+        class="file-info prepend-top-10"
+      >
         <template v-if="fileSize>0">
           {{ fileSizeReadable }}
         </template>

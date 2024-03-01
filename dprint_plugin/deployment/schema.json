@@ -87,6 +87,10 @@
       "default": null,
       "minimum": 1
     },
+    "preferAttrsSingleLine": {
+      "type": "boolean",
+      "default": false
+    },
     "html.normal.selfClosing": {
       "type": ["boolean", "null"],
       "default": null

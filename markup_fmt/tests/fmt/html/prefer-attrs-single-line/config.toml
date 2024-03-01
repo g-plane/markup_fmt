@@ -1,0 +1,23 @@
+[default]
+
+[disabled]
+preferAttrsSingleLine = false
+
+[enabled]
+preferAttrsSingleLine = true
+
+[disabled-with-max-one-attr-per-line]
+preferAttrsSingleLine = false
+maxAttrsPerLine = 1
+
+[enabled-with-max-one-attr-per-line]
+preferAttrsSingleLine = true
+maxAttrsPerLine = 1
+
+[disabled-with-max-two-attr-per-line]
+preferAttrsSingleLine = false
+maxAttrsPerLine = 2
+
+[enabled-with-max-two-attr-per-line]
+preferAttrsSingleLine = true
+maxAttrsPerLine = 2

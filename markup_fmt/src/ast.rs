@@ -45,6 +45,7 @@ pub struct VueDirective<'s> {
 pub struct Element<'s> {
     pub tag_name: &'s str,
     pub attrs: Vec<Attribute<'s>>,
+    pub first_attr_same_line: bool,
     pub children: Vec<Node<'s>>,
     pub self_closing: bool,
     pub void_element: bool,

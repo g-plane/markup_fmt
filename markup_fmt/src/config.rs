@@ -151,6 +151,10 @@ pub struct LanguageOptions {
     /// See [`maxAttrsPerLine`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#maxattrsperline) on GitHub
     pub max_attrs_per_line: Option<NonZeroUsize>,
 
+    #[cfg_attr(feature = "config_serde", serde(alias = "preferAttrsSingleLine"))]
+    /// See [`preferAttrsSingleLine`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#preferattrssingleline) on GitHub
+    pub prefer_attrs_single_line: bool,
+
     #[cfg_attr(
         feature = "config_serde",
         serde(rename = "html.normal.self_closing", alias = "html.normal.selfClosing")

@@ -138,6 +138,12 @@ pub(crate) fn resolve_config(
                 "maxAttrsPerLine",
                 &mut diagnostics,
             ),
+            prefer_attrs_single_line: get_value(
+                &mut config,
+                "preferAttrsSingleLine",
+                false,
+                &mut diagnostics,
+            ),
             html_normal_self_closing: get_nullable_value(
                 &mut config,
                 "html.normal.selfClosing",
