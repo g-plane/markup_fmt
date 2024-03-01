@@ -669,7 +669,8 @@ impl<'s> Parser<'s> {
                     {
                         body.push(JinjaTagOrChildren::Tag(next_tag));
                         break;
-                    } else if (tag_name == "if" || tag_name == "for")
+                    }
+                    if (tag_name == "if" || tag_name == "for")
                         && matches!(next_tag_name, "elif" | "elseif" | "else")
                     {
                         body.push(JinjaTagOrChildren::Tag(next_tag));

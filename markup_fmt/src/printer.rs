@@ -249,12 +249,14 @@ impl<'s> DocGen<'s> for Element<'s> {
                 docs.push(Doc::text(">"));
             }
             return Doc::list(docs).group();
-        } else if self_closing && self.children.is_empty() {
+        }
+        if self_closing && self.children.is_empty() {
             docs.push(attrs);
             docs.push(Doc::line_or_space());
             docs.push(Doc::text("/>"));
             return Doc::list(docs).group();
-        } else if ctx.options.closing_bracket_same_line {
+        }
+        if ctx.options.closing_bracket_same_line {
             docs.push(attrs.append(Doc::text(">")).group());
         } else {
             docs.push(
