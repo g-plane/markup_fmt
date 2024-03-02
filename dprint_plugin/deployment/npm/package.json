@@ -15,18 +15,7 @@
     "*.js",
     "*.d.ts"
   ],
-  "main": "index.js",
   "exports": {
-    ".": "./index.js"
-  },
-  "scripts": {
-    "build": "json2ts ../schema.json -o config.d.ts --no-additionalProperties && tsc -p .",
-    "prepublishOnly": "pnpm build"
-  },
-  "devDependencies": {
-    "@gplane/tsconfig": "^6.1.0",
-    "@types/node": "^20.10.3",
-    "json-schema-to-typescript": "^13.1.1",
-    "typescript": "^5.3.2"
+    "./plugin.wasm": "./plugin.wasm"
   }
 }

@@ -1,6 +1,0 @@
-{
-  "extends": "@gplane/tsconfig",
-  "compilerOptions": {
-    "sourceMap": false
-  }
-}
