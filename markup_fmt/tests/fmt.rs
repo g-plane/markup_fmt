@@ -47,7 +47,7 @@ fn run_format_test(
         Ok::<_, ()>(code.into())
     })
     .unwrap();
-    assert_eq!(
+    similar_asserts::assert_eq!(
         output,
         regression_format,
         "'{}' format is unstable",
