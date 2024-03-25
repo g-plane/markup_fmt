@@ -34,10 +34,12 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 ),
             },
             file_matching: FileMatchingInfo {
-                file_extensions: ["html", "vue", "svelte", "astro", "jinja", "jinja2", "twig"]
-                    .into_iter()
-                    .map(String::from)
-                    .collect(),
+                file_extensions: [
+                    "html", "vue", "svelte", "astro", "jinja", "jinja2", "twig", "njk",
+                ]
+                .into_iter()
+                .map(String::from)
+                .collect(),
                 file_names: vec![],
             },
         }

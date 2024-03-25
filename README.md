@@ -1,6 +1,6 @@
 # markup_fmt
 
-markup_fmt is a configurable HTML/Vue/Svelte/Astro/Jinja/Twig formatter.
+markup_fmt is a configurable HTML/Vue/Svelte/Astro/Jinja/Twig/Nunjucks formatter.
 
 ![GitHub Downloads](https://img.shields.io/github/downloads/g-plane/markup_fmt/latest/plugin.wasm?style=for-the-badge)
 
@@ -19,7 +19,7 @@ This will make ESLint faster because less rules will be executed.
 
 We've provided [dprint](https://dprint.dev/) integration.
 
-This plugin only formats HTML syntax of your HTML/Vue/Svelte/Astro/Jinja/Twig files.
+This plugin only formats HTML syntax of your HTML/Vue/Svelte/Astro/Jinja/Twig/Nunjucks files.
 You also need other dprint plugins to format the code in `<script>` and `<style>` tags.
 You can use [dprint-plugin-typescript](https://github.com/dprint/dprint-plugin-typescript) to
 format TypeScript/JavaScript code and [Malva](https://github.com/g-plane/malva) to format CSS/SCSS/Sass/Less code.

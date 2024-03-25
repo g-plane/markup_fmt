@@ -99,7 +99,7 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
         Some("vue") => Some(Language::Vue),
         Some("svelte") => Some(Language::Svelte),
         Some("astro") => Some(Language::Astro),
-        Some("jinja" | "jinja2" | "twig") => Some(Language::Jinja),
+        Some("jinja" | "jinja2" | "twig" | "njk") => Some(Language::Jinja),
         _ => None,
     }
 }
