@@ -1,0 +1,13 @@
+{{ set message = "Hello, world!" |>toUpperCase }}
+{{ set message|> toUpperCase }}
+{{ /set }}
+
+{{ for even_number of [1, 2, 3] |>filter((n) => n % 2 === 0) }}
+{{ /for }}
+
+{{ include "/hello-world.vto"|> toUpperCase }}
+
+{{ layout "container.vto" |> toUpperCase }}
+{{ /layout }}
+
+{{ export message="Hello, world!"|>toUpperCase }}

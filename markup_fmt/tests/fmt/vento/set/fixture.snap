@@ -1,0 +1,9 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{ set message = "Hello, world!" }}
+
+{{ set message }}
+  Hello, world!
+{{ /set }}
+

@@ -4,7 +4,7 @@ use std::{fs, path::Path, process::Command};
 #[test]
 fn integration_with_dprint_ts_snapshot() {
     glob!(
-        "integration/**/*.{html,vue,svelte,astro,jinja,njk}",
+        "integration/**/*.{html,vue,svelte,astro,jinja,njk,vto}",
         |path| {
             let file = fs::File::open(path).unwrap();
 
@@ -33,7 +33,7 @@ fn integration_with_dprint_ts_snapshot() {
 #[test]
 fn integration_with_biome_snapshot() {
     glob!(
-        "integration/**/*.{html,vue,svelte,astro,jinja,njk}",
+        "integration/**/*.{html,vue,svelte,astro,jinja,njk,vto}",
         |path| {
             let file = fs::File::open(path).unwrap();
 

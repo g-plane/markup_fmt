@@ -101,6 +101,11 @@ pub enum Node<'s> {
     SvelteInterpolation(SvelteInterpolation<'s>),
     SvelteKeyBlock(SvelteKeyBlock<'s>),
     TextNode(TextNode<'s>),
+    VentoBlock(VentoBlock<'s>),
+    VentoComment(VentoComment<'s>),
+    VentoEval(VentoEval<'s>),
+    VentoInterpolation(VentoInterpolation<'s>),
+    VentoTag(VentoTag<'s>),
     VueInterpolation(VueInterpolation<'s>),
 }
 
@@ -182,6 +187,37 @@ pub struct SvelteThenBlock<'s> {
 pub struct TextNode<'s> {
     pub raw: &'s str,
     pub line_breaks: usize,
+}
+
+#[derive(Clone, Debug)]
+pub struct VentoBlock<'s> {
+    pub body: Vec<VentoTagOrChildren<'s>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct VentoComment<'s> {
+    pub raw: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct VentoEval<'s> {
+    pub raw: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct VentoInterpolation<'s> {
+    pub expr: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub struct VentoTag<'s> {
+    pub tag: &'s str,
+}
+
+#[derive(Clone, Debug)]
+pub enum VentoTagOrChildren<'s> {
+    Tag(VentoTag<'s>),
+    Children(Vec<Node<'s>>),
 }
 
 #[derive(Clone, Debug)]

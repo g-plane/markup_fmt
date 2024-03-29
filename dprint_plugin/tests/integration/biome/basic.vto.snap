@@ -1,0 +1,15 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+{{ { name: "Óscar", surname: "Otero" } |> JSON.stringify(null, 2) }}
+
+{{ if !it.user }}
+  No user found!
+{{ /if }}
+
+{{ for odd_number of [1, 2, 3].filter((n) => n % 2) }}
+{{ /for }}
+
+{{ for await item of getItems() }}
+{{ /for }}
+

@@ -1,0 +1,9 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{ include "filename.vto" }}
+
+{{ include `${name}.vto` }}
+
+{{ include "./filename.vto" { name: "Óscar" }}}
+

@@ -29,7 +29,7 @@ where
 {
     pub(crate) fn script_indent(&self) -> bool {
         match self.language {
-            Language::Html | Language::Jinja => self
+            Language::Html | Language::Jinja | Language::Vento => self
                 .options
                 .html_script_indent
                 .unwrap_or(self.options.script_indent),
@@ -50,7 +50,7 @@ where
 
     pub(crate) fn style_indent(&self) -> bool {
         match self.language {
-            Language::Html | Language::Jinja => self
+            Language::Html | Language::Jinja | Language::Vento => self
                 .options
                 .html_style_indent
                 .unwrap_or(self.options.style_indent),
@@ -166,6 +166,30 @@ where
                 .strip_prefix("type T<")
                 .and_then(|s| s.strip_suffix("> = 0"))
                 .unwrap_or(formatted)
+                .to_owned()
+        }
+    }
+
+    pub(crate) fn format_stmt_header(&mut self, keyword: &str, code: &str) -> String {
+        if code.trim().is_empty() {
+            String::new()
+        } else {
+            let wrapped = format!("{keyword} ({code}) {{}}");
+            let formatted = self.format_with_external_formatter(
+                Path::new("stmt_header.js"),
+                &wrapped,
+                self.print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+            );
+            formatted
+                .strip_prefix(keyword)
+                .map(|s| s.trim_start())
+                .and_then(|s| s.strip_prefix("("))
+                .and_then(|s| s.trim_end().strip_suffix('}'))
+                .and_then(|s| s.trim_end().strip_suffix('{'))
+                .and_then(|s| s.trim_end().strip_suffix(')'))
+                .unwrap_or(code)
                 .to_owned()
         }
     }

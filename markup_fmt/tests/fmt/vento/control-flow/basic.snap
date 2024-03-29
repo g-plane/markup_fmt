@@ -1,0 +1,40 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{ if it.user }}
+  The user is {{ it.user }}.
+{{ /if }}
+
+{{ if it.user }}
+  The user is {{ it.user }}.
+{{ else }}
+  No user found!
+{{ /if }}
+
+{{ if !it.user }}
+  No user found!
+{{ else if !it.user.name }}
+  The user doesn't have name.s
+{{ else }}
+  The user is {{ it.user.name }}.
+{{ /if }}
+
+{{ for number of [1, 2, 3] }}
+  {{ number }}
+{{ /for }}
+
+{{ for odd_number of [1, 2, 3].filter((n) => n%2) }}
+  {{ odd_number }}
+{{ /for }}
+
+<dl>
+  {{ for key, value of { name: "Óscar", surname: "Otero" }}}
+    <dt>{{ key }}</dt>
+    <dd>{{ value }}</dd>
+  {{ /for }}
+</dl>
+
+{{ for await item of getItems() }}
+  {{ item }}
+{{ /for }}
+

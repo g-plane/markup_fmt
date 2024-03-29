@@ -22,6 +22,7 @@ pub enum Language {
     Svelte,
     Astro,
     Jinja,
+    Vento,
 }
 
 pub struct Parser<'s> {
@@ -263,7 +264,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Jinja => {
+            Language::Html | Language::Jinja | Language::Vento => {
                 self.parse_native_attr().map(Attribute::NativeAttribute)
             }
             Language::Vue => self
@@ -781,6 +782,9 @@ impl<'s> Parser<'s> {
                                 }
                                 _ => unreachable!(),
                             })
+                    }
+                    Some((_, '{')) if matches!(self.language, Language::Vento) => {
+                        self.parse_vento_tag_or_block(None)
                     }
                     Some((pos, '#')) if matches!(self.language, Language::Svelte) => self
                         .try_parse(Parser::parse_svelte_if_block)
@@ -1477,7 +1481,7 @@ impl<'s> Parser<'s> {
                     Language::Html => {
                         self.chars.next();
                     }
-                    Language::Vue => {
+                    Language::Vue | Language::Vento => {
                         let i = *i;
                         let mut chars = self.chars.clone();
                         chars.next();
@@ -1556,6 +1560,96 @@ impl<'s> Parser<'s> {
         })
     }
 
+    fn parse_vento_block_children(&mut self) -> PResult<Vec<Node<'s>>> {
+        let mut children = vec![];
+        loop {
+            match self.chars.peek() {
+                Some((_, '{')) => {
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if chars.next_if(|(_, c)| *c == '{').is_some() {
+                        break;
+                    }
+                    children.push(self.parse_node()?);
+                }
+                Some(..) => {
+                    children.push(self.parse_node()?);
+                }
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectVentoBlockEnd)),
+            }
+        }
+        Ok(children)
+    }
+
+    fn parse_vento_tag_or_block(&mut self, first_tag: Option<&'s str>) -> PResult<Node<'s>> {
+        let first_tag = if let Some(first_tag) = first_tag {
+            first_tag
+        } else {
+            self.parse_mustache_interpolation()?
+        };
+
+        if let Some(raw) = first_tag
+            .strip_prefix('#')
+            .and_then(|s| s.strip_suffix('#'))
+        {
+            return Ok(Node::VentoComment(VentoComment { raw }));
+        } else if let Some(raw) = first_tag.strip_prefix('>') {
+            return Ok(Node::VentoEval(VentoEval { raw }));
+        }
+
+        let (tag_name, tag_rest) = helpers::parse_vento_tag(&first_tag);
+
+        let is_function = tag_name == "function"
+            || matches!(tag_name, "async" | "export") && tag_rest.starts_with("function");
+        if matches!(tag_name, "for" | "if" | "layout")
+            || matches!(tag_name, "set" | "export") && !first_tag.contains('=')
+            || is_function
+        {
+            let mut body = vec![VentoTagOrChildren::Tag(VentoTag { tag: first_tag })];
+
+            loop {
+                let mut children = self.parse_vento_block_children()?;
+                if !children.is_empty() {
+                    if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
+                        nodes.append(&mut children);
+                    } else {
+                        body.push(VentoTagOrChildren::Children(children));
+                    }
+                }
+                if let Ok(next_tag) = self.parse_mustache_interpolation() {
+                    let (next_tag_name, _) = helpers::parse_vento_tag(&next_tag);
+                    if next_tag_name
+                        .trim()
+                        .strip_prefix('/')
+                        .is_some_and(|name| name == tag_name || is_function && name == "function")
+                    {
+                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
+                        break;
+                    }
+                    if tag_name == "if" && next_tag_name == "else" {
+                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
+                    } else {
+                        let node = self.parse_vento_tag_or_block(Some(next_tag))?;
+                        if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
+                            nodes.push(node);
+                        } else {
+                            body.push(VentoTagOrChildren::Children(vec![node]));
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
+            Ok(Node::VentoBlock(VentoBlock { body }))
+        } else if is_vento_interpolation(tag_name) {
+            Ok(Node::VentoInterpolation(VentoInterpolation {
+                expr: first_tag,
+            }))
+        } else {
+            Ok(Node::VentoTag(VentoTag { tag: first_tag }))
+        }
+    }
+
     fn parse_vue_directive(&mut self) -> PResult<VueDirective<'s>> {
         let name = match self.chars.peek() {
             Some((_, ':')) => {
@@ -1631,6 +1725,21 @@ fn parse_jinja_tag_name<'s>(tag: &JinjaTag<'s>) -> &'s str {
         .split_once(|c: char| c.is_ascii_whitespace())
         .map(|(name, _)| name)
         .unwrap_or(trimmed)
+}
+
+fn is_vento_interpolation(tag_name: &str) -> bool {
+    !matches!(
+        tag_name,
+        "if" | "else"
+            | "for"
+            | "set"
+            | "include"
+            | "layout"
+            | "async"
+            | "function"
+            | "import"
+            | "export"
+    )
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;

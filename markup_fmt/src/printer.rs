@@ -170,10 +170,12 @@ impl<'s> DocGen<'s> for Element<'s> {
             .unwrap_or(self.tag_name);
         ctx.current_tag_name = Some(tag_name);
         ctx.in_svg = tag_name.eq_ignore_ascii_case("svg");
-        let should_lower_cased = matches!(ctx.language, Language::Html | Language::Jinja)
-            && css_dataset::tags::STANDARD_HTML_TAGS
-                .iter()
-                .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
+        let should_lower_cased = matches!(
+            ctx.language,
+            Language::Html | Language::Jinja | Language::Vento
+        ) && css_dataset::tags::STANDARD_HTML_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
         let self_closing = if helpers::is_void_element(tag_name, ctx.language.clone()) {
             ctx.options
@@ -450,6 +452,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         | Node::Comment(..)
                         | Node::AstroExpr(..)
                         | Node::JinjaInterpolation(..)
+                        | Node::VentoInterpolation(..)
                 )
             }) {
                 // This lets it format like this:
@@ -650,6 +653,11 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx),
             Node::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx),
             Node::TextNode(text_node) => text_node.doc(ctx),
+            Node::VentoBlock(vento_block) => vento_block.doc(ctx),
+            Node::VentoComment(vento_comment) => vento_comment.doc(ctx),
+            Node::VentoEval(vento_eval) => vento_eval.doc(ctx),
+            Node::VentoInterpolation(vento_interpolation) => vento_interpolation.doc(ctx),
+            Node::VentoTag(vento_tag) => vento_tag.doc(ctx),
             Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx),
         }
     }
@@ -955,6 +963,158 @@ impl<'s> DocGen<'s> for TextNode<'s> {
             Doc::nil()
         } else {
             Doc::list(docs)
+        }
+    }
+}
+
+impl<'s> DocGen<'s> for VentoBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::list(self.body.iter().map(|child| child.doc(ctx)).collect())
+    }
+}
+
+impl<'s> DocGen<'s> for VentoComment<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        if ctx.options.format_comments {
+            Doc::text("{{#")
+                .append(
+                    Doc::line_or_space()
+                        .concat(reflow_with_indent(self.raw.trim()))
+                        .nest_with_ctx(ctx),
+                )
+                .append(Doc::line_or_space())
+                .append(Doc::text("#}}"))
+                .group()
+        } else {
+            Doc::text("{{#")
+                .concat(reflow_raw(self.raw))
+                .append(Doc::text("#}}"))
+        }
+    }
+}
+
+impl<'s> DocGen<'s> for VentoEval<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{>")
+            .append(Doc::line_or_space())
+            .concat(reflow_with_indent(
+                ctx.format_script(self.raw, "js")
+                    .trim()
+                    .trim_end_matches(';'),
+            ))
+            .nest_with_ctx(ctx)
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for VentoInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{")
+            .append(Doc::line_or_space())
+            .concat(itertools::intersperse(
+                self.expr
+                    .split("|>")
+                    .map(|expr| Doc::list(reflow_with_indent(&ctx.format_expr(expr)).collect())),
+                Doc::line_or_space()
+                    .append(Doc::text("|>"))
+                    .append(Doc::space()),
+            ))
+            .nest_with_ctx(ctx)
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for VentoTag<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{")
+            .append(Doc::line_or_space())
+            .concat(itertools::intersperse(
+                self.tag.split("|>").map(|item| {
+                    let parsed_tag = helpers::parse_vento_tag(item);
+                    if let ("if", rest) = parsed_tag {
+                        format_vento_stmt_header("if", "if", rest, ctx)
+                    } else if let ("else", rest) = parsed_tag {
+                        if let ("if", rest) = helpers::parse_vento_tag(rest) {
+                            format_vento_stmt_header("else if", "if", rest, ctx)
+                        } else {
+                            Doc::text("else")
+                        }
+                    } else if let ("for", rest) = parsed_tag {
+                        let (keyword, rest) =
+                            if let ("await", rest) = helpers::parse_vento_tag(rest) {
+                                ("for await", rest)
+                            } else {
+                                ("for", rest)
+                            };
+                        format_vento_stmt_header(keyword, keyword, rest, ctx)
+                    } else if matches!(parsed_tag, ("include" | "layout" | "function", _))
+                        || parsed_tag.1.starts_with("function")
+                    {
+                        // unsupported at present
+                        Doc::list(reflow_with_indent(item.trim()).collect())
+                    } else if let (tag_name @ ("set" | "export"), rest) = parsed_tag {
+                        if let Some((binding, expr)) = rest.trim().split_once('=') {
+                            Doc::text(tag_name.to_string())
+                                .append(Doc::space())
+                                .concat(reflow_with_indent(&ctx.format_binding(binding)))
+                                .append(Doc::text(" = "))
+                                .concat(reflow_with_indent(&ctx.format_expr(expr)))
+                        } else {
+                            Doc::text(tag_name.to_string())
+                                .append(Doc::space())
+                                .concat(reflow_with_indent(&ctx.format_binding(rest)))
+                        }
+                    } else if let ("import", _) = parsed_tag {
+                        Doc::list(
+                            reflow_with_indent(
+                                ctx.format_script(item, "js").trim().trim_end_matches(';'),
+                            )
+                            .collect(),
+                        )
+                    } else {
+                        Doc::list(reflow_with_indent(item.trim()).collect())
+                    }
+                }),
+                Doc::line_or_space()
+                    .append(Doc::text("|>"))
+                    .append(Doc::space()),
+            ))
+            .nest_with_ctx(ctx)
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for VentoTagOrChildren<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        match self {
+            VentoTagOrChildren::Tag(tag) => tag.doc(ctx),
+            VentoTagOrChildren::Children(children) => {
+                format_control_structure_block_children(children, ctx)
+            }
         }
     }
 }
@@ -1317,7 +1477,8 @@ where
                             | Node::VueInterpolation(..)
                             | Node::SvelteInterpolation(..)
                             | Node::AstroExpr(..)
-                            | Node::JinjaInterpolation(..) => true,
+                            | Node::JinjaInterpolation(..)
+                            | Node::VentoInterpolation(..) => true,
                             Node::Element(element) => {
                                 element.tag_name.eq_ignore_ascii_case("label")
                             }
@@ -1478,4 +1639,20 @@ where
             .nest_with_ctx(ctx)
             .append(format_ws_sensitive_trailing_ws(children)),
     }
+}
+
+fn format_vento_stmt_header<'s, E, F>(
+    tag_keyword: &'static str,
+    fake_keyword: &'static str,
+    code: &'s str,
+    ctx: &mut Ctx<'_, 's, E, F>,
+) -> Doc<'s>
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    Doc::text(tag_keyword)
+        .append(Doc::space())
+        .concat(reflow_with_indent(
+            &ctx.format_stmt_header(fake_keyword, code),
+        ))
 }

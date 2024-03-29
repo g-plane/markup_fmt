@@ -100,6 +100,7 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
         Some("svelte") => Some(Language::Svelte),
         Some("astro") => Some(Language::Astro),
         Some("jinja" | "jinja2" | "twig" | "njk") => Some(Language::Jinja),
+        Some("vto") => Some(Language::Vento),
         _ => None,
     }
 }

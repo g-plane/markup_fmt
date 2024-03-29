@@ -4,3 +4,4 @@
 **/*.astro linguist-detectable=false
 **/*.jinja linguist-detectable=false
 **/*.njk linguist-detectable=false
+**/*.vto linguist-detectable=false

@@ -1,0 +1,19 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{ function hello }}
+  Hello, world!
+{{ /function }}
+
+{{ function hello(name = "world") }}
+  Hello, {{ name }}!
+{{ /function }}
+
+{{ async function hello }}
+  {{ await Promise.resolve("Hello, world!") }}
+{{ /function }}
+
+{{ export function message (name) }}
+  Hello, {{ name }}!
+{{ /export }}
+

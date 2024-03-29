@@ -1,0 +1,4 @@
+{{ "<h1>Hello, world!</h1>" |> escape }}
+{{ myTrustedSource.getHtml() |> safe }}
+{{ "<h1>Hello, world!</h1>" |> filter_name(arg1, arg2, ...) }}
+{{ "https://example.com/data.json" |> await fetch |> await json |> JSON.stringify }}
