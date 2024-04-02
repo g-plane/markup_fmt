@@ -547,13 +547,29 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
 }
 
 impl<'s> DocGen<'s> for JinjaTag<'s> {
-    fn doc<E, F>(&self, _: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
+        let (prefix, content) = self
+            .content
+            .strip_prefix('-')
+            .map(|content| ("-", content))
+            .unwrap_or(("", self.content));
+        let (content, suffix) = self
+            .content
+            .strip_suffix('-')
+            .map(|content| (content, "-"))
+            .unwrap_or((content, ""));
         Doc::text("{%")
-            .append(Doc::text(self.content))
+            .append(Doc::text(prefix))
+            .append(Doc::line_or_space())
+            .append(Doc::text(content.trim()))
+            .nest(ctx.indent_width)
+            .append(Doc::line_or_space())
+            .append(Doc::text(suffix))
             .append(Doc::text("%}"))
+            .group()
     }
 }
 
