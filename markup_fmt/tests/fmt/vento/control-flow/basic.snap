@@ -28,7 +28,7 @@ source: markup_fmt/tests/fmt.rs
 {{ /for }}
 
 <dl>
-  {{ for key, value of { name: "Óscar", surname: "Otero" }}}
+  {{ for key, value of { name: "Óscar", surname: "Otero" } }}
     <dt>{{ key }}</dt>
     <dd>{{ value }}</dd>
   {{ /for }}

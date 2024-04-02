@@ -5,5 +5,5 @@ source: markup_fmt/tests/fmt.rs
 
 {{ include `${name}.vto` }}
 
-{{ include "./filename.vto" { name: "Óscar" }}}
+{{ include "./filename.vto" { name: "Óscar" } }}
 

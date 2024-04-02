@@ -712,13 +712,19 @@ impl<'s> Parser<'s> {
         };
         let start = start + 1;
 
+        let mut braces_stack = 0usize;
         let mut end = start;
         loop {
             match self.chars.next() {
+                Some((_, '{')) => braces_stack += 1,
                 Some((i, '}')) => {
-                    if self.chars.next_if(|(_, c)| *c == '}').is_some() {
-                        end = i;
-                        break;
+                    if braces_stack == 0 {
+                        if self.chars.next_if(|(_, c)| *c == '}').is_some() {
+                            end = i;
+                            break;
+                        }
+                    } else {
+                        braces_stack -= 1;
                     }
                 }
                 Some(..) => continue,
