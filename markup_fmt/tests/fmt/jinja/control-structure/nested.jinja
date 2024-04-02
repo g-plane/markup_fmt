@@ -1,0 +1,21 @@
+{% if a %}
+a start
+{% if b %}
+b content
+{% endif %}
+a end
+{% endif %}
+
+{% for item in list %}
+content
+{% if item %}
+{{ item }}
+{% endif %}
+{% endfor %}
+
+{% if true %}
+{% for item in list %}
+{{ item }}
+{% endfor %}
+content
+{% endif %}

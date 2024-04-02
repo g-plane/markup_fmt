@@ -669,9 +669,13 @@ impl<'s> Parser<'s> {
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
             loop {
-                let children = self.parse_jinja_block_children()?;
+                let mut children = self.parse_jinja_block_children()?;
                 if !children.is_empty() {
-                    body.push(JinjaTagOrChildren::Children(children));
+                    if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
+                        nodes.append(&mut children);
+                    } else {
+                        body.push(JinjaTagOrChildren::Children(children));
+                    }
                 }
                 if let Ok(next_tag) = self.parse_jinja_tag() {
                     let next_tag_name = parse_jinja_tag_name(&next_tag);
@@ -687,6 +691,8 @@ impl<'s> Parser<'s> {
                         && matches!(next_tag_name, "elif" | "elseif" | "else")
                     {
                         body.push(JinjaTagOrChildren::Tag(next_tag));
+                    } else if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
+                        nodes.push(self.parse_jinja_tag_or_block(Some(next_tag))?);
                     } else {
                         body.push(JinjaTagOrChildren::Children(vec![
                             self.parse_jinja_tag_or_block(Some(next_tag))?
