@@ -1066,9 +1066,40 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
                                 ("for", rest)
                             };
                         format_vento_stmt_header(keyword, keyword, rest, ctx)
-                    } else if matches!(parsed_tag, ("include" | "layout" | "function", _))
-                        || parsed_tag.1.starts_with("function")
-                    {
+                    } else if let (tag_name @ ("include" | "layout"), rest) = parsed_tag {
+                        let mut brace_index = None;
+                        let mut quotes_stack = vec![];
+                        for (index, char) in rest.char_indices() {
+                            match char {
+                                '\'' | '"' | '`' => {
+                                    if quotes_stack.last().is_some_and(|last| *last == char) {
+                                        quotes_stack.pop();
+                                    } else {
+                                        quotes_stack.push(char);
+                                    }
+                                }
+                                '{' => {
+                                    if quotes_stack.is_empty() {
+                                        brace_index = Some(index);
+                                        break;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        if let Some(index) = brace_index {
+                            let (template, data) = rest.split_at(index);
+                            Doc::text(tag_name.to_string())
+                                .append(Doc::space())
+                                .concat(reflow_with_indent(&ctx.format_expr(template)))
+                                .append(Doc::text(" "))
+                                .concat(reflow_with_indent(&ctx.format_expr(data)))
+                        } else {
+                            Doc::text(tag_name.to_string())
+                                .append(Doc::space())
+                                .concat(reflow_with_indent(&ctx.format_expr(parsed_tag.1)))
+                        }
+                    } else if parsed_tag.0 == "function" || parsed_tag.1.starts_with("function") {
                         // unsupported at present
                         Doc::list(reflow_with_indent(item.trim()).collect())
                     } else if let (tag_name @ ("set" | "export"), rest) = parsed_tag {

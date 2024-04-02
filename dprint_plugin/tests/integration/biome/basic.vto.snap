@@ -13,3 +13,11 @@ source: dprint_plugin/tests/integration.rs
 {{ for await item of getItems() }}
 {{ /for }}
 
+{{ layout `${name}.vto` }}
+{{ /layout }}
+{{ layout "container.vto" { size: "big" } }}
+{{ /layout }}
+
+{{ include `${name}.vto` }}
+{{ include "./filename.vto" { name: "Óscar" } }}
+
