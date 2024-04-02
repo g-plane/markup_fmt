@@ -62,15 +62,13 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
             if let AstroExprChild::Template(nodes) = child {
                 Some(
                     Doc::flat_or_break(Doc::nil(), Doc::text("("))
-                        .append(
-                            Doc::line_or_nil()
-                                .append(format_children_without_inserting_linebreak(
-                                    nodes,
-                                    has_two_more_non_text_children(nodes),
-                                    ctx,
-                                ))
-                                .nest_with_ctx(ctx),
-                        )
+                        .append(Doc::line_or_nil())
+                        .append(format_children_without_inserting_linebreak(
+                            nodes,
+                            has_two_more_non_text_children(nodes),
+                            ctx,
+                        ))
+                        .nest_with_ctx(ctx)
                         .append(Doc::line_or_nil())
                         .append(Doc::flat_or_break(Doc::nil(), Doc::text(")")))
                         .group(),
@@ -81,22 +79,20 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
         });
 
         let doc = Doc::text("{")
-            .append(
-                Doc::line_or_nil()
-                    .concat(
-                        formatted_script
-                            .split(PLACEHOLDER)
-                            .map(|script| {
-                                if script.contains('\n') {
-                                    Doc::list(reflow_with_indent(script).collect())
-                                } else {
-                                    Doc::text(script.to_string())
-                                }
-                            })
-                            .interleave(templates),
-                    )
-                    .nest_with_ctx(ctx),
+            .append(Doc::line_or_nil())
+            .concat(
+                formatted_script
+                    .split(PLACEHOLDER)
+                    .map(|script| {
+                        if script.contains('\n') {
+                            Doc::list(reflow_with_indent(script).collect())
+                        } else {
+                            Doc::text(script.to_string())
+                        }
+                    })
+                    .interleave(templates),
             )
+            .nest_with_ctx(ctx)
             .append(Doc::line_or_nil())
             .append(Doc::text("}"));
         if script.contains("//") {
@@ -142,11 +138,9 @@ impl<'s> DocGen<'s> for Comment<'s> {
     {
         if ctx.options.format_comments {
             Doc::text("<!--")
-                .append(
-                    Doc::line_or_space()
-                        .concat(reflow_with_indent(self.raw.trim()))
-                        .nest_with_ctx(ctx),
-                )
+                .append(Doc::line_or_space())
+                .concat(reflow_with_indent(self.raw.trim()))
+                .nest_with_ctx(ctx)
                 .append(Doc::line_or_space())
                 .append(Doc::text("-->"))
                 .group()
@@ -513,11 +507,9 @@ impl<'s> DocGen<'s> for JinjaComment<'s> {
     {
         if ctx.options.format_comments {
             Doc::text("{#")
-                .append(
-                    Doc::line_or_space()
-                        .concat(reflow_with_indent(self.raw.trim()))
-                        .nest_with_ctx(ctx),
-                )
+                .append(Doc::line_or_space())
+                .concat(reflow_with_indent(self.raw.trim()))
+                .nest_with_ctx(ctx)
                 .append(Doc::line_or_space())
                 .append(Doc::text("#}"))
                 .group()
@@ -535,11 +527,9 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{{")
-            .append(
-                Doc::line_or_space()
-                    .append(Doc::text(self.expr.trim()))
-                    .nest(ctx.indent_width),
-            )
+            .append(Doc::line_or_space())
+            .append(Doc::text(self.expr.trim()))
+            .nest(ctx.indent_width)
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
             .group()
@@ -928,11 +918,9 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{")
-            .append(
-                Doc::line_or_nil()
-                    .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
-                    .nest_with_ctx(ctx),
-            )
+            .append(Doc::line_or_nil())
+            .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
+            .nest_with_ctx(ctx)
             .append(Doc::line_or_nil())
             .append(Doc::text("}"))
             .group()
@@ -999,11 +987,9 @@ impl<'s> DocGen<'s> for VentoComment<'s> {
     {
         if ctx.options.format_comments {
             Doc::text("{{#")
-                .append(
-                    Doc::line_or_space()
-                        .concat(reflow_with_indent(self.raw.trim()))
-                        .nest_with_ctx(ctx),
-                )
+                .append(Doc::line_or_space())
+                .concat(reflow_with_indent(self.raw.trim()))
+                .nest_with_ctx(ctx)
                 .append(Doc::line_or_space())
                 .append(Doc::text("#}}"))
                 .group()
@@ -1309,11 +1295,9 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{{")
-            .append(
-                Doc::line_or_space()
-                    .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
-                    .nest_with_ctx(ctx),
-            )
+            .append(Doc::line_or_space())
+            .concat(reflow_with_indent(&ctx.format_expr(self.expr)))
+            .nest_with_ctx(ctx)
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
             .group()
