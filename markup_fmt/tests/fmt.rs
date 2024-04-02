@@ -46,6 +46,13 @@ fn run_format_test(
     let regression_format = format_text(&output, language, &options, |_, code, _| {
         Ok::<_, ()>(code.into())
     })
+    .map_err(|err| {
+        format!(
+            "syntax error in stability test '{}': {:?}",
+            path.display(),
+            err
+        )
+    })
     .unwrap();
     similar_asserts::assert_eq!(
         output,
