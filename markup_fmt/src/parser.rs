@@ -751,7 +751,7 @@ impl<'s> Parser<'s> {
                     Some((_, '!')) => {
                         if matches!(
                             self.language,
-                            Language::Html | Language::Astro | Language::Jinja
+                            Language::Html | Language::Astro | Language::Jinja | Language::Vento
                         ) {
                             self.try_parse(Parser::parse_comment)
                                 .map(Node::Comment)
