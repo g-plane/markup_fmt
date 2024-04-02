@@ -75,7 +75,7 @@ dependencies = [
 
 [[package]]
 name = "dprint_plugin_markup"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "dprint-core",
@@ -194,7 +194,7 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "markup_fmt"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "css_dataset",
  "insta",
