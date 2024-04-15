@@ -7,7 +7,7 @@ use tiny_pretty::Doc;
 
 const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
 
-pub(crate) struct Ctx<'b, 's, E, F>
+pub(crate) struct Ctx<'b, E, F>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
@@ -15,15 +15,12 @@ where
     pub(crate) indent_width: usize,
     pub(crate) print_width: usize,
     pub(crate) options: &'b LanguageOptions,
-    pub(crate) current_tag_name: Option<&'s str>,
-    pub(crate) is_root: bool,
-    pub(crate) in_svg: bool,
     pub(crate) indent_level: usize,
     pub(crate) external_formatter: F,
     pub(crate) external_formatter_error: Option<(E, String)>,
 }
 
-impl<'b, 's, E, F> Ctx<'b, 's, E, F>
+impl<'b, E, F> Ctx<'b, E, F>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
@@ -70,10 +67,6 @@ where
     }
 
     pub(crate) fn is_whitespace_sensitive(&self, tag_name: &str) -> bool {
-        if self.in_svg {
-            return false;
-        }
-
         match self.language {
             Language::Vue | Language::Svelte | Language::Astro
                 if helpers::is_component(tag_name) =>
@@ -253,13 +246,13 @@ where
 }
 
 pub(crate) trait NestWithCtx {
-    fn nest_with_ctx<'b, 's, E, F>(self, ctx: &mut Ctx<'b, 's, E, F>) -> Self
+    fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
 impl NestWithCtx for Doc<'_> {
-    fn nest_with_ctx<'b, 's, E, F>(self, ctx: &mut Ctx<'b, 's, E, F>) -> Self
+    fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {

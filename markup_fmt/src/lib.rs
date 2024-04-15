@@ -7,8 +7,9 @@ mod error;
 mod helpers;
 mod parser;
 mod printer;
+mod state;
 
-use crate::{config::FormatOptions, ctx::Ctx, parser::Parser, printer::DocGen};
+use crate::{config::FormatOptions, ctx::Ctx, parser::Parser, printer::DocGen, state::State};
 pub use crate::{error::*, parser::Language};
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::{IndentKind, PrintOptions};
@@ -64,15 +65,19 @@ where
         indent_width: options.layout.indent_width,
         print_width: options.layout.print_width,
         options: &options.language,
-        current_tag_name: None,
-        is_root: true,
-        in_svg: false,
         indent_level: 0,
         external_formatter,
         external_formatter_error: None,
     };
 
-    let doc = ast.doc(&mut ctx);
+    let doc = ast.doc(
+        &mut ctx,
+        &State {
+            current_tag_name: None,
+            is_root: true,
+            in_svg: false,
+        },
+    );
     if let Some((error, code)) = ctx.external_formatter_error {
         return Err(FormatError::External(error, code));
     }

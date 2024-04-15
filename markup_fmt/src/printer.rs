@@ -2,20 +2,22 @@ use crate::{
     ast::*,
     config::{Quotes, VSlotStyle, WhitespaceSensitivity},
     ctx::{Ctx, NestWithCtx},
-    helpers, Language,
+    helpers,
+    state::State,
+    Language,
 };
 use itertools::Itertools;
-use std::{borrow::Cow, mem, path::Path};
+use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
 pub(super) trait DocGen<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
 impl<'s> DocGen<'s> for AstroAttribute<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -40,7 +42,7 @@ impl<'s> DocGen<'s> for AstroAttribute<'s> {
 }
 
 impl<'s> DocGen<'s> for AstroExpr<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -67,6 +69,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                             nodes,
                             has_two_more_non_text_children(nodes),
                             ctx,
+                            state,
                         ))
                         .nest_with_ctx(ctx)
                         .append(Doc::line_or_nil())
@@ -104,7 +107,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
 }
 
 impl<'s> DocGen<'s> for AstroFrontMatter<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -118,21 +121,21 @@ impl<'s> DocGen<'s> for AstroFrontMatter<'s> {
 }
 
 impl<'s> DocGen<'s> for Attribute<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
-            Attribute::NativeAttribute(native_attribute) => native_attribute.doc(ctx),
-            Attribute::SvelteAttribute(svelte_attribute) => svelte_attribute.doc(ctx),
-            Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx),
-            Attribute::AstroAttribute(astro_attribute) => astro_attribute.doc(ctx),
+            Attribute::NativeAttribute(native_attribute) => native_attribute.doc(ctx, state),
+            Attribute::SvelteAttribute(svelte_attribute) => svelte_attribute.doc(ctx, state),
+            Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
+            Attribute::AstroAttribute(astro_attribute) => astro_attribute.doc(ctx, state),
         }
     }
 }
 
 impl<'s> DocGen<'s> for Comment<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -153,7 +156,7 @@ impl<'s> DocGen<'s> for Comment<'s> {
 }
 
 impl<'s> DocGen<'s> for Element<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -162,8 +165,12 @@ impl<'s> DocGen<'s> for Element<'s> {
             .split_once(':')
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
-        ctx.current_tag_name = Some(tag_name);
-        ctx.in_svg = tag_name.eq_ignore_ascii_case("svg");
+        let is_root = state.is_root;
+        let state = State {
+            current_tag_name: Some(tag_name),
+            is_root: false,
+            in_svg: tag_name.eq_ignore_ascii_case("svg"),
+        };
         let should_lower_cased = matches!(
             ctx.language,
             Language::Html | Language::Jinja | Language::Vento
@@ -226,7 +233,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 self.attrs.chunks(max.into()).map(|chunk| {
                     Doc::list(
                         itertools::intersperse(
-                            chunk.iter().map(|attr| attr.doc(ctx)),
+                            chunk.iter().map(|attr| attr.doc(ctx, &state)),
                             attrs_sep.clone(),
                         )
                         .collect(),
@@ -240,7 +247,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::list(
                 self.attrs
                     .iter()
-                    .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx)].into_iter())
+                    .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx, &state)].into_iter())
                     .collect(),
             )
             .nest_with_ctx(ctx)
@@ -277,8 +284,9 @@ impl<'s> DocGen<'s> for Element<'s> {
         }
 
         let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue)
-            && ctx.is_root
+            && is_root
             && self.tag_name.eq_ignore_ascii_case("template"))
+            && !state.in_svg
             && ctx.is_whitespace_sensitive(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
@@ -330,7 +338,6 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::line_or_nil()
         };
 
-        let is_root = mem::replace(&mut ctx.is_root, false);
         if tag_name.eq_ignore_ascii_case("script") {
             if let [Node::TextNode(text_node)] = &self.children[..] {
                 let is_json = self.attrs.iter().any(|attr| {
@@ -425,7 +432,8 @@ impl<'s> DocGen<'s> for Element<'s> {
         } else if !is_whitespace_sensitive && has_two_more_non_text_children {
             docs.push(leading_ws.nest_with_ctx(ctx));
             docs.push(
-                format_children_with_inserting_linebreak(&self.children, ctx).nest_with_ctx(ctx),
+                format_children_with_inserting_linebreak(&self.children, ctx, &state)
+                    .nest_with_ctx(ctx),
             );
             docs.push(trailing_ws);
         } else if is_whitespace_sensitive
@@ -437,6 +445,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 &self.children,
                 has_two_more_non_text_children,
                 ctx,
+                &state,
             ));
             if self.children.iter().all(|child| {
                 matches!(
@@ -473,16 +482,13 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .append(Doc::text(">"))
                 .group(),
         );
-        ctx.current_tag_name = None;
-        ctx.in_svg = false;
-        ctx.is_root = is_root;
 
         Doc::list(docs).group()
     }
 }
 
 impl<'s> DocGen<'s> for JinjaBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -490,9 +496,9 @@ impl<'s> DocGen<'s> for JinjaBlock<'s> {
             self.body
                 .iter()
                 .map(|child| match child {
-                    JinjaTagOrChildren::Tag(tag) => tag.doc(ctx),
+                    JinjaTagOrChildren::Tag(tag) => tag.doc(ctx, state),
                     JinjaTagOrChildren::Children(children) => {
-                        format_control_structure_block_children(children, ctx)
+                        format_control_structure_block_children(children, ctx, state)
                     }
                 })
                 .collect(),
@@ -501,7 +507,7 @@ impl<'s> DocGen<'s> for JinjaBlock<'s> {
 }
 
 impl<'s> DocGen<'s> for JinjaComment<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -522,7 +528,7 @@ impl<'s> DocGen<'s> for JinjaComment<'s> {
 }
 
 impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -537,7 +543,7 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
 }
 
 impl<'s> DocGen<'s> for JinjaTag<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -564,7 +570,7 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
 }
 
 impl<'s> DocGen<'s> for NativeAttribute<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -572,7 +578,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
         if let Some(value) = self.value {
             let value = match ctx.language {
                 Language::Vue => {
-                    if ctx
+                    if state
                         .current_tag_name
                         .map(|name| name.eq_ignore_ascii_case("script"))
                         .unwrap_or_default()
@@ -638,39 +644,39 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
 }
 
 impl<'s> DocGen<'s> for Node<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
-            Node::AstroExpr(astro_expr) => astro_expr.doc(ctx),
-            Node::AstroFrontMatter(astro_front_matter) => astro_front_matter.doc(ctx),
-            Node::Comment(comment) => comment.doc(ctx),
+            Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
+            Node::AstroFrontMatter(astro_front_matter) => astro_front_matter.doc(ctx, state),
+            Node::Comment(comment) => comment.doc(ctx, state),
             Node::Doctype => Doc::text("<!DOCTYPE html>"),
-            Node::Element(element) => element.doc(ctx),
-            Node::JinjaBlock(jinja_block) => jinja_block.doc(ctx),
-            Node::JinjaComment(jinja_comment) => jinja_comment.doc(ctx),
-            Node::JinjaInterpolation(jinja_interpolation) => jinja_interpolation.doc(ctx),
-            Node::JinjaTag(jinja_tag) => jinja_tag.doc(ctx),
-            Node::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx),
-            Node::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx),
-            Node::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx),
-            Node::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx),
-            Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx),
-            Node::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx),
-            Node::TextNode(text_node) => text_node.doc(ctx),
-            Node::VentoBlock(vento_block) => vento_block.doc(ctx),
-            Node::VentoComment(vento_comment) => vento_comment.doc(ctx),
-            Node::VentoEval(vento_eval) => vento_eval.doc(ctx),
-            Node::VentoInterpolation(vento_interpolation) => vento_interpolation.doc(ctx),
-            Node::VentoTag(vento_tag) => vento_tag.doc(ctx),
-            Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx),
+            Node::Element(element) => element.doc(ctx, state),
+            Node::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
+            Node::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
+            Node::JinjaInterpolation(jinja_interpolation) => jinja_interpolation.doc(ctx, state),
+            Node::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
+            Node::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx, state),
+            Node::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx, state),
+            Node::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx, state),
+            Node::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx, state),
+            Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx, state),
+            Node::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx, state),
+            Node::TextNode(text_node) => text_node.doc(ctx, state),
+            Node::VentoBlock(vento_block) => vento_block.doc(ctx, state),
+            Node::VentoComment(vento_comment) => vento_comment.doc(ctx, state),
+            Node::VentoEval(vento_eval) => vento_eval.doc(ctx, state),
+            Node::VentoInterpolation(vento_interpolation) => vento_interpolation.doc(ctx, state),
+            Node::VentoTag(vento_tag) => vento_tag.doc(ctx, state),
+            Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx, state),
         }
     }
 }
 
 impl<'s> DocGen<'s> for Root<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -692,12 +698,14 @@ impl<'s> DocGen<'s> for Root<'s> {
             )
             || !is_whitespace_sensitive && has_two_more_non_text_children
         {
-            format_children_with_inserting_linebreak(&self.children, ctx).append(Doc::hard_line())
+            format_children_with_inserting_linebreak(&self.children, ctx, state)
+                .append(Doc::hard_line())
         } else {
             format_children_without_inserting_linebreak(
                 &self.children,
                 has_two_more_non_text_children,
                 ctx,
+                state,
             )
             .append(Doc::hard_line())
         }
@@ -705,7 +713,7 @@ impl<'s> DocGen<'s> for Root<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteAtTag<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -718,7 +726,7 @@ impl<'s> DocGen<'s> for SvelteAtTag<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteAttribute<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -772,7 +780,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -800,14 +808,18 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
                 .append(Doc::text("}"))
                 .group(),
         );
-        docs.push(format_control_structure_block_children(&self.children, ctx));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
 
         if let Some(then_block) = &self.then_block {
-            docs.push(then_block.doc(ctx));
+            docs.push(then_block.doc(ctx, state));
         }
 
         if let Some(catch_block) = &self.catch_block {
-            docs.push(catch_block.doc(ctx));
+            docs.push(catch_block.doc(ctx, state));
         }
 
         docs.push(Doc::text("{/await}"));
@@ -816,11 +828,11 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let children = format_control_structure_block_children(&self.children, ctx);
+        let children = format_control_structure_block_children(&self.children, ctx, state);
         if let Some(binding) = self.binding {
             Doc::text("{:catch ")
                 .append(Doc::text(ctx.format_binding(binding)))
@@ -833,7 +845,7 @@ impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -865,11 +877,17 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
                 .append(Doc::text("}"))
                 .group(),
         );
-        docs.push(format_control_structure_block_children(&self.children, ctx));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
 
         if let Some(children) = &self.else_children {
             docs.push(Doc::text("{:else}"));
-            docs.push(format_control_structure_block_children(children, ctx));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
         }
 
         docs.push(Doc::text("{/each}"));
@@ -878,19 +896,23 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteElseIfBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{:else if ")
             .append(Doc::text(ctx.format_expr(self.expr)))
             .append(Doc::text("}"))
-            .append(format_control_structure_block_children(&self.children, ctx))
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
     }
 }
 
 impl<'s> DocGen<'s> for SvelteIfBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -898,13 +920,23 @@ impl<'s> DocGen<'s> for SvelteIfBlock<'s> {
         docs.push(Doc::text("{#if "));
         docs.push(Doc::text(ctx.format_expr(self.expr)));
         docs.push(Doc::text("}"));
-        docs.push(format_control_structure_block_children(&self.children, ctx));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
 
-        docs.extend(self.else_if_blocks.iter().map(|block| block.doc(ctx)));
+        docs.extend(
+            self.else_if_blocks
+                .iter()
+                .map(|block| block.doc(ctx, state)),
+        );
 
         if let Some(children) = &self.else_children {
             docs.push(Doc::text("{:else}"));
-            docs.push(format_control_structure_block_children(children, ctx));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
         }
 
         docs.push(Doc::text("{/if}"));
@@ -913,7 +945,7 @@ impl<'s> DocGen<'s> for SvelteIfBlock<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -928,32 +960,40 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteKeyBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{#key ")
             .append(Doc::text(ctx.format_expr(self.expr)))
             .append(Doc::text("}"))
-            .append(format_control_structure_block_children(&self.children, ctx))
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
             .append(Doc::text("{/key}"))
     }
 }
 
 impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{:then ")
             .append(Doc::text(ctx.format_binding(self.binding)))
             .append(Doc::text("}"))
-            .append(format_control_structure_block_children(&self.children, ctx))
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
     }
 }
 
 impl<'s> DocGen<'s> for TextNode<'s> {
-    fn doc<E, F>(&self, _: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, _: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -972,16 +1012,21 @@ impl<'s> DocGen<'s> for TextNode<'s> {
 }
 
 impl<'s> DocGen<'s> for VentoBlock<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        Doc::list(self.body.iter().map(|child| child.doc(ctx)).collect())
+        Doc::list(
+            self.body
+                .iter()
+                .map(|child| child.doc(ctx, state))
+                .collect(),
+        )
     }
 }
 
 impl<'s> DocGen<'s> for VentoComment<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -1002,7 +1047,7 @@ impl<'s> DocGen<'s> for VentoComment<'s> {
 }
 
 impl<'s> DocGen<'s> for VentoEval<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -1021,7 +1066,7 @@ impl<'s> DocGen<'s> for VentoEval<'s> {
 }
 
 impl<'s> DocGen<'s> for VentoInterpolation<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -1043,7 +1088,7 @@ impl<'s> DocGen<'s> for VentoInterpolation<'s> {
 }
 
 impl<'s> DocGen<'s> for VentoTag<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -1139,21 +1184,21 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
 }
 
 impl<'s> DocGen<'s> for VentoTagOrChildren<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, 's, E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
-            VentoTagOrChildren::Tag(tag) => tag.doc(ctx),
+            VentoTagOrChildren::Tag(tag) => tag.doc(ctx, state),
             VentoTagOrChildren::Children(children) => {
-                format_control_structure_block_children(children, ctx)
+                format_control_structure_block_children(children, ctx, state)
             }
         }
     }
 }
 
 impl<'s> DocGen<'s> for VueDirective<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -1211,7 +1256,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             }
             "#" => {
                 let slot = extract_slot_name(self.arg_and_modifiers);
-                let style = match get_v_slot_style_option(slot, ctx) {
+                let style = match get_v_slot_style_option(slot, ctx, state) {
                     Some(VSlotStyle::Short) | None => VSlotStyle::Short,
                     Some(VSlotStyle::VSlot) if slot == "default" => VSlotStyle::VSlot,
                     Some(VSlotStyle::Long | VSlotStyle::VSlot) => VSlotStyle::Long,
@@ -1220,7 +1265,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             }
             "slot" => {
                 let slot = extract_slot_name(self.arg_and_modifiers);
-                let style = match get_v_slot_style_option(slot, ctx) {
+                let style = match get_v_slot_style_option(slot, ctx, state) {
                     Some(VSlotStyle::Short) => VSlotStyle::Short,
                     Some(VSlotStyle::VSlot) if slot == "default" => VSlotStyle::VSlot,
                     Some(VSlotStyle::Long | VSlotStyle::VSlot) => VSlotStyle::Long,
@@ -1290,7 +1335,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
 }
 
 impl<'s> DocGen<'s> for VueInterpolation<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
@@ -1450,7 +1495,8 @@ fn format_attr_value<'a>(
 
 fn format_children_with_inserting_linebreak<'s, E, F>(
     children: &[Node<'s>],
-    ctx: &mut Ctx<'_, 's, E, F>,
+    ctx: &mut Ctx<'_, E, F>,
+    state: &State<'s>,
 ) -> Doc<'s>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
@@ -1486,7 +1532,7 @@ where
                                 {
                                     docs.push(doc);
                                 }
-                                docs.push(text_node.doc(ctx));
+                                docs.push(text_node.doc(ctx, state));
                                 if let Some(doc) =
                                     should_add_whitespace_after_text_node(text_node, is_last)
                                 {
@@ -1498,7 +1544,7 @@ where
                             if let Some(hard_line) = maybe_hard_line {
                                 docs.push(hard_line);
                             }
-                            docs.push(child.doc(ctx));
+                            docs.push(child.doc(ctx, state));
                         }
                     };
                     (
@@ -1526,7 +1572,8 @@ where
 fn format_children_without_inserting_linebreak<'s, E, F>(
     children: &[Node<'s>],
     has_two_more_non_text_children: bool,
-    ctx: &mut Ctx<'_, 's, E, F>,
+    ctx: &mut Ctx<'_, E, F>,
+    state: &State<'s>,
 ) -> Doc<'s>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
@@ -1553,13 +1600,13 @@ where
                     if let Some(doc) = should_add_whitespace_before_text_node(text_node, is_first) {
                         docs.push(doc);
                     }
-                    docs.push(text_node.doc(ctx));
+                    docs.push(text_node.doc(ctx, state));
                     if let Some(doc) = should_add_whitespace_after_text_node(text_node, is_last) {
                         docs.push(doc);
                     }
                     Doc::list(docs)
                 }
-                child => child.doc(ctx),
+                child => child.doc(ctx, state),
             })
             .collect(),
     )
@@ -1572,11 +1619,15 @@ fn extract_slot_name(arg_and_modifiers: Option<&str>) -> &str {
         .unwrap_or("default")
 }
 
-fn get_v_slot_style_option<E, F>(slot: &str, ctx: &Ctx<E, F>) -> Option<VSlotStyle>
+fn get_v_slot_style_option<'s, E, F>(
+    slot: &'s str,
+    ctx: &Ctx<E, F>,
+    state: &State<'s>,
+) -> Option<VSlotStyle>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
-    let option = if ctx
+    let option = if state
         .current_tag_name
         .map(|name| name.eq_ignore_ascii_case("template"))
         .unwrap_or_default()
@@ -1636,7 +1687,7 @@ fn format_v_for<'s, E, F>(
     left: &str,
     delimiter: &'static str,
     right: &str,
-    ctx: &mut Ctx<'_, 's, E, F>,
+    ctx: &mut Ctx<'_, E, F>,
 ) -> String
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
@@ -1652,7 +1703,8 @@ where
 
 fn format_control_structure_block_children<'s, E, F>(
     children: &[Node<'s>],
-    ctx: &mut Ctx<'_, 's, E, F>,
+    ctx: &mut Ctx<'_, E, F>,
+    state: &State<'s>,
 ) -> Doc<'s>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
@@ -1666,6 +1718,7 @@ where
                 children,
                 has_two_more_non_text_children(children),
                 ctx,
+                state,
             ))
             .nest_with_ctx(ctx)
             .append(format_ws_sensitive_trailing_ws(children)),
@@ -1676,7 +1729,7 @@ fn format_vento_stmt_header<'s, E, F>(
     tag_keyword: &'static str,
     fake_keyword: &'static str,
     code: &'s str,
-    ctx: &mut Ctx<'_, 's, E, F>,
+    ctx: &mut Ctx<'_, E, F>,
 ) -> Doc<'s>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
