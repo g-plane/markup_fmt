@@ -1312,7 +1312,7 @@ fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'_>> {
     )
 }
 
-fn reflow_owned(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
+fn reflow_owned<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
     itertools::intersperse(
         s.split('\n')
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
@@ -1320,7 +1320,7 @@ fn reflow_owned(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
     )
 }
 
-fn reflow_with_indent(s: &str) -> impl Iterator<Item = Doc<'static>> + '_ {
+fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
     let indent = s
         .lines()
         .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
@@ -1415,12 +1415,12 @@ fn has_two_more_non_text_children(children: &[Node]) -> bool {
         > 1
 }
 
-fn format_attr_value(
+fn format_attr_value<'a>(
     value: impl AsRef<str>,
     quotes: &Quotes,
     split_whitespaces: bool,
     indent: bool,
-) -> Doc<'static> {
+) -> Doc<'a> {
     let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::text("'")
