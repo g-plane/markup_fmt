@@ -1,8 +1,4 @@
-[script]
-scriptIndent = true
-
-[style]
-styleIndent = true
+[default]
 
 [override-script]
 scriptIndent = false
@@ -13,5 +9,5 @@ styleIndent = false
 "vue.styleIndent" = true
 
 [both]
-scriptIndent = true
-styleIndent = true
+"vue.scriptIndent" = true
+"vue.styleIndent" = true

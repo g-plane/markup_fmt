@@ -2,31 +2,31 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <br
-/>
+>
 <br
-/>
+>
 <br
-/>
+>
 <br
-/>
+>
 <br
   attribute-a
-/>
+>
 <br
   very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute
-/>
+>
 <br
   attribute-a="value"
-/>
+>
 <br
   attribute-a="value"
-/>
+>
 <br
   very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute="value"
-/>
+>
 <br
   very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute="very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-value"
-/>
+>
 <br
   attribute-a="value"
   attribute-b="value"
@@ -34,7 +34,7 @@ source: markup_fmt/tests/fmt.rs
   attribute-d="value"
   attribute-e="value"
   attribute-f="value"
-/>
+>
 <div
 >
   string
@@ -331,12 +331,12 @@ source: markup_fmt/tests/fmt.rs
 >
 <img
   src="longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"
-/>123
+>123
 <div
 >
   123<meta
     attr
-  />456
+  >456
 </div
 >
 <p
@@ -373,14 +373,14 @@ source: markup_fmt/tests/fmt.rs
 ></span
 >
 <br
-/>
+>
 <button
   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 >12345678901234567890</button
 >
 <br
-/><br
-/>
+><br
+>
 
 <button
   bind-disabled="isUnchanged"
@@ -389,15 +389,15 @@ source: markup_fmt/tests/fmt.rs
   Cancel</button
 >
 <br
-/><br
-/>
+><br
+>
 <button
   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 >12345678901234567890</button
 >
 <br
-/><br
-/>
+><br
+>
 
 <button
   bind-disabled="isUnchanged"
@@ -406,8 +406,8 @@ source: markup_fmt/tests/fmt.rs
   Cancel</button
 >
 <br
-/><br
-/>
+><br
+>
 <p
 >
   "<span
@@ -546,19 +546,19 @@ source: markup_fmt/tests/fmt.rs
 <span
 ><input
     type="checkbox"
-  />
+  >
 </span
 >
 <span
 ><span
   ><input
       type="checkbox"
-    /></span
+    ></span
   ></span
 >
 <span
 ><input
     type="checkbox"
-  /></span
+  ></span
 >
 

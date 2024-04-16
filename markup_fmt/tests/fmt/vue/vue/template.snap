@@ -12,7 +12,7 @@ source: markup_fmt/tests/fmt.rs
         :alt="path"
         @load="onImgLoad"
         @click="onImgClick"
-      />
+      >
       <p
         v-if="renderInfo"
         class="file-info prepend-top-10"

@@ -62,11 +62,11 @@ source: markup_fmt/tests/fmt.rs
     <param
       name="autoplay"
       value="true"
-    />
+    >
     <param
       name="autoplay"
       value="true"
-    />
+    >
   </object
   >after
 </div

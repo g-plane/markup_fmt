@@ -1,8 +1,16 @@
-[script]
+[default]
+
+[script-enabled]
 scriptIndent = true
 
-[style]
+[script-disabled]
+scriptIndent = false
+
+[style-enabled]
 styleIndent = true
+
+[style-disabled]
+styleIndent = false
 
 [override-script]
 scriptIndent = false
@@ -12,6 +20,6 @@ scriptIndent = false
 styleIndent = false
 "html.styleIndent" = true
 
-[both]
-scriptIndent = true
-styleIndent = true
+[both-disabled]
+scriptIndent = false
+styleIndent = false

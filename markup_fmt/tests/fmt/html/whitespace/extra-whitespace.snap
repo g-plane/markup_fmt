@@ -2,6 +2,6 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <script>
-const name = "world";
+  const name = "world";
 </script>
 

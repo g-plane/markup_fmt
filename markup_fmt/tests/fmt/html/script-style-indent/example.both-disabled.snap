@@ -5,10 +5,10 @@ source: markup_fmt/tests/fmt.rs
 <html lang="en">
   <body>
     <style>
-      a { text-decoration: none; }
+    a { text-decoration: none; }
     </style>
     <script>
-      window.addEventListener('load', () => {})
+    window.addEventListener('load', () => {})
     </script>
   </body>
 </html>
