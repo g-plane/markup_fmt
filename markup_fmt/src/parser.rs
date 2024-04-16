@@ -12,7 +12,7 @@ use crate::{
     error::{SyntaxError, SyntaxErrorKind},
     helpers,
 };
-use std::{iter::Peekable, str::CharIndices};
+use std::{cmp::Ordering, iter::Peekable, ops::ControlFlow, str::CharIndices};
 
 #[derive(Clone, Debug)]
 /// Supported languages.
@@ -60,13 +60,32 @@ impl<'s> Parser<'s> {
     }
 
     fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
+        let pos = self
+            .chars
+            .peek()
+            .map(|(pos, _)| *pos)
+            .unwrap_or(self.source.len());
+        self.emit_error_with_pos(kind, pos)
+    }
+
+    fn emit_error_with_pos(&self, kind: SyntaxErrorKind, pos: usize) -> SyntaxError {
+        let search = memchr::memchr_iter(b'\n', self.source.as_bytes()).try_fold(
+            (1, 0),
+            |(line, prev_offset), offset| match pos.cmp(&offset) {
+                Ordering::Less => ControlFlow::Break((line, prev_offset)),
+                Ordering::Equal => ControlFlow::Break((line, prev_offset)),
+                Ordering::Greater => ControlFlow::Continue((line + 1, offset)),
+            },
+        );
+        let (line, column) = match search {
+            ControlFlow::Break((line, offset)) => (line, pos - offset + 1),
+            ControlFlow::Continue((line, _)) => (line, 0),
+        };
         SyntaxError {
             kind,
-            pos: self
-                .chars
-                .peek()
-                .map(|(pos, _)| *pos)
-                .unwrap_or(self.source.len()),
+            pos,
+            line,
+            column,
         }
     }
 
@@ -480,10 +499,9 @@ impl<'s> Parser<'s> {
                         self.chars = chars;
                         let close_tag_name = self.parse_tag_name()?;
                         if !close_tag_name.eq_ignore_ascii_case(tag_name) {
-                            return Err(SyntaxError {
-                                kind: SyntaxErrorKind::ExpectCloseTag,
-                                pos,
-                            });
+                            return Err(
+                                self.emit_error_with_pos(SyntaxErrorKind::ExpectCloseTag, pos)
+                            );
                         }
                         self.skip_ws();
                         if self.chars.next_if(|(_, c)| *c == '>').is_some() {
@@ -813,9 +831,8 @@ impl<'s> Parser<'s> {
                             self.try_parse(Parser::parse_svelte_key_block)
                                 .map(Node::SvelteKeyBlock)
                         })
-                        .map_err(|_| SyntaxError {
-                            kind: SyntaxErrorKind::UnknownSvelteBlock,
-                            pos,
+                        .map_err(|_| {
+                            self.emit_error_with_pos(SyntaxErrorKind::UnknownSvelteBlock, pos)
                         }),
                     Some((_, '#')) if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_comment().map(Node::JinjaComment)

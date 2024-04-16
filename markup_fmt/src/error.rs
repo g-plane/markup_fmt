@@ -5,6 +5,8 @@ use std::{borrow::Cow, error::Error, fmt};
 pub struct SyntaxError {
     pub kind: SyntaxErrorKind,
     pub pos: usize,
+    pub line: usize,
+    pub column: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -84,7 +86,11 @@ impl fmt::Display for SyntaxError {
             SyntaxErrorKind::UnknownSvelteBlock => "unknown Svelte block".into(),
         };
 
-        write!(f, "syntax error '{reason}' at position {}", self.pos)
+        write!(
+            f,
+            "syntax error '{reason}' at line {}, column {}",
+            self.line, self.column
+        )
     }
 }
 
