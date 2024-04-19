@@ -22,14 +22,14 @@ source: markup_fmt/tests/fmt.rs
     ></span>
     <img
       long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
-    >
+    />
     <div class="a">
       text
     </div>
     <span class="a">
       text
     </span>
-    <img class="a">
+    <img class="a" />
   </div>
 </template>
 

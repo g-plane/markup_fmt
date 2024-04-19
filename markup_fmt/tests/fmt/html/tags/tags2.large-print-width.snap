@@ -9,8 +9,8 @@ source: markup_fmt/tests/fmt.rs
 
 <div>
   before<object data="horse.wav">
-    <param name="autoplay" value="true">
-    <param name="autoplay" value="true">
+    <param name="autoplay" value="true" />
+    <param name="autoplay" value="true" />
   </object>after
 </div>
 

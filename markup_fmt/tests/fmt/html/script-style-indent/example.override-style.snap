@@ -8,7 +8,7 @@ source: markup_fmt/tests/fmt.rs
       a { text-decoration: none; }
     </style>
     <script>
-      window.addEventListener('load', () => {})
+    window.addEventListener('load', () => {})
     </script>
   </body>
 </html>

@@ -3,7 +3,7 @@ source: markup_fmt/tests/fmt.rs
 ---
 <template>
   <style>
-  a { text-decoration: none; }
+    a { text-decoration: none; }
   </style>
   <script>
   window.addEventListener('load', () => {})
@@ -11,7 +11,7 @@ source: markup_fmt/tests/fmt.rs
 </template>
 
 <style>
-a { text-decoration: none; }
+  a { text-decoration: none; }
 </style>
 <script>
 window.addEventListener('load', () => {})

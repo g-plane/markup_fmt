@@ -5,7 +5,7 @@ source: markup_fmt/tests/fmt.rs
 <div />
 
 <input>
-<input>
+<input />
 
 <circle></circle>
 <circle />

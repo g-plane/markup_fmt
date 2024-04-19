@@ -1,16 +1,8 @@
-[default]
-
-[script-enabled]
+[script]
 scriptIndent = true
 
-[script-disabled]
-scriptIndent = false
-
-[style-enabled]
+[style]
 styleIndent = true
-
-[style-disabled]
-styleIndent = false
 
 [override-script]
 scriptIndent = false
@@ -20,6 +12,6 @@ scriptIndent = false
 styleIndent = false
 "svelte.styleIndent" = true
 
-[both-disabled]
-scriptIndent = false
-styleIndent = false
+[both]
+scriptIndent = true
+styleIndent = true

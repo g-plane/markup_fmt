@@ -38,7 +38,7 @@ source: markup_fmt/tests/fmt.rs
           height="58px"
           width="205px"
           alt="Yahoo"
-        ></a>
+        /></a>
     </h1>
   </div>
 </div>

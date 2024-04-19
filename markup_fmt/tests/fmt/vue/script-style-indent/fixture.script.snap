@@ -1,17 +1,17 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<head>
+<template>
   <style>
-    a { text-decoration: none; }
+  a { text-decoration: none; }
   </style>
   <script>
     window.addEventListener('load', () => {})
   </script>
-</head>
+</template>
 
 <style>
-  a { text-decoration: none; }
+a { text-decoration: none; }
 </style>
 <script>
   window.addEventListener('load', () => {})

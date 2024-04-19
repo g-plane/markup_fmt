@@ -6,10 +6,10 @@ source: markup_fmt/tests/fmt.rs
 </script>
 
 <template>
-  <br>
+  <br />
   <footer>
     foo
-    <br>
+    <br />
   </footer>
 </template>
 

@@ -13,18 +13,18 @@ source: markup_fmt/tests/fmt.rs
 <span> </span>
 <span> </span>
 <span> </span>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
-<img>
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
+<img />
 <div> </div>
 <div> </div>
 <div>  </div>
@@ -33,10 +33,10 @@ source: markup_fmt/tests/fmt.rs
 <span>   </span>
 <span>    </span>
 <span>     </span>
-<img> <img>
-<img>   <img>
-<img>    <img>
-<img>     <img>
+<img /> <img />
+<img />   <img />
+<img />    <img />
+<img />     <img />
 <i />   |   <i />
 <p>
   <span>X</span>
@@ -44,24 +44,24 @@ source: markup_fmt/tests/fmt.rs
 </p><p>X   or   Y</p>
 <!-- U+2005 -->
 <script type="text/unknown" lang="unknown">
-  // comment
-  // comment
-  // comment
-  // comment
+// comment
+// comment
+// comment
+// comment
 </script>
 <!-- U+005F -->
 <script type="text/unknown" lang="unknown">
-  _    // comment
-  // comment
-  // comment
-  // comment
+_    // comment
+// comment
+// comment
+// comment
 </script>
 <!-- U+0020 -->
 <script type="text/unknown" lang="unknown">
-  // comment
-  // comment
-  // comment
-  // comment
+// comment
+// comment
+// comment
+// comment
 </script>
 
 <!-- U+2005 -->

@@ -6,7 +6,7 @@ source: markup_fmt/tests/fmt.rs
     src="/images/pansies.jpg"
     alt="about fedco bottom image"
     style="float: left;"
-  >
+  />
   <strong>We are a cooperative</strong>
   , one of the few seed companies so organized in the United States. Because we
   do not have an individual owner or beneficiary, profit is not our primary
