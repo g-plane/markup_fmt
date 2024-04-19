@@ -71,7 +71,7 @@ impl From<LineBreak> for tiny_pretty::LineBreak {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "config_serde", serde(default))]
 /// Configuration related to syntax.
@@ -246,48 +246,6 @@ pub struct LanguageOptions {
     #[cfg_attr(feature = "config_serde", serde(alias = "astroAttrShorthand"))]
     /// See [`astroAttrShorthand`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#astroattrshorthand) on GitHub
     pub astro_attr_shorthand: Option<bool>,
-}
-
-impl Default for LanguageOptions {
-    fn default() -> Self {
-        Self {
-            quotes: Quotes::default(),
-            format_comments: false,
-            script_indent: true,
-            html_script_indent: None,
-            vue_script_indent: Some(false),
-            svelte_script_indent: None,
-            astro_script_indent: None,
-            style_indent: true,
-            html_style_indent: None,
-            vue_style_indent: Some(false),
-            svelte_style_indent: None,
-            astro_style_indent: None,
-            closing_bracket_same_line: false,
-            closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty::default(),
-            max_attrs_per_line: None,
-            prefer_attrs_single_line: false,
-            html_normal_self_closing: None,
-            html_void_self_closing: Some(false),
-            component_self_closing: None,
-            svg_self_closing: None,
-            mathml_self_closing: None,
-            whitespace_sensitivity: WhitespaceSensitivity::default(),
-            component_whitespace_sensitivity: None,
-            v_bind_style: None,
-            v_on_style: None,
-            v_for_delimiter_style: None,
-            v_slot_style: None,
-            component_v_slot_style: None,
-            default_v_slot_style: None,
-            named_v_slot_style: None,
-            v_bind_same_name_short_hand: None,
-            strict_svelte_attr: false,
-            svelte_attr_shorthand: None,
-            svelte_directive_shorthand: None,
-            astro_attr_shorthand: None,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Default)]
