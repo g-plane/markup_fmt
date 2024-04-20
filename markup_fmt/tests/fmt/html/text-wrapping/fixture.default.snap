@@ -1,0 +1,23 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<a
+  href="quite-a-long-url-that-just-keeps-going"
+>short text</a>
+<a
+  href="quite-a-long-url-that-just-keeps-going"
+>short text</a>
+
+<a
+  href="not-a-long-url"
+>but a long piece of text that wraps</a>
+<a
+  href="not-a-long-url"
+>but a long piece of text that wraps</a>
+
+<div class="a">short text</div>
+
+<!-- no attributes -->
+<long-name-web-component>but a long piece of text
+  that wraps</long-name-web-component>
+

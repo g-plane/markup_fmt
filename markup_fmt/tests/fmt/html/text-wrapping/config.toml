@@ -1,0 +1,6 @@
+[default]
+printWidth = 50
+
+[bracket-same-line]
+printWidth = 50
+closingBracketSameLine = true

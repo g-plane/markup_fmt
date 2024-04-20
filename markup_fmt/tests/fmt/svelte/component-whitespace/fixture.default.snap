@@ -8,7 +8,8 @@ source: markup_fmt/tests/fmt.rs
 </p>
 
 <p>
-  <ExternalLink href="https://www.buymeacoffee.com">buy me a
-    coffee</ExternalLink>!
+  <ExternalLink
+    href="https://www.buymeacoffee.com"
+  >buy me a coffee</ExternalLink>!
 </p>
 

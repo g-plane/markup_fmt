@@ -20,6 +20,7 @@ source: markup_fmt/tests/fmt.rs
 >
   text
 </span>
-<span class="a">text</span><span class="a">text</span><span class="a">text</span
-><span class="a">text</span><span class="a">text</span>
+<span class="a">text</span><span class="a">text</span><span
+  class="a"
+>text</span><span class="a">text</span><span class="a">text</span>
 
