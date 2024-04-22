@@ -1,18 +1,14 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<a
-  href="quite-a-long-url-that-just-keeps-going"
+<a href="quite-a-long-url-that-just-keeps-going"
 >short text</a>
-<a
-  href="quite-a-long-url-that-just-keeps-going"
+<a href="quite-a-long-url-that-just-keeps-going"
 >short text</a>
 
-<a
-  href="not-a-long-url"
+<a href="not-a-long-url"
 >but a long piece of text that wraps</a>
-<a
-  href="not-a-long-url"
+<a href="not-a-long-url"
 >but a long piece of text that wraps</a>
 
 <div class="a">short text</div>

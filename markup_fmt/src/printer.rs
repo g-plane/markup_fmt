@@ -280,7 +280,6 @@ impl<'s> DocGen<'s> for Element<'s> {
         if ctx.options.closing_bracket_same_line {
             docs.push(attrs.append(Doc::text(">")).group());
         } else {
-            let attrs = attrs.append(Doc::line_or_nil()).append(Doc::text(">"));
             // for #16
             if is_whitespace_sensitive
                 && !self.attrs.is_empty() // there're no attributes, so don't insert line break
@@ -305,9 +304,19 @@ impl<'s> DocGen<'s> for Element<'s> {
                         }
                     })
             {
-                docs.push(attrs);
+                docs.push(
+                    attrs
+                        .group()
+                        .append(Doc::line_or_nil())
+                        .append(Doc::text(">")),
+                );
             } else {
-                docs.push(attrs.group());
+                docs.push(
+                    attrs
+                        .append(Doc::line_or_nil())
+                        .append(Doc::text(">"))
+                        .group(),
+                );
             }
         }
 
