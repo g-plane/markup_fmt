@@ -1,0 +1,15 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<style></style>
+
+<style>
+</style>
+
+<html>
+  <style></style>
+
+  <style>
+  </style>
+</html>
+

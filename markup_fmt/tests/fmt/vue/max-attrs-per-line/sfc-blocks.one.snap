@@ -28,21 +28,18 @@ p {
   lang="ts"
   src="./long_long_long_long_long_long_file_path.ts"
 >
-
 </script>
 
 <script
   lang="ts"
   src="./long_long_long_long_long_long_long_file_path.ts"
 >
-
 </script>
 
 <script
   lang="ts"
   src="./short"
 >
-
 </script>
 
 <template
