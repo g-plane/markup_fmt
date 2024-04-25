@@ -199,6 +199,11 @@ impl<'s> DocGen<'s> for Element<'s> {
         } else {
             self.self_closing
         };
+        let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue)
+            && is_root
+            && self.tag_name.eq_ignore_ascii_case("template"))
+            && !state.in_svg
+            && ctx.is_whitespace_sensitive(tag_name);
 
         let mut docs = Vec::with_capacity(5);
 
@@ -275,19 +280,46 @@ impl<'s> DocGen<'s> for Element<'s> {
         if ctx.options.closing_bracket_same_line {
             docs.push(attrs.append(Doc::text(">")).group());
         } else {
-            docs.push(
-                attrs
-                    .append(Doc::line_or_nil())
-                    .append(Doc::text(">"))
-                    .group(),
-            );
+            // for #16
+            if is_whitespace_sensitive
+                && !self.attrs.is_empty() // there're no attributes, so don't insert line break
+                && self
+                    .children
+                    .first()
+                    .is_some_and(|child| {
+                        if let Node::TextNode(text_node) = child {
+                            !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
+                        } else {
+                            false
+                        }
+                    })
+                && self
+                    .children
+                    .last()
+                    .is_some_and(|child| {
+                        if let Node::TextNode(text_node) = child {
+                            !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
+                        } else {
+                            false
+                        }
+                    })
+            {
+                docs.push(
+                    attrs
+                        .group()
+                        .append(Doc::line_or_nil())
+                        .append(Doc::text(">")),
+                );
+            } else {
+                docs.push(
+                    attrs
+                        .append(Doc::line_or_nil())
+                        .append(Doc::text(">"))
+                        .group(),
+                );
+            }
         }
 
-        let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue)
-            && is_root
-            && self.tag_name.eq_ignore_ascii_case("template"))
-            && !state.in_svg
-            && ctx.is_whitespace_sensitive(tag_name);
         let is_empty = match &self.children[..] {
             [] => true,
             [Node::TextNode(text_node)] => {
@@ -1007,17 +1039,19 @@ impl<'s> DocGen<'s> for TextNode<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let docs = itertools::intersperse(
-            self.raw.split_ascii_whitespace().map(Doc::text),
-            Doc::soft_line(),
-        )
-        .collect::<Vec<_>>();
-
-        if docs.is_empty() {
-            Doc::nil()
-        } else {
-            Doc::list(docs)
-        }
+        // for #16
+        Doc::flat_or_break(Doc::text(self.raw.split_ascii_whitespace().join(" ")), {
+            let docs = itertools::intersperse(
+                self.raw.split_ascii_whitespace().map(Doc::text),
+                Doc::soft_line(),
+            )
+            .collect::<Vec<_>>();
+            if docs.is_empty() {
+                Doc::nil()
+            } else {
+                Doc::list(docs)
+            }
+        })
     }
 }
 
