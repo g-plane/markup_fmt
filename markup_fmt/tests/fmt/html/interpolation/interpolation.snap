@@ -8,4 +8,3 @@ source: markup_fmt/tests/fmt.rs
   vero est error {{ preserve invalid interpolation }} reprehenderit voluptates
   minus {{console.log( short_interpolation )}} nemo.
 </div>
-

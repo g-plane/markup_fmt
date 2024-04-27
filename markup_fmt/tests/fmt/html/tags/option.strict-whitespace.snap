@@ -6,4 +6,3 @@ source: markup_fmt/tests/fmt.rs
   ><option>Dark Blue</option><option>Dark Green</option></optgroup></select>
 <input list="colors">
 <datalist id="colors"><option>Blue</option><option>Green</option></datalist>
-

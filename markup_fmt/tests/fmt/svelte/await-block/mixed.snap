@@ -27,4 +27,3 @@ source: markup_fmt/tests/fmt.rs
   <!-- promise was rejected -->
   <p>Something went wrong: {error.message}</p>
 {/await}
-

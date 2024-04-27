@@ -20,4 +20,3 @@ source: dprint_plugin/tests/integration.rs
 
 {{ include `${name}.vto` }}
 {{ include "./filename.vto" { name: "Óscar" } }}
-

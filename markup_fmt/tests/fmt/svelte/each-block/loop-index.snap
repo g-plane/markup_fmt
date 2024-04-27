@@ -6,4 +6,3 @@ source: markup_fmt/tests/fmt.rs
     {i + 1}: {item.name} x {item.qty}
   </li>
 {/each}
-

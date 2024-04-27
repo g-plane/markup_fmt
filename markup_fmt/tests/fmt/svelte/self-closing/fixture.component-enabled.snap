@@ -3,4 +3,3 @@ source: markup_fmt/tests/fmt.rs
 ---
 <MyComponent />
 <MyComponent />
-

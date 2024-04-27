@@ -14,4 +14,3 @@ source: markup_fmt/tests/fmt.rs
 {{ /layout }}
 
 {{ export message = "Hello, world!" |> toUpperCase }}
-

@@ -18,4 +18,3 @@ source: markup_fmt/tests/fmt.rs
 <!-- no attributes -->
 <long-name-web-component>but a long piece of text
   that wraps</long-name-web-component>
-

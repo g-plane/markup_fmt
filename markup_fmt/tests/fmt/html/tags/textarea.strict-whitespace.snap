@@ -36,4 +36,3 @@ source: markup_fmt/tests/fmt.rs
 <textarea></textarea>
 
 <div><textarea>lorem ipsum</textarea></div>
-

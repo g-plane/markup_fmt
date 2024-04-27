@@ -8,4 +8,3 @@ source: markup_fmt/tests/fmt.rs
   <button v-bind:type.sync=""></button>
   <button v-bind></button>
 </template>
-

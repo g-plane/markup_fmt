@@ -30,4 +30,3 @@ if (Astro.cookies.get("token").value) return Astro.redirect("/");
 
 <!-- Test 8: we can use return in HTML -->
 <div>return</div>
-

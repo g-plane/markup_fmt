@@ -13,4 +13,3 @@ source: markup_fmt/tests/fmt.rs
 </object>1
 
 <span><img src="1.png"><img src="1.png"></span>1
-

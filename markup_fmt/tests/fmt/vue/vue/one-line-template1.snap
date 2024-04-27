@@ -5,4 +5,3 @@ source: markup_fmt/tests/fmt.rs
   <p>foo</p>
   <div>foo</div>
 </template>
-

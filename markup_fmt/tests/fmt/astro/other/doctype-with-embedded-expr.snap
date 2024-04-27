@@ -26,4 +26,3 @@ let title =
               <div><Color name={color} /></div>))}
   </body>
 </html>
-

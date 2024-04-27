@@ -26,4 +26,3 @@ source: markup_fmt/tests/fmt.rs
 {:catch}
   <p>loooooooooooooooooooooong</p>
 {/await}
-

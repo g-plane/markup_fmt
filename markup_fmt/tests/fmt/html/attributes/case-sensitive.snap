@@ -2,4 +2,3 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div CaseSensitive></div>
-

@@ -16,4 +16,3 @@ a { text-decoration: none; }
 <script>
   window.addEventListener('load', () => {})
 </script>
-

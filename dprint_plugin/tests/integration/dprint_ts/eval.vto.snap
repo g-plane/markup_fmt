@@ -2,4 +2,3 @@
 source: dprint_plugin/tests/integration.rs
 ---
 {{> console.log("Hello, world!") }}
-

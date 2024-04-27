@@ -25,4 +25,3 @@ source: markup_fmt/tests/fmt.rs
 {@debug myArray[0]}
 {@debug !isReady}
 {@debug typeof user === 'object'}
-

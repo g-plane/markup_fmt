@@ -25,4 +25,3 @@ function greet(msg: string) {
   <button @click="e => console.log(e)"></button>
   <button :class="" @click="">{{  }}{{ /**/ }}</button>
 </template>
-

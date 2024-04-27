@@ -14,4 +14,3 @@ source: markup_fmt/tests/fmt.rs
   <template v-slot=""></template>
   <template v-slot:named=""></template>
 </template>
-

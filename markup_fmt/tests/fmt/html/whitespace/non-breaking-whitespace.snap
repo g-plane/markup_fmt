@@ -10,4 +10,3 @@ source: markup_fmt/tests/fmt.rs
 >
 <!-- non-breaking narrow whitespaces -->
 <span>Prix : 32 €</span>
-

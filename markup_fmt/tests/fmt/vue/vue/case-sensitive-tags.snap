@@ -4,4 +4,3 @@ source: markup_fmt/tests/fmt.rs
 <template>
   <Input></Input>
 </template>
-

@@ -68,4 +68,3 @@ display: inline
 <div style="{{ ...styles }}"></div>
 
 <div style="color: red; {{ otherStyles }}"></div>
-

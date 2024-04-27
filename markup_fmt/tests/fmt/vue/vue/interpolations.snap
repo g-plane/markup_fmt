@@ -58,4 +58,3 @@ source: markup_fmt/tests/fmt.rs
     }} 1234567890
   </div>
 </template>
-

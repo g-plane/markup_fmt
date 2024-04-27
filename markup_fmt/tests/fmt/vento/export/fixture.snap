@@ -6,4 +6,3 @@ source: markup_fmt/tests/fmt.rs
 {{ export message }}
   Hello, world!
 {{ /export }}
-

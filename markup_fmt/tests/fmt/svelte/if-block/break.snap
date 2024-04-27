@@ -16,4 +16,3 @@ source: markup_fmt/tests/fmt.rs
   </p>{:else if blubb}<p>loooooooooooooooooooooooooooooong</p><p>
     loooooooooooooooooooooooooooooong
   </p>{/if}
-

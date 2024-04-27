@@ -40,4 +40,3 @@ source: markup_fmt/tests/fmt.rs
   src="/images/foo.png"
   alt="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 />
-

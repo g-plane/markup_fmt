@@ -11,4 +11,3 @@ source: markup_fmt/tests/fmt.rs
   <ExternalLink href="https://www.buymeacoffee.com"
   >buy me a coffee</ExternalLink>!
 </p>
-

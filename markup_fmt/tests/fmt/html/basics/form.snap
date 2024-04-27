@@ -109,4 +109,3 @@ source: markup_fmt/tests/fmt.rs
   </div>
   <button type="submit" class="btn btn-primary">Submit</button>
 </form>
-

@@ -3,4 +3,3 @@ source: markup_fmt/tests/fmt.rs
 ---
 <app-foo></app-foo>
 <app-bar></app-bar>
-

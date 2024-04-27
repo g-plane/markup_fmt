@@ -3,4 +3,3 @@ source: dprint_plugin/tests/integration.rs
 ---
 {{ import { message } from "./vars.vto" }}
 {{ import fns from "./functions.vto" }}
-

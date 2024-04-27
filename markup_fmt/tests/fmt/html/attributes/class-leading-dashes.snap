@@ -8,4 +8,3 @@ source: markup_fmt/tests/fmt.rs
 <my-tag
   class="--prefix1--foo --prefix1--bar --prefix2--foo prefix2 prefix2__something __prefix2__something_else"
 ></my-tag>
-

@@ -6,4 +6,3 @@ source: markup_fmt/tests/fmt.rs
 </template>
 
 <style src="./style.css" module />
-

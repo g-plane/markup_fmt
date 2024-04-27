@@ -8,4 +8,3 @@ source: markup_fmt/tests/fmt.rs
 {{ layout 'container.vto' {size:'big'} }}
   <h1>Hello, world!</h1>
 {{ /layout }}
-

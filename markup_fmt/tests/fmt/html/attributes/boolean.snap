@@ -27,4 +27,3 @@ source: markup_fmt/tests/fmt.rs
 <input type="checkbox" checked="checked" disabled="disabled" name="cheese">
 <input type="checkbox" checked="" disabled="" name="cheese">
 <div lang=""></div>
-

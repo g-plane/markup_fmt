@@ -65,4 +65,3 @@ document.getElementById("button").addEventListener("click", handleClick);
 
 <!-- Below should be treated as text node. -->
 --- let title = 'My Site'; ---
-

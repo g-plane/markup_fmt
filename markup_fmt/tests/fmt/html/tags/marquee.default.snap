@@ -14,4 +14,3 @@ source: markup_fmt/tests/fmt.rs
 >
   <marquee behavior="alternate"> This text will bounce </marquee>
 </marquee>
-

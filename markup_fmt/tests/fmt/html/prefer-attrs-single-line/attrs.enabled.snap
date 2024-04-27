@@ -8,4 +8,3 @@ source: markup_fmt/tests/fmt.rs
 <div a="a" b="b" c="c" d="d"></div>
 
 <div a="a" b="b" c="c" d="d"></div>
-

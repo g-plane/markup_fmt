@@ -13,4 +13,3 @@ source: markup_fmt/tests/fmt.rs
     href3="contacts.html#Mailing_address"
     href4="contacts.html#Mailing_address"
   ><b><a>mailing address</a></b></a>.</p>
-

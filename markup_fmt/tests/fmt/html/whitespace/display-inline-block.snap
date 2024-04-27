@@ -22,4 +22,3 @@ source: markup_fmt/tests/fmt.rs
   <track kind="subtitles" src="brave.en.vtt" srclang="en" label="English">
   <track kind="subtitles" src="brave.en.vtt" srclang="en" label="English">
 </video>
-

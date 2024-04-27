@@ -48,4 +48,3 @@ source: markup_fmt/tests/fmt.rs
   {a}
   {b}
 {/await}
-

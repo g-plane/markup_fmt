@@ -14,4 +14,3 @@ source: markup_fmt/tests/fmt.rs
   <option>Blue</option>
   <option>Green</option>
 </datalist>
-

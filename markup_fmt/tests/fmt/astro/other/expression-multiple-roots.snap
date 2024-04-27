@@ -14,4 +14,3 @@ source: markup_fmt/tests/fmt.rs
   return <div></div><h1></h1>
   })
 }
-

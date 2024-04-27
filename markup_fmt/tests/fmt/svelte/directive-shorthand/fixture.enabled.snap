@@ -22,4 +22,3 @@ source: markup_fmt/tests/fmt.rs
 <div style:background></div>
 <div style:background></div>
 <div style:background></div>
-

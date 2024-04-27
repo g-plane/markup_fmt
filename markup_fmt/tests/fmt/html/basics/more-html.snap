@@ -8,4 +8,3 @@ source: markup_fmt/tests/fmt.rs
     <div hidden class="foo" id="bar"></div>
   </body>
 </html>
-

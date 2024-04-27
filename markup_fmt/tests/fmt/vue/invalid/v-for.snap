@@ -20,4 +20,3 @@ source: markup_fmt/tests/fmt.rs
   </div>
   <div v-for="item instanceof  items"></div>
 </template>
-
