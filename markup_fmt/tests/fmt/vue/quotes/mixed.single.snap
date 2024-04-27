@@ -1,0 +1,8 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <button
+    @click='content += &#x27;{"hello": "I\&#x27;m a button!"}&#x27;'
+  ></button>
+</template>

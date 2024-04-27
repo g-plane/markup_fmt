@@ -1,0 +1,9 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <input :value='""'>
+  <input :value="''">
+  <input :value='""'>
+  <input :value="''">
+</template>

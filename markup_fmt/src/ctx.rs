@@ -1,11 +1,18 @@
 use crate::{
-    config::{LanguageOptions, WhitespaceSensitivity},
+    config::{LanguageOptions, Quotes, WhitespaceSensitivity},
     helpers, Language,
 };
+use aho_corasick::AhoCorasick;
+use memchr::memchr;
+use once_cell::sync::Lazy;
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::Doc;
 
 const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
+
+static UNESCAPING_AC: Lazy<AhoCorasick> =
+    Lazy::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());
+const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
 where
@@ -94,7 +101,18 @@ where
     }
 
     pub(crate) fn format_attr_expr(&mut self, code: &str) -> String {
-        self.format_expr(code, Path::new("attr_expr.tsx"))
+        let code = UNESCAPING_AC.replace_all(code, &QUOTES);
+        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"));
+        if memchr(b'\'', formatted.as_bytes()).is_some()
+            && memchr(b'"', formatted.as_bytes()).is_some()
+        {
+            match self.options.quotes {
+                Quotes::Double => formatted.replace('"', "&quot;"),
+                Quotes::Single => formatted.replace('\'', "&#x27;"),
+            }
+        } else {
+            formatted
+        }
     }
 
     fn format_expr(&mut self, code: &str, path: &Path) -> String {
