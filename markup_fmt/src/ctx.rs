@@ -89,7 +89,15 @@ where
         }
     }
 
-    pub(crate) fn format_expr(&mut self, code: &str) -> String {
+    pub(crate) fn format_general_expr(&mut self, code: &str) -> String {
+        self.format_expr(code, Path::new("expr.tsx"))
+    }
+
+    pub(crate) fn format_attr_expr(&mut self, code: &str) -> String {
+        self.format_expr(code, Path::new("attr_expr.tsx"))
+    }
+
+    fn format_expr(&mut self, code: &str, path: &Path) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -98,7 +106,7 @@ where
             // though external formatter isn't available.
             let wrapped = format!("<>{{{}}}</>", code.trim());
             let formatted = self.format_with_external_formatter(
-                Path::new("expr.tsx"),
+                &path,
                 &wrapped,
                 self.print_width
                     .saturating_sub(self.indent_level)

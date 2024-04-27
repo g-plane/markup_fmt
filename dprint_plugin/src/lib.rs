@@ -6,7 +6,10 @@ use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration, ResolveConfigurationResult},
     plugins::{FileMatchingInfo, PluginInfo, SyncPluginHandler, SyncPluginInfo},
 };
-use markup_fmt::{config::FormatOptions, detect_language, format_text, FormatError};
+use markup_fmt::{
+    config::{FormatOptions, Quotes},
+    detect_language, format_text, FormatError,
+};
 use std::path::Path;
 
 mod config;
@@ -75,13 +78,25 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 let mut additional_config = ConfigKeyMap::new();
                 additional_config.insert("lineWidth".into(), (print_width as i32).into());
                 additional_config.insert("printWidth".into(), (print_width as i32).into());
-                if let Some("expr.ts" | "binding.ts" | "type_params.ts") =
-                    path.file_name().and_then(|s| s.to_str())
-                {
+
+                let file_name = path.file_name().and_then(|s| s.to_str());
+                if let Some("expr.ts" | "binding.ts" | "type_params.ts") = &file_name {
                     // dprint-plugin-typescript
                     additional_config.insert("semiColons".into(), "asi".into());
                     // Biome
                     additional_config.insert("semicolons".into(), "asNeeded".into());
+                }
+                if let Some("attr_expr.tsx") = &file_name {
+                    // Only for dprint-plugin-typescript currently,
+                    // because it conflicts with the `quoteStyle` option in Biome.
+                    match config.language.quotes {
+                        Quotes::Double => {
+                            additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
+                        }
+                        Quotes::Single => {
+                            additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
+                        }
+                    }
                 }
 
                 format_with_host(path, code.into(), &additional_config).and_then(|result| {

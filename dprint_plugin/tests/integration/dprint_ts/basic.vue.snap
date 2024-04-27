@@ -10,7 +10,7 @@ function greet(msg: string) {
 </script>
 
 <template>
-  <span v-if='name != ""'>{{ ":" + name }}</span>
+  <span v-if="name != ''">{{ ":" + name }}</span>
   <button @click="greet(name)">Click</button>
 
   <ul>

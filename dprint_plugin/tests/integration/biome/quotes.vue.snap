@@ -1,0 +1,7 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<template>
+  <div v-if='(label = "a")'></div>
+  <div v-if='(label = "a")'></div>
+</template>
