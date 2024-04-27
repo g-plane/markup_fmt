@@ -108,6 +108,7 @@ where
             let formatted = self.format_with_external_formatter(
                 &path,
                 &wrapped,
+                code,
                 self.print_width
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
@@ -137,6 +138,7 @@ where
             let formatted = self.format_with_external_formatter(
                 Path::new("binding.ts"),
                 &wrapped,
+                code,
                 self.print_width
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
@@ -158,6 +160,7 @@ where
             let formatted = self.format_with_external_formatter(
                 Path::new("type_params.ts"),
                 &wrapped,
+                code,
                 self.print_width
                     .saturating_sub(self.indent_level)
                     .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
@@ -179,6 +182,7 @@ where
             let formatted = self.format_with_external_formatter(
                 Path::new("stmt_header.js"),
                 &wrapped,
+                code,
                 self.print_width
                     .saturating_sub(self.indent_level)
                     .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
@@ -199,6 +203,7 @@ where
         self.format_with_external_formatter(
             Path::new(&format!("script.{lang}")),
             code,
+            code,
             self.print_width
                 .saturating_sub(self.indent_level)
                 .saturating_sub(if self.script_indent() {
@@ -212,6 +217,7 @@ where
     pub(crate) fn format_style<'a>(&mut self, code: &'a str, lang: &str) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new(&format!("style.{lang}")),
+            code,
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
@@ -227,6 +233,7 @@ where
         self.format_with_external_formatter(
             Path::new("code.json"),
             code,
+            code,
             self.print_width
                 .saturating_sub(self.indent_level)
                 .saturating_sub(if self.script_indent() {
@@ -241,12 +248,13 @@ where
         &mut self,
         path: &Path,
         code: &'a str,
+        original_code: &'a str,
         print_width: usize,
     ) -> Cow<'a, str> {
         match (self.external_formatter)(path, code, print_width) {
             Ok(code) => code,
             Err(e) => {
-                self.external_formatter_error = Some((e, code.to_owned()));
+                self.external_formatter_error = Some((e, original_code.to_owned()));
                 code.into()
             }
         }
