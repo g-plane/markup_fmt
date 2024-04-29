@@ -318,13 +318,30 @@ impl<'s> Parser<'s> {
         let quote = self.chars.next_if(|(_, c)| *c == '"' || *c == '\'');
 
         if let Some((start, quote)) = quote {
+            let is_jinja_or_vento = matches!(self.language, Language::Jinja | Language::Vento);
             let start = start + 1;
             let mut end = start;
+            let mut chars_stack = vec![];
             loop {
                 match self.chars.next() {
                     Some((i, c)) if c == quote => {
-                        end = i;
-                        break;
+                        if chars_stack.is_empty() || !is_jinja_or_vento {
+                            end = i;
+                            break;
+                        } else if chars_stack.last().is_some_and(|last| *last == c) {
+                            chars_stack.pop();
+                        } else {
+                            chars_stack.push(c);
+                        }
+                    }
+                    Some((_, '{')) if is_jinja_or_vento => {
+                        chars_stack.push('{');
+                    }
+                    Some((_, '}'))
+                        if is_jinja_or_vento
+                            && chars_stack.last().is_some_and(|last| *last == '{') =>
+                    {
+                        chars_stack.pop();
                     }
                     Some(..) => continue,
                     None => break,
