@@ -166,7 +166,7 @@ impl<'s> Parser<'s> {
                             // do nothing
                         } else if prev.chars().all(|c| c.is_ascii_whitespace()) {
                             if let Some(AstroExprChild::Template(nodes)) = children.last_mut() {
-                                nodes.push(Node::TextNode(TextNode {
+                                nodes.push(Node::Text(TextNode {
                                     raw: prev,
                                     line_breaks: prev.chars().filter(|c| *c == '\n').count(),
                                 }));
@@ -284,20 +284,20 @@ impl<'s> Parser<'s> {
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
             Language::Html | Language::Jinja | Language::Vento => {
-                self.parse_native_attr().map(Attribute::NativeAttribute)
+                self.parse_native_attr().map(Attribute::Native)
             }
             Language::Vue => self
                 .try_parse(Parser::parse_vue_directive)
                 .map(Attribute::VueDirective)
-                .or_else(|_| self.parse_native_attr().map(Attribute::NativeAttribute)),
+                .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Svelte => self
                 .try_parse(Parser::parse_svelte_attr)
-                .map(Attribute::SvelteAttribute)
-                .or_else(|_| self.parse_native_attr().map(Attribute::NativeAttribute)),
+                .map(Attribute::Svelte)
+                .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Astro => self
                 .try_parse(Parser::parse_astro_attr)
-                .map(Attribute::AstroAttribute)
-                .or_else(|_| self.parse_native_attr().map(Attribute::NativeAttribute)),
+                .map(Attribute::Astro)
+                .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
         }
     }
 
@@ -503,7 +503,7 @@ impl<'s> Parser<'s> {
         {
             let text_node = self.parse_raw_text_node(tag_name)?;
             if !text_node.raw.is_empty() {
-                children.push(Node::TextNode(text_node));
+                children.push(Node::Text(text_node));
             }
         }
 
@@ -535,7 +535,7 @@ impl<'s> Parser<'s> {
                             || tag_name.eq_ignore_ascii_case("pre")
                             || tag_name.eq_ignore_ascii_case("textarea")
                         {
-                            self.parse_raw_text_node(tag_name).map(Node::TextNode)?
+                            self.parse_raw_text_node(tag_name).map(Node::Text)?
                         } else {
                             self.parse_node()?
                         },
@@ -805,7 +805,7 @@ impl<'s> Parser<'s> {
                                 .or_else(|_| {
                                     self.try_parse(Parser::parse_doctype).map(|_| Node::Doctype)
                                 })
-                                .or_else(|_| self.parse_text_node().map(Node::TextNode))
+                                .or_else(|_| self.parse_text_node().map(Node::Text))
                         } else {
                             self.parse_comment().map(Node::Comment)
                         }
@@ -813,7 +813,7 @@ impl<'s> Parser<'s> {
                     Some((_, '>')) if matches!(self.language, Language::Astro) => {
                         self.parse_element().map(Node::Element)
                     }
-                    _ => self.parse_text_node().map(Node::TextNode),
+                    _ => self.parse_text_node().map(Node::Text),
                 }
             }
             Some((_, '{')) => {
@@ -863,7 +863,7 @@ impl<'s> Parser<'s> {
                             .parse_svelte_interpolation()
                             .map(Node::SvelteInterpolation),
                         Language::Astro => self.parse_astro_expr().map(Node::AstroExpr),
-                        _ => self.parse_text_node().map(Node::TextNode),
+                        _ => self.parse_text_node().map(Node::Text),
                     },
                 }
             }
@@ -876,10 +876,10 @@ impl<'s> Parser<'s> {
                 if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
                     self.parse_astro_front_matter().map(Node::AstroFrontMatter)
                 } else {
-                    self.parse_text_node().map(Node::TextNode)
+                    self.parse_text_node().map(Node::Text)
                 }
             }
-            Some(..) => self.parse_text_node().map(Node::TextNode),
+            Some(..) => self.parse_text_node().map(Node::Text),
             None => Err(self.emit_error(SyntaxErrorKind::ExpectElement)),
         }
     }
@@ -1643,7 +1643,7 @@ impl<'s> Parser<'s> {
             return Ok(Node::VentoEval(VentoEval { raw }));
         }
 
-        let (tag_name, tag_rest) = helpers::parse_vento_tag(&first_tag);
+        let (tag_name, tag_rest) = helpers::parse_vento_tag(first_tag);
 
         let is_function = tag_name == "function"
             || matches!(tag_name, "async" | "export") && tag_rest.starts_with("function");
@@ -1663,7 +1663,7 @@ impl<'s> Parser<'s> {
                     }
                 }
                 if let Ok(next_tag) = self.parse_mustache_interpolation() {
-                    let (next_tag_name, _) = helpers::parse_vento_tag(&next_tag);
+                    let (next_tag_name, _) = helpers::parse_vento_tag(next_tag);
                     if next_tag_name
                         .trim()
                         .strip_prefix('/')

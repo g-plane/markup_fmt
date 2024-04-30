@@ -124,7 +124,7 @@ where
             // though external formatter isn't available.
             let wrapped = format!("<>{{{}}}</>", code.trim());
             let formatted = self.format_with_external_formatter(
-                &path,
+                path,
                 &wrapped,
                 code,
                 self.print_width
@@ -208,7 +208,7 @@ where
             formatted
                 .strip_prefix(keyword)
                 .map(|s| s.trim_start())
-                .and_then(|s| s.strip_prefix("("))
+                .and_then(|s| s.strip_prefix('('))
                 .and_then(|s| s.trim_end().strip_suffix('}'))
                 .and_then(|s| s.trim_end().strip_suffix('{'))
                 .and_then(|s| s.trim_end().strip_suffix(')'))

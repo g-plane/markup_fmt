@@ -16,11 +16,10 @@ pub struct AstroFrontMatter<'s> {
     pub raw: &'s str,
 }
 
-#[allow(clippy::enum_variant_names)]
 pub enum Attribute<'s> {
-    AstroAttribute(AstroAttribute<'s>),
-    NativeAttribute(NativeAttribute<'s>),
-    SvelteAttribute(SvelteAttribute<'s>),
+    Astro(AstroAttribute<'s>),
+    Native(NativeAttribute<'s>),
+    Svelte(SvelteAttribute<'s>),
     VueDirective(VueDirective<'s>),
 }
 
@@ -85,7 +84,7 @@ pub enum Node<'s> {
     SvelteIfBlock(SvelteIfBlock<'s>),
     SvelteInterpolation(SvelteInterpolation<'s>),
     SvelteKeyBlock(SvelteKeyBlock<'s>),
-    TextNode(TextNode<'s>),
+    Text(TextNode<'s>),
     VentoBlock(VentoBlock<'s>),
     VentoComment(VentoComment<'s>),
     VentoEval(VentoEval<'s>),

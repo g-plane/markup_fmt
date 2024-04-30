@@ -126,10 +126,10 @@ impl<'s> DocGen<'s> for Attribute<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
-            Attribute::NativeAttribute(native_attribute) => native_attribute.doc(ctx, state),
-            Attribute::SvelteAttribute(svelte_attribute) => svelte_attribute.doc(ctx, state),
+            Attribute::Native(native_attribute) => native_attribute.doc(ctx, state),
+            Attribute::Svelte(svelte_attribute) => svelte_attribute.doc(ctx, state),
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
-            Attribute::AstroAttribute(astro_attribute) => astro_attribute.doc(ctx, state),
+            Attribute::Astro(astro_attribute) => astro_attribute.doc(ctx, state),
         }
     }
 }
@@ -201,8 +201,8 @@ impl<'s> DocGen<'s> for Element<'s> {
         };
         let is_whitespace_sensitive = !(matches!(ctx.language, Language::Vue)
             && is_root
-            && self.tag_name.eq_ignore_ascii_case("template"))
-            && !state.in_svg
+            && self.tag_name.eq_ignore_ascii_case("template")
+            || state.in_svg)
             && ctx.is_whitespace_sensitive(tag_name);
 
         let mut docs = Vec::with_capacity(5);
@@ -287,7 +287,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .children
                     .first()
                     .is_some_and(|child| {
-                        if let Node::TextNode(text_node) = child {
+                        if let Node::Text(text_node) = child {
                             !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
                         } else {
                             false
@@ -297,7 +297,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .children
                     .last()
                     .is_some_and(|child| {
-                        if let Node::TextNode(text_node) = child {
+                        if let Node::Text(text_node) = child {
                             !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
                         } else {
                             false
@@ -322,7 +322,7 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         let is_empty = match &self.children[..] {
             [] => true,
-            [Node::TextNode(text_node)] => {
+            [Node::Text(text_node)] => {
                 !is_whitespace_sensitive
                     && text_node
                         .raw
@@ -340,7 +340,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .children
                 .first()
                 .map(|child| match child {
-                    Node::TextNode(text_node) => text_node.line_breaks > 0,
+                    Node::Text(text_node) => text_node.line_breaks > 0,
                     _ => false,
                 })
                 .unwrap_or_default()
@@ -358,7 +358,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .children
                 .last()
                 .map(|child| match child {
-                    Node::TextNode(text_node) => text_node.line_breaks > 0,
+                    Node::Text(text_node) => text_node.line_breaks > 0,
                     _ => false,
                 })
                 .unwrap_or_default()
@@ -371,12 +371,12 @@ impl<'s> DocGen<'s> for Element<'s> {
         };
 
         if tag_name.eq_ignore_ascii_case("script") {
-            if let [Node::TextNode(text_node)] = &self.children[..] {
+            if let [Node::Text(text_node)] = &self.children[..] {
                 if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
                     docs.push(Doc::hard_line());
                 } else {
                     let is_json = self.attrs.iter().any(|attr| {
-                        if let Attribute::NativeAttribute(native_attr) = attr {
+                        if let Attribute::Native(native_attr) = attr {
                             native_attr.name.eq_ignore_ascii_case("type")
                                 && native_attr
                                     .value
@@ -396,7 +396,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                             self.attrs
                                 .iter()
                                 .find_map(|attr| match attr {
-                                    Attribute::NativeAttribute(native_attribute)
+                                    Attribute::Native(native_attribute)
                                         if native_attribute.name.eq_ignore_ascii_case("lang") =>
                                     {
                                         native_attribute.value
@@ -422,7 +422,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 }
             }
         } else if tag_name.eq_ignore_ascii_case("style") {
-            if let [Node::TextNode(text_node)] = &self.children[..] {
+            if let [Node::Text(text_node)] = &self.children[..] {
                 if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
                     docs.push(Doc::hard_line());
                 } else {
@@ -431,7 +431,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         self.attrs
                             .iter()
                             .find_map(|attr| match attr {
-                                Attribute::NativeAttribute(native_attribute)
+                                Attribute::Native(native_attribute)
                                     if native_attribute.name.eq_ignore_ascii_case("lang") =>
                                 {
                                     native_attribute.value
@@ -453,7 +453,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {
-            if let [Node::TextNode(text_node)] = &self.children[..] {
+            if let [Node::Text(text_node)] = &self.children[..] {
                 if text_node.raw.contains('\n')
                     && !text_node.raw.starts_with('\n')
                     && !text_node.raw.starts_with("\r\n")
@@ -479,7 +479,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             );
             docs.push(trailing_ws);
         } else if is_whitespace_sensitive
-            && matches!(&self.children[..], [Node::TextNode(text_node)] if is_all_ascii_whitespace(text_node.raw))
+            && matches!(&self.children[..], [Node::Text(text_node)] if is_all_ascii_whitespace(text_node.raw))
         {
             docs.push(Doc::line_or_space());
         } else {
@@ -706,7 +706,7 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx, state),
             Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx, state),
             Node::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx, state),
-            Node::TextNode(text_node) => text_node.doc(ctx, state),
+            Node::Text(text_node) => text_node.doc(ctx, state),
             Node::VentoBlock(vento_block) => vento_block.doc(ctx, state),
             Node::VentoComment(vento_comment) => vento_comment.doc(ctx, state),
             Node::VentoEval(vento_eval) => vento_eval.doc(ctx, state),
@@ -1499,7 +1499,7 @@ fn should_add_whitespace_after_text_node<'s>(
 fn has_two_more_non_text_children(children: &[Node]) -> bool {
     children
         .iter()
-        .filter(|child| !matches!(child, Node::TextNode(_)))
+        .filter(|child| !matches!(child, Node::Text(_)))
         .count()
         > 1
 }
@@ -1558,7 +1558,7 @@ where
                         Some(Doc::hard_line())
                     };
                     match child {
-                        Node::TextNode(text_node) => {
+                        Node::Text(text_node) => {
                             let is_first = i == 0;
                             let is_last = i + 1 == children.len();
                             if is_all_ascii_whitespace(text_node.raw) {
@@ -1594,7 +1594,7 @@ where
                     (
                         docs,
                         match child {
-                            Node::TextNode(..)
+                            Node::Text(..)
                             | Node::VueInterpolation(..)
                             | Node::SvelteInterpolation(..)
                             | Node::AstroExpr(..)
@@ -1627,7 +1627,7 @@ where
             .iter()
             .enumerate()
             .map(|(i, child)| match child {
-                Node::TextNode(text_node) => {
+                Node::Text(text_node) => {
                     let is_first = i == 0;
                     let is_last = i + 1 == children.len();
                     if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
@@ -1696,7 +1696,7 @@ fn format_v_slot(style: VSlotStyle, slot: &str) -> Doc<'_> {
 }
 
 fn format_ws_sensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
-    if let Some(Node::TextNode(text_node)) = children.first() {
+    if let Some(Node::Text(text_node)) = children.first() {
         if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
             if text_node.line_breaks > 0 {
                 Doc::hard_line()
@@ -1712,7 +1712,7 @@ fn format_ws_sensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
 }
 
 fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
-    if let Some(Node::TextNode(text_node)) = children.last() {
+    if let Some(Node::Text(text_node)) = children.last() {
         if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
             if text_node.line_breaks > 0 {
                 Doc::hard_line()
@@ -1754,9 +1754,7 @@ where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
     match children {
-        [Node::TextNode(text_node)] if is_all_ascii_whitespace(text_node.raw) => {
-            Doc::line_or_space()
-        }
+        [Node::Text(text_node)] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
         _ => format_ws_sensitive_leading_ws(children)
             .append(format_children_without_inserting_linebreak(
                 children,
