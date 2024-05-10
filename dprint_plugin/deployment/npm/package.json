@@ -11,11 +11,10 @@
     "dprint-plugin"
   ],
   "files": [
-    "*.wasm",
-    "*.js",
-    "*.d.ts"
+    "*.wasm"
   ],
   "exports": {
-    "./plugin.wasm": "./plugin.wasm"
+    "./plugin.wasm": "./plugin.wasm",
+    "./package.json": "./package.json"
   }
 }
