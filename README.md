@@ -1,8 +1,9 @@
-# markup_fmt
+<div align="center"><img src="./media/markup_fmt.svg" width="160"></div>
+<h1 align="center">markup_fmt</h1>
 
+<p align="center">
 markup_fmt is a configurable HTML/Vue/Svelte/Astro/Jinja/Twig/Nunjucks/Vento formatter.
-
-![GitHub Downloads](https://img.shields.io/github/downloads/g-plane/markup_fmt/latest/plugin.wasm?style=for-the-badge)
+</p>
 
 ## Notes for Vue and Svelte Users
 
