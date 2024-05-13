@@ -12,7 +12,7 @@ assert_eq!("<div class=\"container\"></div>\n", &format_text(
     "<div class=container></div>",
     Language::Html,
     &options,
-    |_, code, _| Ok::<_, ()>(code.into()),
+    |_, code, _| Ok::<_, std::convert::Infallible>(code.into()),
 ).unwrap());
 ```
 
@@ -30,7 +30,7 @@ assert!(matches!(
         "<div>",
         Language::Html,
         &options,
-        |_, code, _| Ok::<_, ()>(code.into()),
+        |_, code, _| Ok::<_, std::convert::Infallible>(code.into()),
     ).unwrap_err(),
     FormatError::Syntax(SyntaxError { .. })
 ));
@@ -52,6 +52,6 @@ assert!(matches!(
         &options,
         |_, _, _| Err(ExternalFormatterError),
     ).unwrap_err(),
-    FormatError::External(ExternalFormatterError, _)
+    FormatError::External(errors) if !errors.is_empty()
 ));
 ```
