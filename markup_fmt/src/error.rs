@@ -103,7 +103,7 @@ pub enum FormatError<E> {
     Syntax(SyntaxError),
     /// Error from external formatter, for example,
     /// there're errors when formatting the `<script>` or `<style>` tag.
-    External(E, String),
+    External(Vec<E>),
 }
 
 impl<E> fmt::Display for FormatError<E>
@@ -113,10 +113,13 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             FormatError::Syntax(e) => e.fmt(f),
-            FormatError::External(e, code) => write!(
-                f,
-                "failed to format code with external formatter: `{code}`:\n{e}"
-            ),
+            FormatError::External(errors) => {
+                writeln!(f, "failed to format code with external formatter:")?;
+                for error in errors {
+                    writeln!(f, "{error}")?;
+                }
+                Ok(())
+            }
         }
     }
 }

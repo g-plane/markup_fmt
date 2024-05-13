@@ -112,9 +112,16 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         match format_result {
             Ok(code) => Ok(Some(code.into_bytes())),
             Err(FormatError::Syntax(err)) => Err(err.into()),
-            Err(FormatError::External(err, code)) => Err(anyhow::anyhow!(
-                "[markup_fmt] failed to format code with external formatter: `{code}`:\n{err}"
-            )),
+            Err(FormatError::External(errors)) => {
+                let msg = errors.into_iter().fold(
+                    String::from("failed to format code with external formatter:\n"),
+                    |mut msg, error| {
+                        msg.push_str(&format!("{error}\n"));
+                        msg
+                    },
+                );
+                Err(anyhow::anyhow!(msg))
+            }
         }
     }
 }

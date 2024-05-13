@@ -24,7 +24,7 @@ where
     pub(crate) options: &'b LanguageOptions,
     pub(crate) indent_level: usize,
     pub(crate) external_formatter: F,
-    pub(crate) external_formatter_error: Option<(E, String)>,
+    pub(crate) external_formatter_errors: Vec<E>,
 }
 
 impl<'b, E, F> Ctx<'b, E, F>
@@ -266,13 +266,13 @@ where
         &mut self,
         path: &Path,
         code: &'a str,
-        original_code: &'a str,
+        _original_code: &'a str,
         print_width: usize,
     ) -> Cow<'a, str> {
         match (self.external_formatter)(path, code, print_width) {
             Ok(code) => code,
             Err(e) => {
-                self.external_formatter_error = Some((e, original_code.to_owned()));
+                self.external_formatter_errors.push(e);
                 code.into()
             }
         }

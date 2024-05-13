@@ -67,7 +67,7 @@ where
         options: &options.language,
         indent_level: 0,
         external_formatter,
-        external_formatter_error: None,
+        external_formatter_errors: Default::default(),
     };
 
     let doc = ast.doc(
@@ -78,8 +78,8 @@ where
             in_svg: false,
         },
     );
-    if let Some((error, code)) = ctx.external_formatter_error {
-        return Err(FormatError::External(error, code));
+    if !ctx.external_formatter_errors.is_empty() {
+        return Err(FormatError::External(ctx.external_formatter_errors));
     }
 
     Ok(tiny_pretty::print(
