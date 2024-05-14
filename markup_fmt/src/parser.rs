@@ -117,7 +117,11 @@ impl<'s> Parser<'s> {
         };
 
         self.parse_svelte_or_astro_expr()
-            .map(|expr| AstroAttribute { name, expr })
+            .map(|(expr, expr_start)| AstroAttribute {
+                name,
+                expr,
+                expr_start,
+            })
     }
 
     fn parse_astro_expr(&mut self) -> PResult<AstroExpr<'s>> {
@@ -132,6 +136,7 @@ impl<'s> Parser<'s> {
             .peek()
             .map(|(i, _)| *i)
             .unwrap_or(self.source.len());
+        let start = pos;
         while let Some((i, c)) = self.chars.peek() {
             match c {
                 '{' => {
@@ -200,7 +205,7 @@ impl<'s> Parser<'s> {
             }
         }
 
-        Ok(AstroExpr { children })
+        Ok(AstroExpr { children, start })
     }
 
     fn parse_astro_front_matter(&mut self) -> PResult<AstroFrontMatter<'s>> {
@@ -278,6 +283,7 @@ impl<'s> Parser<'s> {
         self.state.has_astro_front_matter = true;
         Ok(AstroFrontMatter {
             raw: unsafe { self.source.get_unchecked(start..end) },
+            start,
         })
     }
 
@@ -314,7 +320,7 @@ impl<'s> Parser<'s> {
         unsafe { Ok(self.source.get_unchecked(start..=end)) }
     }
 
-    fn parse_attr_value(&mut self) -> PResult<&'s str> {
+    fn parse_attr_value(&mut self) -> PResult<(&'s str, usize)> {
         let quote = self.chars.next_if(|(_, c)| *c == '"' || *c == '\'');
 
         if let Some((start, quote)) = quote {
@@ -347,7 +353,7 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            Ok(unsafe { self.source.get_unchecked(start..end) })
+            Ok((unsafe { self.source.get_unchecked(start..end) }, start))
         } else {
             fn is_unquoted_attr_value_char(c: char) -> bool {
                 !c.is_ascii_whitespace() && !matches!(c, '"' | '\'' | '=' | '<' | '>' | '`')
@@ -363,7 +369,7 @@ impl<'s> Parser<'s> {
                 end = i;
             }
 
-            unsafe { Ok(self.source.get_unchecked(start..=end)) }
+            Ok((unsafe { self.source.get_unchecked(start..=end) }, start))
         }
     }
 
@@ -749,7 +755,7 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_mustache_interpolation(&mut self) -> PResult<&'s str> {
+    fn parse_mustache_interpolation(&mut self) -> PResult<(&'s str, usize)> {
         let Some((start, _)) = self
             .chars
             .next_if(|(_, c)| *c == '{')
@@ -779,7 +785,7 @@ impl<'s> Parser<'s> {
             }
         }
 
-        Ok(unsafe { self.source.get_unchecked(start..end) })
+        Ok((unsafe { self.source.get_unchecked(start..end) }, start))
     }
 
     fn parse_native_attr(&mut self) -> PResult<NativeAttribute<'s>> {
@@ -787,7 +793,7 @@ impl<'s> Parser<'s> {
         self.skip_ws();
         let value = if self.chars.next_if(|(_, c)| *c == '=').is_some() {
             self.skip_ws();
-            Some(self.parse_attr_value()?)
+            Some(self.parse_attr_value()?.0)
         } else {
             None
         };
@@ -827,14 +833,17 @@ impl<'s> Parser<'s> {
                 chars.next();
                 match chars.next() {
                     Some((_, '{')) if matches!(self.language, Language::Vue | Language::Jinja) => {
-                        self.parse_mustache_interpolation()
-                            .map(|expr| match self.language {
-                                Language::Vue => Node::VueInterpolation(VueInterpolation { expr }),
+                        self.parse_mustache_interpolation().map(|(expr, start)| {
+                            match self.language {
+                                Language::Vue => {
+                                    Node::VueInterpolation(VueInterpolation { expr, start })
+                                }
                                 Language::Jinja => {
                                     Node::JinjaInterpolation(JinjaInterpolation { expr })
                                 }
                                 _ => unreachable!(),
-                            })
+                            }
+                        })
                     }
                     Some((_, '{')) if matches!(self.language, Language::Vento) => {
                         self.parse_vento_tag_or_block(None)
@@ -958,8 +967,12 @@ impl<'s> Parser<'s> {
         };
         let name = self.parse_identifier()?;
         self.skip_ws();
-        let expr = self.parse_svelte_or_astro_expr()?;
-        Ok(SvelteAtTag { name, expr })
+        let (expr, expr_start) = self.parse_svelte_or_astro_expr()?;
+        Ok(SvelteAtTag {
+            name,
+            expr,
+            expr_start,
+        })
     }
 
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {
@@ -982,7 +995,11 @@ impl<'s> Parser<'s> {
         };
 
         self.parse_svelte_or_astro_expr()
-            .map(|expr| SvelteAttribute { name, expr })
+            .map(|(expr, expr_start)| SvelteAttribute {
+                name,
+                expr,
+                expr_start,
+            })
     }
 
     fn parse_svelte_await_block(&mut self) -> PResult<Box<SvelteAwaitBlock<'s>>> {
@@ -1002,7 +1019,7 @@ impl<'s> Parser<'s> {
         };
         self.skip_ws();
 
-        let expr = {
+        let (expr, expr_start) = {
             let start = self
                 .chars
                 .peek()
@@ -1063,7 +1080,7 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            unsafe { self.source.get_unchecked(start..end) }
+            (unsafe { self.source.get_unchecked(start..end) }, start)
         };
 
         self.skip_ws();
@@ -1119,13 +1136,17 @@ impl<'s> Parser<'s> {
             .is_ok()
         {
             self.skip_ws();
-            let binding = self.parse_svelte_binding()?;
+            let (binding, binding_start) = self.parse_svelte_binding()?;
             self.skip_ws();
             if self.chars.next_if(|(_, c)| *c == '}').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteThenBlock));
             }
             let children = self.parse_svelte_block_children()?;
-            Some(SvelteThenBlock { binding, children })
+            Some(SvelteThenBlock {
+                binding,
+                binding_start,
+                children,
+            })
         } else {
             None
         };
@@ -1175,6 +1196,7 @@ impl<'s> Parser<'s> {
         {
             Ok(Box::new(SvelteAwaitBlock {
                 expr,
+                expr_start,
                 then_binding,
                 catch_binding,
                 children,
@@ -1186,11 +1208,15 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_svelte_binding(&mut self) -> PResult<&'s str> {
-        match self.chars.peek() {
-            Some((_, '{')) => self.parse_inside('{', '}', true),
-            Some((_, '[')) => self.parse_inside('[', ']', true),
-            _ => self.parse_identifier(),
+    fn parse_svelte_binding(&mut self) -> PResult<(&'s str, usize)> {
+        match self.chars.peek().copied() {
+            Some((start, '{')) => self
+                .parse_inside('{', '}', true)
+                .map(|binding| (binding, start + 1)),
+            Some((start, '[')) => self
+                .parse_inside('[', ']', true)
+                .map(|binding| (binding, start + 1)),
+            _ => self.parse_identifier().map(|ident| (ident, 0)),
         }
     }
 
@@ -1231,7 +1257,7 @@ impl<'s> Parser<'s> {
         };
         self.skip_ws();
 
-        let expr = {
+        let (expr, expr_start) = {
             let start = self
                 .chars
                 .peek()
@@ -1260,11 +1286,11 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            unsafe { self.source.get_unchecked(start..end) }
+            (unsafe { self.source.get_unchecked(start..end) }, start)
         };
 
         self.skip_ws();
-        let binding = self.parse_svelte_binding()?;
+        let (binding, binding_start) = self.parse_svelte_binding()?;
 
         self.skip_ws();
         let index = if self.chars.next_if(|(_, c)| *c == ',').is_some() {
@@ -1275,8 +1301,8 @@ impl<'s> Parser<'s> {
         };
 
         self.skip_ws();
-        let key = if matches!(self.chars.peek(), Some((_, '('))) {
-            Some(self.parse_inside('(', ')', false)?)
+        let key = if let Some((start, '(')) = self.chars.peek().copied() {
+            Some((self.parse_inside('(', ')', false)?, start + 1))
         } else {
             None
         };
@@ -1325,7 +1351,9 @@ impl<'s> Parser<'s> {
         {
             Ok(SvelteEachBlock {
                 expr,
+                expr_start,
                 binding,
+                binding_start,
                 index,
                 key,
                 children,
@@ -1349,7 +1377,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
 
-        let expr = self.parse_svelte_or_astro_expr()?;
+        let (expr, expr_start) = self.parse_svelte_or_astro_expr()?;
         let children = self.parse_svelte_block_children()?;
 
         let mut else_if_blocks = vec![];
@@ -1378,9 +1406,13 @@ impl<'s> Parser<'s> {
                                     self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock)
                                 );
                             }
-                            let expr = self.parse_svelte_or_astro_expr()?;
+                            let (expr, expr_start) = self.parse_svelte_or_astro_expr()?;
                             let children = self.parse_svelte_block_children()?;
-                            else_if_blocks.push(SvelteElseIfBlock { expr, children });
+                            else_if_blocks.push(SvelteElseIfBlock {
+                                expr,
+                                expr_start,
+                                children,
+                            });
                         }
                         Some((_, '}')) => {
                             else_children = Some(self.parse_svelte_block_children()?);
@@ -1402,6 +1434,7 @@ impl<'s> Parser<'s> {
         {
             Ok(SvelteIfBlock {
                 expr,
+                expr_start,
                 children,
                 else_if_blocks,
                 else_children,
@@ -1413,9 +1446,8 @@ impl<'s> Parser<'s> {
 
     fn parse_svelte_interpolation(&mut self) -> PResult<SvelteInterpolation<'s>> {
         if self.chars.next_if(|(_, c)| *c == '{').is_some() {
-            Ok(SvelteInterpolation {
-                expr: self.parse_svelte_or_astro_expr()?,
-            })
+            let (expr, start) = self.parse_svelte_or_astro_expr()?;
+            Ok(SvelteInterpolation { expr, start })
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectSvelteInterpolation))
         }
@@ -1435,7 +1467,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteKeyBlock));
         };
 
-        let expr = self.parse_svelte_or_astro_expr()?;
+        let (expr, expr_start) = self.parse_svelte_or_astro_expr()?;
         let children = self.parse_svelte_block_children()?;
 
         if self
@@ -1449,14 +1481,18 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
-            Ok(SvelteKeyBlock { expr, children })
+            Ok(SvelteKeyBlock {
+                expr,
+                expr_start,
+                children,
+            })
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
         }
     }
 
     /// This will consume `}`.
-    fn parse_svelte_or_astro_expr(&mut self) -> PResult<&'s str> {
+    fn parse_svelte_or_astro_expr(&mut self) -> PResult<(&'s str, usize)> {
         self.skip_ws();
 
         let start = self
@@ -1482,7 +1518,7 @@ impl<'s> Parser<'s> {
                 None => break,
             }
         }
-        Ok(unsafe { self.source.get_unchecked(start..end) })
+        Ok((unsafe { self.source.get_unchecked(start..end) }, start))
     }
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
@@ -1633,8 +1669,11 @@ impl<'s> Parser<'s> {
         Ok(children)
     }
 
-    fn parse_vento_tag_or_block(&mut self, first_tag: Option<&'s str>) -> PResult<Node<'s>> {
-        let first_tag = if let Some(first_tag) = first_tag {
+    fn parse_vento_tag_or_block(
+        &mut self,
+        first_tag: Option<(&'s str, usize)>,
+    ) -> PResult<Node<'s>> {
+        let (first_tag, tag_start) = if let Some(first_tag) = first_tag {
             first_tag
         } else {
             self.parse_mustache_interpolation()?
@@ -1646,7 +1685,10 @@ impl<'s> Parser<'s> {
         {
             return Ok(Node::VentoComment(VentoComment { raw }));
         } else if let Some(raw) = first_tag.strip_prefix('>') {
-            return Ok(Node::VentoEval(VentoEval { raw }));
+            return Ok(Node::VentoEval(VentoEval {
+                raw,
+                start: tag_start + 1,
+            }));
         }
 
         let (tag_name, tag_rest) = helpers::parse_vento_tag(first_tag);
@@ -1657,7 +1699,10 @@ impl<'s> Parser<'s> {
             || matches!(tag_name, "set" | "export") && !first_tag.contains('=')
             || is_function
         {
-            let mut body = vec![VentoTagOrChildren::Tag(VentoTag { tag: first_tag })];
+            let mut body = vec![VentoTagOrChildren::Tag(VentoTag {
+                tag: first_tag,
+                start: tag_start,
+            })];
 
             loop {
                 let mut children = self.parse_vento_block_children()?;
@@ -1668,20 +1713,26 @@ impl<'s> Parser<'s> {
                         body.push(VentoTagOrChildren::Children(children));
                     }
                 }
-                if let Ok(next_tag) = self.parse_mustache_interpolation() {
+                if let Ok((next_tag, start)) = self.parse_mustache_interpolation() {
                     let (next_tag_name, _) = helpers::parse_vento_tag(next_tag);
                     if next_tag_name
                         .trim()
                         .strip_prefix('/')
                         .is_some_and(|name| name == tag_name || is_function && name == "function")
                     {
-                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
+                        body.push(VentoTagOrChildren::Tag(VentoTag {
+                            tag: next_tag,
+                            start,
+                        }));
                         break;
                     }
                     if tag_name == "if" && next_tag_name == "else" {
-                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
+                        body.push(VentoTagOrChildren::Tag(VentoTag {
+                            tag: next_tag,
+                            start,
+                        }));
                     } else {
-                        let node = self.parse_vento_tag_or_block(Some(next_tag))?;
+                        let node = self.parse_vento_tag_or_block(Some((next_tag, start)))?;
                         if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
                             nodes.push(node);
                         } else {
@@ -1696,9 +1747,13 @@ impl<'s> Parser<'s> {
         } else if is_vento_interpolation(tag_name) {
             Ok(Node::VentoInterpolation(VentoInterpolation {
                 expr: first_tag,
+                start: tag_start,
             }))
         } else {
-            Ok(Node::VentoTag(VentoTag { tag: first_tag }))
+            Ok(Node::VentoTag(VentoTag {
+                tag: first_tag,
+                start: tag_start,
+            }))
         }
     }
 

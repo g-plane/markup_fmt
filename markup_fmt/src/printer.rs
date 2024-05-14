@@ -853,13 +853,13 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
         head.push(Doc::text("{#await "));
         head.push(Doc::text(ctx.format_general_expr(self.expr)));
 
-        if let Some(then_binding) = self.then_binding {
+        if let Some((then_binding, _start)) = self.then_binding {
             head.push(Doc::line_or_space());
             head.push(Doc::text("then "));
             head.push(Doc::text(ctx.format_binding(then_binding)));
         }
 
-        if let Some(catch_binding) = self.catch_binding {
+        if let Some((catch_binding, _start)) = self.catch_binding {
             head.push(Doc::line_or_space());
             head.push(Doc::text("catch "));
             head.push(Doc::text(ctx.format_binding(catch_binding)));
@@ -898,7 +898,7 @@ impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let children = format_control_structure_block_children(&self.children, ctx, state);
-        if let Some(binding) = self.binding {
+        if let Some((binding, _start)) = self.binding {
             Doc::text("{:catch ")
                 .append(Doc::text(ctx.format_binding(binding)))
                 .append(Doc::text("}"))
@@ -924,10 +924,10 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
         if let Some(index) = self.index {
             head.push(Doc::text(","));
             head.push(Doc::line_or_space());
-            head.push(Doc::text(ctx.format_binding(index)));
+            head.push(Doc::text(index));
         }
 
-        if let Some(key) = self.key {
+        if let Some((key, _start)) = self.key {
             head.push(Doc::line_or_space());
             head.push(Doc::text("("));
             head.push(Doc::text(ctx.format_general_expr(key)));
@@ -1349,7 +1349,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             }
         };
 
-        if let Some(value) = self.value {
+        if let Some((value, _start)) = self.value {
             let value = match self.name {
                 "for" => {
                     use crate::config::VForDelimiterStyle;

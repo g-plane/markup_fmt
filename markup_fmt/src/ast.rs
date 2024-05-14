@@ -1,10 +1,12 @@
 pub struct AstroAttribute<'s> {
     pub name: Option<&'s str>,
     pub expr: &'s str,
+    pub expr_start: usize,
 }
 
 pub struct AstroExpr<'s> {
     pub children: Vec<AstroExprChild<'s>>,
+    pub start: usize,
 }
 
 pub enum AstroExprChild<'s> {
@@ -14,6 +16,7 @@ pub enum AstroExprChild<'s> {
 
 pub struct AstroFrontMatter<'s> {
     pub raw: &'s str,
+    pub start: usize,
 }
 
 pub enum Attribute<'s> {
@@ -30,12 +33,6 @@ pub struct Comment<'s> {
 pub struct Doctype<'s> {
     pub keyword: &'s str,
     pub value: &'s str,
-}
-
-pub struct VueDirective<'s> {
-    pub name: &'s str,
-    pub arg_and_modifiers: Option<&'s str>,
-    pub value: Option<&'s str>,
 }
 
 pub struct Element<'s> {
@@ -105,43 +102,50 @@ pub struct Root<'s> {
 pub struct SvelteAtTag<'s> {
     pub name: &'s str,
     pub expr: &'s str,
+    pub expr_start: usize,
 }
 
 pub struct SvelteAttribute<'s> {
     pub name: Option<&'s str>,
     pub expr: &'s str,
+    pub expr_start: usize,
 }
 
 pub struct SvelteAwaitBlock<'s> {
     pub expr: &'s str,
-    pub then_binding: Option<&'s str>,
-    pub catch_binding: Option<&'s str>,
+    pub expr_start: usize,
+    pub then_binding: Option<(&'s str, usize)>,
+    pub catch_binding: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub then_block: Option<SvelteThenBlock<'s>>,
     pub catch_block: Option<SvelteCatchBlock<'s>>,
 }
 
 pub struct SvelteCatchBlock<'s> {
-    pub binding: Option<&'s str>,
+    pub binding: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
 }
 
 pub struct SvelteEachBlock<'s> {
     pub expr: &'s str,
+    pub expr_start: usize,
     pub binding: &'s str,
+    pub binding_start: usize,
     pub index: Option<&'s str>,
-    pub key: Option<&'s str>,
+    pub key: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub else_children: Option<Vec<Node<'s>>>,
 }
 
 pub struct SvelteElseIfBlock<'s> {
     pub expr: &'s str,
+    pub expr_start: usize,
     pub children: Vec<Node<'s>>,
 }
 
 pub struct SvelteIfBlock<'s> {
     pub expr: &'s str,
+    pub expr_start: usize,
     pub children: Vec<Node<'s>>,
     pub else_if_blocks: Vec<SvelteElseIfBlock<'s>>,
     pub else_children: Option<Vec<Node<'s>>>,
@@ -149,15 +153,18 @@ pub struct SvelteIfBlock<'s> {
 
 pub struct SvelteInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }
 
 pub struct SvelteKeyBlock<'s> {
     pub expr: &'s str,
+    pub expr_start: usize,
     pub children: Vec<Node<'s>>,
 }
 
 pub struct SvelteThenBlock<'s> {
     pub binding: &'s str,
+    pub binding_start: usize,
     pub children: Vec<Node<'s>>,
 }
 
@@ -176,14 +183,17 @@ pub struct VentoComment<'s> {
 
 pub struct VentoEval<'s> {
     pub raw: &'s str,
+    pub start: usize,
 }
 
 pub struct VentoInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }
 
 pub struct VentoTag<'s> {
     pub tag: &'s str,
+    pub start: usize,
 }
 
 pub enum VentoTagOrChildren<'s> {
@@ -191,6 +201,13 @@ pub enum VentoTagOrChildren<'s> {
     Children(Vec<Node<'s>>),
 }
 
+pub struct VueDirective<'s> {
+    pub name: &'s str,
+    pub arg_and_modifiers: Option<&'s str>,
+    pub value: Option<(&'s str, usize)>,
+}
+
 pub struct VueInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }
