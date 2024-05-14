@@ -403,7 +403,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                             native_attr.name.eq_ignore_ascii_case("type")
                                 && native_attr
                                     .value
-                                    .map(|value| {
+                                    .map(|(value, _)| {
                                         value == "importmap" || value == "application/json"
                                     })
                                     .unwrap_or_default()
@@ -426,6 +426,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                     }
                                     _ => None,
                                 })
+                                .map(|(value, _)| value)
                                 .unwrap_or(if matches!(ctx.language, Language::Astro) {
                                     "ts"
                                 } else {
@@ -461,6 +462,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 }
                                 _ => None,
                             })
+                            .map(|(value, _)| value)
                             .unwrap_or("css"),
                     );
                     let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
@@ -640,7 +642,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let name = Doc::text(self.name);
-        if let Some(value) = self.value {
+        if let Some((value, _start)) = self.value {
             let value = match ctx.language {
                 Language::Vue => {
                     if state

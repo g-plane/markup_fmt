@@ -794,7 +794,7 @@ impl<'s> Parser<'s> {
         self.skip_ws();
         let value = if self.chars.next_if(|(_, c)| *c == '=').is_some() {
             self.skip_ws();
-            Some(self.parse_attr_value()?.0)
+            Some(self.parse_attr_value()?)
         } else {
             None
         };
