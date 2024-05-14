@@ -171,6 +171,7 @@ pub struct SvelteThenBlock<'s> {
 pub struct TextNode<'s> {
     pub raw: &'s str,
     pub line_breaks: usize,
+    pub start: usize,
 }
 
 pub struct VentoBlock<'s> {

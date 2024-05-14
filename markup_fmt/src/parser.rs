@@ -174,6 +174,7 @@ impl<'s> Parser<'s> {
                                 nodes.push(Node::Text(TextNode {
                                     raw: prev,
                                     line_breaks: prev.chars().filter(|c| *c == '\n').count(),
+                                    start: pos,
                                 }));
                             }
                         } else {
@@ -944,6 +945,7 @@ impl<'s> Parser<'s> {
         Ok(TextNode {
             raw: unsafe { self.source.get_unchecked(start..end) },
             line_breaks,
+            start,
         })
     }
 
@@ -1645,6 +1647,7 @@ impl<'s> Parser<'s> {
         Ok(TextNode {
             raw: unsafe { self.source.get_unchecked(start..end) },
             line_breaks,
+            start,
         })
     }
 
