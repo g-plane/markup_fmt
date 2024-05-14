@@ -1699,10 +1699,7 @@ impl<'s> Parser<'s> {
             || matches!(tag_name, "set" | "export") && !first_tag.contains('=')
             || is_function
         {
-            let mut body = vec![VentoTagOrChildren::Tag(VentoTag {
-                tag: first_tag,
-                start: tag_start,
-            })];
+            let mut body = vec![VentoTagOrChildren::Tag(VentoTag { tag: first_tag })];
 
             loop {
                 let mut children = self.parse_vento_block_children()?;
@@ -1720,17 +1717,11 @@ impl<'s> Parser<'s> {
                         .strip_prefix('/')
                         .is_some_and(|name| name == tag_name || is_function && name == "function")
                     {
-                        body.push(VentoTagOrChildren::Tag(VentoTag {
-                            tag: next_tag,
-                            start,
-                        }));
+                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
                         break;
                     }
                     if tag_name == "if" && next_tag_name == "else" {
-                        body.push(VentoTagOrChildren::Tag(VentoTag {
-                            tag: next_tag,
-                            start,
-                        }));
+                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
                     } else {
                         let node = self.parse_vento_tag_or_block(Some((next_tag, start)))?;
                         if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
@@ -1750,10 +1741,7 @@ impl<'s> Parser<'s> {
                 start: tag_start,
             }))
         } else {
-            Ok(Node::VentoTag(VentoTag {
-                tag: first_tag,
-                start: tag_start,
-            }))
+            Ok(Node::VentoTag(VentoTag { tag: first_tag }))
         }
     }
 

@@ -193,7 +193,6 @@ pub struct VentoInterpolation<'s> {
 
 pub struct VentoTag<'s> {
     pub tag: &'s str,
-    pub start: usize,
 }
 
 pub enum VentoTagOrChildren<'s> {
