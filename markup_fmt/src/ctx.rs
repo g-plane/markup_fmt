@@ -16,7 +16,7 @@ const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
 where
-    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&Path, &'a str, FormattingMeta) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) language: Language,
     pub(crate) indent_width: usize,
@@ -29,7 +29,7 @@ where
 
 impl<'b, E, F> Ctx<'b, E, F>
 where
-    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&Path, &'a str, FormattingMeta) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) fn script_indent(&self) -> bool {
         match self.language {
@@ -96,13 +96,13 @@ where
         }
     }
 
-    pub(crate) fn format_general_expr(&mut self, code: &str) -> String {
-        self.format_expr(code, Path::new("expr.tsx"))
+    pub(crate) fn format_general_expr(&mut self, code: &str, start_offset: usize) -> String {
+        self.format_expr(code, Path::new("expr.tsx"), start_offset)
     }
 
-    pub(crate) fn format_attr_expr(&mut self, code: &str) -> String {
+    pub(crate) fn format_attr_expr(&mut self, code: &str, start_offset: usize) -> String {
         let code = UNESCAPING_AC.replace_all(code, &QUOTES);
-        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"));
+        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"), start_offset);
         if memchr(b'\'', formatted.as_bytes()).is_some()
             && memchr(b'"', formatted.as_bytes()).is_some()
         {
@@ -115,21 +115,28 @@ where
         }
     }
 
-    fn format_expr(&mut self, code: &str, path: &Path) -> String {
+    fn format_expr(&mut self, code: &str, path: &Path, start_offset: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
+            const PREFIX: &str = "<>{";
+            const SUFFIX: &str = "}</>";
             // Trim original code before sending it to the external formatter.
             // This makes sure the code will be trimmed
             // though external formatter isn't available.
-            let wrapped = format!("<>{{{}}}</>", code.trim());
+            let wrapped = format!("{PREFIX}{}{SUFFIX}", code.trim());
             let formatted = self.format_with_external_formatter(
                 path,
                 &wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(2), // this is technically wrong, just workaround
+                FormattingMeta {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(2), // this is technically wrong, just workaround
+                    start_offset,
+                    offset_back: PREFIX.len(),
+                },
             );
             let formatted =
                 formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
@@ -148,18 +155,24 @@ where
         }
     }
 
-    pub(crate) fn format_binding(&mut self, code: &str) -> String {
+    pub(crate) fn format_binding(&mut self, code: &str, start_offset: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
-            let wrapped = format!("let {} = 0", code.trim());
+            const PREFIX: &str = "let ";
+            let wrapped = format!("{PREFIX}{} = 0", code.trim());
             let formatted = self.format_with_external_formatter(
                 Path::new("binding.ts"),
                 &wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(2), // this is technically wrong, just workaround
+                FormattingMeta {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(2), // this is technically wrong, just workaround
+                    start_offset,
+                    offset_back: PREFIX.len(),
+                },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
@@ -170,18 +183,24 @@ where
         }
     }
 
-    pub(crate) fn format_type_params(&mut self, code: &str) -> String {
+    pub(crate) fn format_type_params(&mut self, code: &str, start_offset: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
-            let wrapped = format!("type T<{}> = 0", code.trim());
+            const PREFIX: &str = "type T<";
+            let wrapped = format!("{PREFIX}{}> = 0", code.trim());
             let formatted = self.format_with_external_formatter(
                 Path::new("type_params.ts"),
                 &wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
+                FormattingMeta {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
+                    start_offset,
+                    offset_back: PREFIX.len(),
+                },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
@@ -192,7 +211,12 @@ where
         }
     }
 
-    pub(crate) fn format_stmt_header(&mut self, keyword: &str, code: &str) -> String {
+    pub(crate) fn format_stmt_header(
+        &mut self,
+        keyword: &str,
+        code: &str,
+        start_offset: usize,
+    ) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -201,9 +225,14 @@ where
                 Path::new("stmt_header.js"),
                 &wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+                FormattingMeta {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+                    start_offset,
+                    offset_back: 0,
+                },
             );
             formatted
                 .strip_prefix(keyword)
@@ -217,48 +246,73 @@ where
         }
     }
 
-    pub(crate) fn format_script<'a>(&mut self, code: &'a str, lang: &str) -> Cow<'a, str> {
+    pub(crate) fn format_script<'a>(
+        &mut self,
+        code: &'a str,
+        lang: &str,
+        start_offset: usize,
+    ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new(&format!("script.{lang}")),
             code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.script_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            FormattingMeta {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.script_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                start_offset,
+                offset_back: 0,
+            },
         )
     }
 
-    pub(crate) fn format_style<'a>(&mut self, code: &'a str, lang: &str) -> Cow<'a, str> {
+    pub(crate) fn format_style<'a>(
+        &mut self,
+        code: &'a str,
+        lang: &str,
+        start_offset: usize,
+    ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new(&format!("style.{lang}")),
             code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.style_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            FormattingMeta {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.style_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                start_offset,
+                offset_back: 0,
+            },
         )
     }
 
-    pub(crate) fn format_json<'a>(&mut self, code: &'a str) -> Cow<'a, str> {
+    pub(crate) fn format_json<'a>(&mut self, code: &'a str, start_offset: usize) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new("code.json"),
             code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.script_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            FormattingMeta {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.script_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                start_offset,
+                offset_back: 0,
+            },
         )
     }
 
@@ -267,9 +321,9 @@ where
         path: &Path,
         code: &'a str,
         _original_code: &'a str,
-        print_width: usize,
+        formatting_meta: FormattingMeta,
     ) -> Cow<'a, str> {
-        match (self.external_formatter)(path, code, print_width) {
+        match (self.external_formatter)(path, code, formatting_meta) {
             Ok(code) => code,
             Err(e) => {
                 self.external_formatter_errors.push(e);
@@ -282,17 +336,23 @@ where
 pub(crate) trait NestWithCtx {
     fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
-        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
+        F: for<'a> FnMut(&Path, &'a str, FormattingMeta) -> Result<Cow<'a, str>, E>;
 }
 
 impl NestWithCtx for Doc<'_> {
     fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
-        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, FormattingMeta) -> Result<Cow<'a, str>, E>,
     {
         ctx.indent_level += ctx.indent_width;
         let doc = self.nest(ctx.indent_width);
         ctx.indent_level -= ctx.indent_width;
         doc
     }
+}
+
+pub struct FormattingMeta {
+    pub print_width: usize,
+    pub start_offset: usize,
+    pub offset_back: usize,
 }

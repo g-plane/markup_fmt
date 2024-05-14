@@ -70,14 +70,17 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         // falling back to HTML allows to format files with unknown extensions, such as .svg
         let language = detect_language(file_path).unwrap_or(markup_fmt::Language::Html);
 
+        let file_text = std::str::from_utf8(&file_text)?;
         let format_result = format_text(
-            std::str::from_utf8(&file_text)?,
+            &file_text,
             language,
             config,
-            |path, code, print_width| {
+            |path, code, formatting_meta| {
                 let mut additional_config = ConfigKeyMap::new();
-                additional_config.insert("lineWidth".into(), (print_width as i32).into());
-                additional_config.insert("printWidth".into(), (print_width as i32).into());
+
+                let print_width = formatting_meta.print_width as i32;
+                additional_config.insert("lineWidth".into(), print_width.into());
+                additional_config.insert("printWidth".into(), print_width.into());
 
                 let file_name = path.file_name().and_then(|s| s.to_str());
                 if let Some("expr.ts" | "binding.ts" | "type_params.ts") = &file_name {
@@ -98,6 +101,20 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                         }
                     }
                 }
+
+                additional_config.insert(
+                    "__fmp_v1_path".into(),
+                    file_path.display().to_string().into(),
+                );
+                additional_config.insert("__fmp_v1_code".into(), file_text.into());
+                additional_config.insert(
+                    "__fmp_v1_start".into(),
+                    (formatting_meta.start_offset as i32).into(),
+                );
+                additional_config.insert(
+                    "__fmp_v1_back".into(),
+                    (formatting_meta.offset_back as i32).into(),
+                );
 
                 format_with_host(path, code.into(), &additional_config).and_then(|result| {
                     match result {
