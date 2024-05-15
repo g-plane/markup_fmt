@@ -134,8 +134,7 @@ where
                         .print_width
                         .saturating_sub(self.indent_level)
                         .saturating_sub(2), // this is technically wrong, just workaround
-                    start_offset,
-                    offset_back: PREFIX.len(),
+                    start_offset: (start_offset - PREFIX.len()) as isize,
                 },
             );
             let formatted =
@@ -170,8 +169,7 @@ where
                         .print_width
                         .saturating_sub(self.indent_level)
                         .saturating_sub(2), // this is technically wrong, just workaround
-                    start_offset,
-                    offset_back: PREFIX.len(),
+                    start_offset: (start_offset - PREFIX.len()) as isize,
                 },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
@@ -198,8 +196,7 @@ where
                         .print_width
                         .saturating_sub(self.indent_level)
                         .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
-                    start_offset,
-                    offset_back: PREFIX.len(),
+                    start_offset: (start_offset - PREFIX.len()) as isize,
                 },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
@@ -230,8 +227,7 @@ where
                         .print_width
                         .saturating_sub(self.indent_level)
                         .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
-                    start_offset,
-                    offset_back: 0,
+                    start_offset: start_offset as isize,
                 },
             );
             formatted
@@ -265,8 +261,7 @@ where
                     } else {
                         0
                     }),
-                start_offset,
-                offset_back: 0,
+                start_offset: start_offset as isize,
             },
         )
     }
@@ -290,8 +285,7 @@ where
                     } else {
                         0
                     }),
-                start_offset,
-                offset_back: 0,
+                start_offset: start_offset as isize,
             },
         )
     }
@@ -310,8 +304,7 @@ where
                     } else {
                         0
                     }),
-                start_offset,
-                offset_back: 0,
+                start_offset: start_offset as isize,
             },
         )
     }
@@ -353,6 +346,5 @@ impl NestWithCtx for Doc<'_> {
 
 pub struct FormattingMeta {
     pub print_width: usize,
-    pub start_offset: usize,
-    pub offset_back: usize,
+    pub start_offset: isize,
 }
