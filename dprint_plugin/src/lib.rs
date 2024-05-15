@@ -109,7 +109,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 additional_config.insert("__fmp_v1_code".into(), file_text.into());
                 additional_config.insert(
                     "__fmp_v1_start".into(),
-                    (formatting_meta.start_offset as i32).into(),
+                    (formatting_meta.start_at as i32).into(),
                 );
 
                 format_with_host(path, code.into(), &additional_config).and_then(|result| {
