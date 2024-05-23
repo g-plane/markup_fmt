@@ -404,38 +404,44 @@ impl<'s> Parser<'s> {
         })
     }
 
-    fn parse_doctype(&mut self) -> PResult<()> {
-        if self
+    fn parse_doctype(&mut self) -> PResult<Doctype<'s>> {
+        let keyword_start = if let Some((start, _)) = self
             .chars
             .next_if(|(_, c)| *c == '<')
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '!'))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'d')))
+        {
+            start + 1
+        } else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
+        };
+        let keyword = if let Some((end, _)) = self
+            .chars
+            .next_if(|(_, c)| c.eq_ignore_ascii_case(&'d'))
             .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'o')))
             .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'c')))
             .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'t')))
             .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'y')))
             .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'p')))
             .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'e')))
-            .is_none()
         {
+            unsafe { self.source.get_unchecked(keyword_start..end + 1) }
+        } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
         };
         self.skip_ws();
 
-        if self
-            .chars
-            .next_if(|(_, c)| c.eq_ignore_ascii_case(&'h'))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'t')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'m')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'l')))
-            .is_none()
-        {
+        let value_start = if let Some((start, _)) = self.chars.peek() {
+            *start
+        } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
-        }
-        self.skip_ws();
+        };
+        while self.chars.next_if(|(_, c)| *c != '>').is_some() {}
 
-        if self.chars.next_if(|(_, c)| *c == '>').is_some() {
-            Ok(())
+        if let Some((value_end, _)) = self.chars.next_if(|(_, c)| *c == '>') {
+            Ok(Doctype {
+                keyword,
+                value: unsafe { self.source.get_unchecked(value_start..value_end) }.trim_end(),
+            })
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectDoctype))
         }
@@ -803,7 +809,7 @@ impl<'s> Parser<'s> {
                             self.try_parse(Parser::parse_comment)
                                 .map(Node::Comment)
                                 .or_else(|_| {
-                                    self.try_parse(Parser::parse_doctype).map(|_| Node::Doctype)
+                                    self.try_parse(Parser::parse_doctype).map(Node::Doctype)
                                 })
                                 .or_else(|_| self.parse_text_node().map(Node::Text))
                         } else {

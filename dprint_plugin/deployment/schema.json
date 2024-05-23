@@ -121,6 +121,11 @@
       "enum": ["css", "strict", "ignore", null],
       "default": null
     },
+    "doctypeKeywordCase": {
+      "type": "string",
+      "enum": ["ignore", "upper", "lower"],
+      "default": "upper"
+    },
     "vBindStyle": {
       "type": ["string", "null"],
       "enum": ["short", "long", null],

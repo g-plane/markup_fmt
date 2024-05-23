@@ -199,6 +199,10 @@ pub struct LanguageOptions {
     /// See [`whitespaceSensitivity`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#whitespacesensitivity) on GitHub
     pub component_whitespace_sensitivity: Option<WhitespaceSensitivity>,
 
+    #[cfg_attr(feature = "config_serde", serde(alias = "doctypeKeywordCase"))]
+    /// See [`doctypeKeywordCase`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#doctypekeywordcase) on GitHub
+    pub doctype_keyword_case: DoctypeKeywordCase,
+
     #[cfg_attr(feature = "config_serde", serde(alias = "vBindStyle"))]
     /// See [`vBindStyle`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#vbindstyle) on GitHub
     pub v_bind_style: Option<VBindStyle>,
@@ -275,6 +279,16 @@ pub enum WhitespaceSensitivity {
     Css,
     Strict,
     Ignore,
+}
+
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "kebab-case"))]
+pub enum DoctypeKeywordCase {
+    Ignore,
+    #[default]
+    Upper,
+    Lower,
 }
 
 #[derive(Clone, Debug, Default)]

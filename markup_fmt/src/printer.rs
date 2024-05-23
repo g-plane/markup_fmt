@@ -155,6 +155,29 @@ impl<'s> DocGen<'s> for Comment<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for Doctype<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        use crate::config::DoctypeKeywordCase;
+
+        Doc::text("<!")
+            .append(match ctx.options.doctype_keyword_case {
+                DoctypeKeywordCase::Ignore => Doc::text(self.keyword),
+                DoctypeKeywordCase::Upper => Doc::text(self.keyword.to_ascii_uppercase()),
+                DoctypeKeywordCase::Lower => Doc::text(self.keyword.to_ascii_lowercase()),
+            })
+            .append(Doc::space())
+            .append(Doc::text(if self.value.eq_ignore_ascii_case("html") {
+                "html"
+            } else {
+                self.value
+            }))
+            .append(Doc::text(">"))
+    }
+}
+
 impl<'s> DocGen<'s> for Element<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -694,7 +717,7 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
             Node::AstroFrontMatter(astro_front_matter) => astro_front_matter.doc(ctx, state),
             Node::Comment(comment) => comment.doc(ctx, state),
-            Node::Doctype => Doc::text("<!DOCTYPE html>"),
+            Node::Doctype(doctype) => doctype.doc(ctx, state),
             Node::Element(element) => element.doc(ctx, state),
             Node::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
             Node::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
@@ -723,7 +746,7 @@ impl<'s> DocGen<'s> for Root<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let is_whole_document_like = self.children.iter().any(|child| match child {
-            Node::Doctype => true,
+            Node::Doctype(..) => true,
             Node::Element(element) => element.tag_name.eq_ignore_ascii_case("html"),
             _ => false,
         });

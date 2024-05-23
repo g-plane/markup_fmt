@@ -1,0 +1,10 @@
+[default]
+
+[ignore]
+doctypeKeywordCase = "ignore"
+
+[upper]
+doctypeKeywordCase = "upper"
+
+[lower]
+doctypeKeywordCase = "lower"

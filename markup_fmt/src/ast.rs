@@ -27,6 +27,11 @@ pub struct Comment<'s> {
     pub raw: &'s str,
 }
 
+pub struct Doctype<'s> {
+    pub keyword: &'s str,
+    pub value: &'s str,
+}
+
 pub struct VueDirective<'s> {
     pub name: &'s str,
     pub arg_and_modifiers: Option<&'s str>,
@@ -72,7 +77,7 @@ pub enum Node<'s> {
     AstroExpr(AstroExpr<'s>),
     AstroFrontMatter(AstroFrontMatter<'s>),
     Comment(Comment<'s>),
-    Doctype,
+    Doctype(Doctype<'s>),
     Element(Element<'s>),
     JinjaBlock(JinjaBlock<'s>),
     JinjaComment(JinjaComment<'s>),

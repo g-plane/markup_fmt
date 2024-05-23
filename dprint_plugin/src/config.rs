@@ -2,10 +2,7 @@ use dprint_core::configuration::{
     get_nullable_value, get_unknown_property_diagnostics, get_value, ConfigKeyMap,
     ConfigurationDiagnostic, GlobalConfiguration, NewLineKind, ResolveConfigurationResult,
 };
-use markup_fmt::config::{
-    ClosingTagLineBreakForEmpty, FormatOptions, LanguageOptions, LayoutOptions, LineBreak, Quotes,
-    VBindStyle, VForDelimiterStyle, VOnStyle, VSlotStyle, WhitespaceSensitivity,
-};
+use markup_fmt::config::*;
 
 pub(crate) fn resolve_config(
     mut config: ConfigKeyMap,
@@ -201,6 +198,23 @@ pub(crate) fn resolve_config(
                     Default::default()
                 }
             }),
+            doctype_keyword_case: match &*get_value(
+                &mut config,
+                "doctypeKeywordCase",
+                "upper".to_string(),
+                &mut diagnostics,
+            ) {
+                "ignore" => DoctypeKeywordCase::Ignore,
+                "upper" => DoctypeKeywordCase::Upper,
+                "lower" => DoctypeKeywordCase::Lower,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "doctypeKeywordCase".into(),
+                        message: "invalid value for config `doctypeKeywordCase`".into(),
+                    });
+                    Default::default()
+                }
+            },
             v_bind_style: get_nullable_value::<String>(&mut config, "vBindStyle", &mut diagnostics)
                 .as_deref()
                 .and_then(|option_value| match option_value {
