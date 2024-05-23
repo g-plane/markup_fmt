@@ -165,8 +165,8 @@ impl<'s> DocGen<'s> for Doctype<'s> {
         Doc::text("<!")
             .append(match ctx.options.doctype_keyword_case {
                 DoctypeKeywordCase::Ignore => Doc::text(self.keyword),
-                DoctypeKeywordCase::Upper => Doc::text(self.keyword.to_ascii_uppercase()),
-                DoctypeKeywordCase::Lower => Doc::text(self.keyword.to_ascii_lowercase()),
+                DoctypeKeywordCase::Upper => Doc::text("DOCTYPE"),
+                DoctypeKeywordCase::Lower => Doc::text("doctype"),
             })
             .append(Doc::space())
             .append(Doc::text(if self.value.eq_ignore_ascii_case("html") {
