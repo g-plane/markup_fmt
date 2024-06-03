@@ -353,14 +353,27 @@ impl<'s> Parser<'s> {
                 !c.is_ascii_whitespace() && !matches!(c, '"' | '\'' | '=' | '<' | '>' | '`')
             }
 
-            let Some((start, _)) = self.chars.next_if(|(_, c)| is_unquoted_attr_value_char(*c))
-            else {
-                return Err(self.emit_error(SyntaxErrorKind::ExpectAttrValue));
+            let start = match self.chars.peek() {
+                Some((i, c)) if is_unquoted_attr_value_char(*c) => { *i },
+                _ => return Err(self.emit_error(SyntaxErrorKind::ExpectAttrValue))
             };
-            let mut end = start;
 
-            while let Some((i, _)) = self.chars.next_if(|(_, c)| is_unquoted_attr_value_char(*c)) {
-                end = i;
+            let mut end = start;
+            loop {
+                match self.chars.peek() {
+                    Some((_, '{')) => {
+                        self.parse_mustache_interpolation()?;
+                        match self.chars.peek() {
+                            Some((i, _)) => end = i - 1,
+                            None => break
+                        }
+                    }
+                    Some((i, c)) if is_unquoted_attr_value_char(*c) => {
+                        end = *i;
+                        self.chars.next();
+                    },
+                    _ => break
+                };
             }
 
             unsafe { Ok(self.source.get_unchecked(start..=end)) }
