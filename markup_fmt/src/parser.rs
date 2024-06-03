@@ -353,14 +353,34 @@ impl<'s> Parser<'s> {
                 !c.is_ascii_whitespace() && !matches!(c, '"' | '\'' | '=' | '<' | '>' | '`')
             }
 
-            let Some((start, _)) = self.chars.next_if(|(_, c)| is_unquoted_attr_value_char(*c))
-            else {
-                return Err(self.emit_error(SyntaxErrorKind::ExpectAttrValue));
+            let start = match self.chars.peek() {
+                Some((i, c)) if is_unquoted_attr_value_char(*c) => *i,
+                _ => return Err(self.emit_error(SyntaxErrorKind::ExpectAttrValue)),
             };
-            let mut end = start;
 
-            while let Some((i, _)) = self.chars.next_if(|(_, c)| is_unquoted_attr_value_char(*c)) {
-                end = i;
+            let mut end = start;
+            loop {
+                match self.chars.peek() {
+                    Some((i, '{'))
+                        if matches!(self.language, Language::Jinja | Language::Vento) =>
+                    {
+                        end = *i;
+                        let mut chars = self.chars.clone();
+                        chars.next();
+                        if chars.next_if(|(_, c)| *c == '{').is_some() {
+                            // We use inclusive range when returning string,
+                            // so we need to substract 1 here.
+                            end += self.parse_mustache_interpolation()?.len() + "{{}}".len() - 1;
+                        } else {
+                            self.chars.next();
+                        }
+                    }
+                    Some((i, c)) if is_unquoted_attr_value_char(*c) => {
+                        end = *i;
+                        self.chars.next();
+                    }
+                    _ => break,
+                };
             }
 
             unsafe { Ok(self.source.get_unchecked(start..=end)) }
