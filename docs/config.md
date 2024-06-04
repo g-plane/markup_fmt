@@ -235,7 +235,7 @@ Default option is `"fit"`.
 Control the maximum number of attributes in one line.
 If this option is unset, there won't be any limitations.
 
-This option conflicts with `perferAttrsSingleLine` option.
+This option conflicts with `preferAttrsSingleLine` option.
 
 Default option is `null`. This option can't be `0`.
 

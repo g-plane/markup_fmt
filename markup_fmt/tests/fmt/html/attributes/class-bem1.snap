@@ -7,12 +7,12 @@ source: markup_fmt/tests/fmt.rs
   Foo
 </div>
 
-<div class="a-bem-block a-bem-block--with-modifer">
+<div class="a-bem-block a-bem-block--with-modifier">
   <div
-    class="a-bem-block__element a-bem-block__element--with-modifer also-another-block"
+    class="a-bem-block__element a-bem-block__element--with-modifier also-another-block"
   >
     <div
-      class="a-bem-block__element a-bem-block__element--with-modifer also-another-block__element"
+      class="a-bem-block__element a-bem-block__element--with-modifier also-another-block__element"
     >
     </div>
   </div>
