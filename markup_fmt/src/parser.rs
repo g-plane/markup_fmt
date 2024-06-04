@@ -380,7 +380,7 @@ impl<'s> Parser<'s> {
                         self.chars.next();
                     }
                     _ => break,
-                };
+                }
             }
 
             unsafe { Ok(self.source.get_unchecked(start..=end)) }
