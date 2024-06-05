@@ -1,6 +1,6 @@
 [package]
 name = "markup_fmt"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2021"
 authors = ["Pig Fang <g-plane@hotmail.com>"]
 description = "Configurable HTML/Vue/Svelte/Astro/Jinja/Twig/Nunjucks/Vento formatter."
