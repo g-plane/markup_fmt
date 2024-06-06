@@ -726,6 +726,9 @@ impl<'s> Parser<'s> {
                 | "autoescape"
                 | "embed"
                 | "with"
+                | "set"
+                | "trans"
+                | "raw"
         ) {
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
