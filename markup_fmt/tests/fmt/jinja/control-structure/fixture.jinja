@@ -50,3 +50,29 @@ Sold-out!
 {%- endmacro %}
 
 <title>{% block title %}{% endblock %}</title>
+
+{% set reply | wordwrap %}
+    You wrote:
+    {{ message }}
+{% endset %}
+
+{% trans %}Hello, {{ user }}!{% endtrans %}
+{% trans user=user.username %}Hello, {{ user }}!{% endtrans %}
+
+{% trans book_title=book.title, author=author.name %}
+This is {{ book_title }} by {{ author }}
+{% endtrans %}
+
+{% trans count=list|length %}
+There is {{ count }} {{ name }} object.
+{% pluralize %}
+There are {{ count }} {{ name }} objects.
+{% endtrans %}
+
+{% raw %}
+<ul>
+{% for item in seq %}
+    <li>{{ item }}</li>
+{% endfor %}
+</ul>
+{% endraw %}
