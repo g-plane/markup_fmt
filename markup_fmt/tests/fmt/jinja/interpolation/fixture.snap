@@ -10,3 +10,7 @@ source: markup_fmt/tests/fmt.rs
 <span>{{
   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 }}</span>
+
+<div>
+  {{ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx }}
+</div>

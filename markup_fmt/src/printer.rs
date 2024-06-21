@@ -512,17 +512,19 @@ impl<'s> DocGen<'s> for Element<'s> {
                 ctx,
                 &state,
             ));
-            if self.children.iter().all(|child| {
-                matches!(
-                    child,
-                    Node::VueInterpolation(..)
-                        | Node::SvelteInterpolation(..)
-                        | Node::Comment(..)
-                        | Node::AstroExpr(..)
-                        | Node::JinjaInterpolation(..)
-                        | Node::VentoInterpolation(..)
-                )
-            }) {
+            if is_whitespace_sensitive
+                && self.children.iter().all(|child| {
+                    matches!(
+                        child,
+                        Node::VueInterpolation(..)
+                            | Node::SvelteInterpolation(..)
+                            | Node::Comment(..)
+                            | Node::AstroExpr(..)
+                            | Node::JinjaInterpolation(..)
+                            | Node::VentoInterpolation(..)
+                    )
+                })
+            {
                 // This lets it format like this:
                 // ```
                 // <span>{{
