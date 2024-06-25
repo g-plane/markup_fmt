@@ -1577,7 +1577,17 @@ where
             .fold(
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
-                    let maybe_hard_line = if is_prev_text_like {
+                    let is_current_text_like = match child {
+                        Node::Text(..)
+                        | Node::VueInterpolation(..)
+                        | Node::SvelteInterpolation(..)
+                        | Node::AstroExpr(..)
+                        | Node::JinjaInterpolation(..)
+                        | Node::VentoInterpolation(..) => true,
+                        Node::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
+                        _ => false,
+                    };
+                    let maybe_hard_line = if is_prev_text_like || is_current_text_like {
                         None
                     } else {
                         Some(Doc::hard_line())
@@ -1616,21 +1626,7 @@ where
                             docs.push(child.doc(ctx, state));
                         }
                     };
-                    (
-                        docs,
-                        match child {
-                            Node::Text(..)
-                            | Node::VueInterpolation(..)
-                            | Node::SvelteInterpolation(..)
-                            | Node::AstroExpr(..)
-                            | Node::JinjaInterpolation(..)
-                            | Node::VentoInterpolation(..) => true,
-                            Node::Element(element) => {
-                                element.tag_name.eq_ignore_ascii_case("label")
-                            }
-                            _ => false,
-                        },
-                    )
+                    (docs, is_current_text_like)
                 },
             )
             .0,

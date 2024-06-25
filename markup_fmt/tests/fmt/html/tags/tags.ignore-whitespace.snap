@@ -113,15 +113,12 @@ source: markup_fmt/tests/fmt.rs
     id="bar"
   >
     First
-  </li>
-  456<li class="baz">Second</li>
-  789
+  </li>456<li class="baz">Second</li>789
 </ul>
 <span>*<b>200</b></span>
 <img
   src="longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"
-/>
-123
+/>123
 <div>123<meta attr />456</div>
 <p>x<span a="b"></span></p>
 <p>x<meta a></p>
@@ -153,9 +150,7 @@ source: markup_fmt/tests/fmt.rs
 <br />
 <br />
 <p>
-  "<span [innerHTML]="title"></span>
-  " is the <i>property bound</i>
-  title.
+  "<span [innerHTML]="title"></span>" is the <i>property bound</i> title.
 </p>
 <li>
   12345678901234567890123456789012345678901234567890123456789012345678901234567890

@@ -314,14 +314,12 @@ source: markup_fmt/tests/fmt.rs
   >
     First
   </li
-  >
-  456<li
+  >456<li
     class="baz"
   >
     Second
   </li
-  >
-  789
+  >789
 </ul
 >
 <span
@@ -413,8 +411,7 @@ source: markup_fmt/tests/fmt.rs
   "<span
     [innerHTML]="title"
   ></span
-  >
-  "
+  >"
   is
   the
   <i

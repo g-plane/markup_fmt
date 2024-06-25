@@ -5,9 +5,11 @@ source: markup_fmt/tests/fmt.rs
   <Tag />
   Text
   <Tag />
+
   Text
 
   <Tag />
+
   Text
 
   <Tag />
