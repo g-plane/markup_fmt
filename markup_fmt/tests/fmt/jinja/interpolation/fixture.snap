@@ -2,9 +2,7 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div>
-  {{ x }}
-  {{ x }}
-  {{ x }}
+  {{ x }} {{ x }} {{ x }}
 </div>
 
 <span>{{
@@ -15,25 +13,16 @@ source: markup_fmt/tests/fmt.rs
   {{ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx }}
 </div>
 
-<div>
-  Hello {{ user.first_name }}
-  {{ user.last_name }}!
-</div>
+<div>Hello {{ user.first_name }} {{ user.last_name }}!</div>
 
-<span>Hello {{ user.first_name }}
-  {{ user.last_name }}!</span>
+<span>Hello {{ user.first_name }} {{ user.last_name }}!</span>
 
-<div>
-  Flat rate for {{ nb_months }} month{{ nb_months|pluralize }}
-</div>
+<div>Flat rate for {{ nb_months }} month{{ nb_months|pluralize }}</div>
+
+<div>{{ first_idx }}-{{ last_idx }} of {{ total_count }} lines</div>
 
 <div>
-  {{ first_idx }}-{{ last_idx }} of {{ total_count }} lines
-</div>
-
-<div>
-  Hello {{ user.first_name }}
-  {{ user.last_name }}!
+  Hello {{ user.first_name }} {{ user.last_name }}!
 </div>
 <span>
   Hello

@@ -1501,11 +1501,7 @@ fn should_add_whitespace_after_text_node<'s>(
 }
 
 fn has_two_more_non_text_children(children: &[Node]) -> bool {
-    children
-        .iter()
-        .filter(|child| !matches!(child, Node::Text(_)))
-        .count()
-        > 1
+    children.iter().filter(|child| !is_text_like(child)).count() > 1
 }
 
 fn format_attr_value<'a>(
