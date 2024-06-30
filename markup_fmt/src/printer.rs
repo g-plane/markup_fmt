@@ -360,37 +360,20 @@ impl<'s> DocGen<'s> for Element<'s> {
             Doc::nil()
         } else if is_whitespace_sensitive {
             format_ws_sensitive_leading_ws(&self.children)
-        } else if has_two_more_non_text_children
-            || self
-                .children
-                .first()
-                .map(|child| match child {
-                    Node::Text(text_node) => text_node.line_breaks > 0,
-                    _ => false,
-                })
-                .unwrap_or_default()
-        {
+        } else if has_two_more_non_text_children {
             Doc::hard_line()
         } else {
-            Doc::line_or_nil()
+            format_ws_insensitive_leading_ws(&self.children)
         };
+
         let trailing_ws = if is_empty {
             Doc::nil()
         } else if is_whitespace_sensitive {
             format_ws_sensitive_trailing_ws(&self.children)
-        } else if has_two_more_non_text_children
-            || self
-                .children
-                .last()
-                .map(|child| match child {
-                    Node::Text(text_node) => text_node.line_breaks > 0,
-                    _ => false,
-                })
-                .unwrap_or_default()
-        {
+        } else if has_two_more_non_text_children {
             Doc::hard_line()
         } else {
-            Doc::line_or_nil()
+            format_ws_insensitive_trailing_ws(&self.children)
         };
         if tag_name.eq_ignore_ascii_case("script") {
             if let [Node::Text(text_node)] = &self.children[..] {
@@ -1746,7 +1729,18 @@ fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
         Doc::nil()
     }
 }
-
+fn format_ws_insensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
+    match children.first() {
+        Some(Node::Text(text_node)) if text_node.line_breaks > 0 => Doc::hard_line(),
+        _ => Doc::line_or_nil(),
+    }
+}
+fn format_ws_insensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
+    match children.last() {
+        Some(Node::Text(text_node)) if text_node.line_breaks > 0 => Doc::hard_line(),
+        _ => Doc::line_or_nil(),
+    }
+}
 fn format_v_for<'s, E, F>(
     left: &str,
     delimiter: &'static str,
