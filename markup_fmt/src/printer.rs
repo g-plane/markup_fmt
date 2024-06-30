@@ -356,7 +356,9 @@ impl<'s> DocGen<'s> for Element<'s> {
         };
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
 
-        let leading_ws = if is_whitespace_sensitive {
+        let leading_ws = if is_empty {
+            Doc::nil()
+        } else if is_whitespace_sensitive {
             format_ws_sensitive_leading_ws(&self.children)
         } else if has_two_more_non_text_children
             || self
@@ -369,12 +371,12 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .unwrap_or_default()
         {
             Doc::hard_line()
-        } else if is_empty {
-            Doc::nil()
         } else {
             Doc::line_or_nil()
         };
-        let trailing_ws = if is_whitespace_sensitive {
+        let trailing_ws = if is_empty {
+            Doc::nil()
+        } else if is_whitespace_sensitive {
             format_ws_sensitive_trailing_ws(&self.children)
         } else if has_two_more_non_text_children
             || self
@@ -387,12 +389,9 @@ impl<'s> DocGen<'s> for Element<'s> {
                 .unwrap_or_default()
         {
             Doc::hard_line()
-        } else if is_empty {
-            Doc::nil()
         } else {
             Doc::line_or_nil()
         };
-
         if tag_name.eq_ignore_ascii_case("script") {
             if let [Node::Text(text_node)] = &self.children[..] {
                 if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
