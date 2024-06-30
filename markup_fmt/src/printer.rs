@@ -1556,16 +1556,7 @@ where
             .fold(
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
-                    let is_current_text_like = match child {
-                        Node::Text(..)
-                        | Node::VueInterpolation(..)
-                        | Node::SvelteInterpolation(..)
-                        | Node::AstroExpr(..)
-                        | Node::JinjaInterpolation(..)
-                        | Node::VentoInterpolation(..) => true,
-                        Node::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
-                        _ => false,
-                    };
+                    let is_current_text_like = is_text_like(child);
                     let maybe_hard_line = if is_prev_text_like || is_current_text_like {
                         None
                     } else {
@@ -1611,6 +1602,21 @@ where
             .0,
     )
     .group()
+}
+
+/// Determines if a given node is "text-like".
+/// Text-like nodes should remain on the same line whenever possible.
+fn is_text_like(node: &Node) -> bool {
+    match node {
+        Node::Text(..)
+        | Node::VueInterpolation(..)
+        | Node::SvelteInterpolation(..)
+        | Node::AstroExpr(..)
+        | Node::JinjaInterpolation(..)
+        | Node::VentoInterpolation(..) => true,
+        Node::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
+        _ => false,
+    }
 }
 
 fn format_children_without_inserting_linebreak<'s, E, F>(
