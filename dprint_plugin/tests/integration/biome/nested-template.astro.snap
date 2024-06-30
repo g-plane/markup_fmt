@@ -26,8 +26,7 @@ source: dprint_plugin/tests/integration.rs
     {
       fields.map((field) => (
         <p class="instructions">
-          {"To get started, o"}{"pen the directory"}
-          {"in your project."}
+          {"To get started, o"}{"pen the directory"} {"in your project."}
         </p>
       ))
     }
