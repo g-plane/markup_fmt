@@ -6,178 +6,339 @@
   "type": "object",
   "properties": {
     "printWidth": {
+      "description": "The line width limitation that markup_fmt should *(but not must)* avoid exceeding. markup_fmt will try its best to keep line width less than this value, but it may exceed for some cases, for example, a very very long single word.",
       "type": "integer",
       "default": 80,
       "minimum": 0
     },
     "useTabs": {
+      "description": "Specify use space or tab for indentation.",
       "type": "boolean",
       "default": false
     },
     "indentWidth": {
+      "description": "Size of indentation. When enabled `useTabs`, this option may be disregarded, since only one tab will be inserted when indented once.",
       "type": "integer",
       "default": 2,
       "minimum": 0
     },
     "lineBreak": {
+      "description": "Specify whether use `\\n` (LF) or `\\r\\n` (CRLF) for line break.",
       "type": "string",
       "enum": ["lf", "crlf"],
       "default": "lf"
     },
     "quotes": {
+      "description": "Control the quotes of attribute value.",
       "type": "string",
-      "enum": ["double", "single"],
+      "oneOf": [
+        {
+          "const": "double",
+          "description": "Use double quotes as possible. However if there're double quotes in strings, quotes will be kept as-is."
+        },
+        {
+          "const": "single",
+          "description": "Use single quotes as possible. However if there're single quotes in strings, quotes will be kept as-is."
+        }
+      ],
       "default": "double"
     },
     "formatComments": {
+      "description": "Control whether whitespace should be inserted at the beginning and end of comments and comments should be indented properly or not.",
       "type": "boolean",
       "default": false
     },
     "scriptIndent": {
+      "description": "Control whether the code block in the `<script>` tag should be indented or not.",
       "type": "boolean",
       "default": false
     },
     "html.scriptIndent": {
+      "description": "Control whether the code block in the `<script>` tag should be indented or not for HTML.",
       "type": ["boolean", "null"],
       "default": null
     },
     "vue.scriptIndent": {
+      "description": "Control whether the code block in the `<script>` tag should be indented or not for Vue.",
       "type": ["boolean", "null"],
       "default": null
     },
     "svelte.scriptIndent": {
+      "description": "Control whether the code block in the `<script>` tag should be indented or not for Svelte.",
       "type": ["boolean", "null"],
       "default": null
     },
     "astro.scriptIndent": {
+      "description": "Control whether the code block in the `<script>` tag should be indented or not for Astro.",
       "type": ["boolean", "null"],
       "default": null
     },
     "styleIndent": {
+      "description": "Control whether the code block in the `<style>` tag should be indented or not.",
       "type": "boolean",
       "default": false
     },
     "html.styleIndent": {
+      "description": "Control whether the code block in the `<style>` tag should be indented or not for HTML.",
       "type": ["boolean", "null"],
       "default": null
     },
     "vue.styleIndent": {
+      "description": "Control whether the code block in the `<style>` tag should be indented or not for Vue.",
       "type": ["boolean", "null"],
       "default": null
     },
     "svelte.styleIndent": {
+      "description": "Control whether the code block in the `<style>` tag should be indented or not for Svelte.",
       "type": ["boolean", "null"],
       "default": null
     },
     "astro.styleIndent": {
+      "description": "Control whether the code block in the `<style>` tag should be indented or not for Astro.",
       "type": ["boolean", "null"],
       "default": null
     },
     "closingBracketSameLine": {
+      "description": "Control the closing bracket (`>`) of a multi-line element should come at the end of the last line or on the next line (with a line break).",
       "type": "boolean",
       "default": false
     },
     "closingTagLineBreakForEmpty": {
+      "description": "When there're no children in an element, this option controls whether to insert a line break before the closing tag or not.",
       "type": "string",
-      "enum": ["always", "fit", "never"],
+      "oneOf": [
+        {
+          "const": "always",
+          "description": "Always insert a line break before the closing tag."
+        },
+        {
+          "const": "fit",
+          "description": "Only insert a line break if it doesn't fit the `printWidth` option."
+        },
+        {
+          "const": "never",
+          "description": "Don't insert a line break."
+        }
+      ],
       "default": "fit"
     },
     "maxAttrsPerLine": {
+      "description": "Control the maximum number of attributes in one line. If this option is unset, there won't be any limitations. This option conflicts with `preferAttrsSingleLine` option.",
       "type": ["integer", "null"],
       "default": null,
       "minimum": 1
     },
     "preferAttrsSingleLine": {
+      "description": "Control whether attributes should be put on single line when possible. This option conflicts with `maxAttrsPerLine` option.",
       "type": "boolean",
       "default": false
     },
     "html.normal.selfClosing": {
+      "description": "Control whether HTML normal element should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },
     "html.void.selfClosing": {
+      "description": "Control whether HTML void element should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },
     "component.selfClosing": {
+      "description": "Control whether Vue/Svelte/Astro component should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },
     "svg.selfClosing": {
+      "description": "Control whether SVG element should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },
     "mathml.selfClosing": {
+      "description": "Control whether MathML element should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },
     "whitespaceSensitivity": {
+      "description": "Control the whitespace sensitivity before and after the children of an element.",
       "type": "string",
-      "enum": ["css", "strict", "ignore"],
+      "oneOf": [
+        {
+          "const": "css",
+          "description": "Respect the default value of CSS `display` property."
+        },
+        {
+          "const": "strict",
+          "description": "Whitespace (or the lack of it) around all tags is considered significant."
+        },
+        {
+          "const": "ignore",
+          "description": "Whitespace (or the lack of it) around all tags is considered insignificant."
+        }
+      ],
       "default": "css"
     },
     "component.whitespaceSensitivity": {
+      "description": "Control the whitespace sensitivity before and after the children of an element for components.",
       "type": ["string", "null"],
-      "enum": ["css", "strict", "ignore", null],
+      "oneOf": [
+        {
+          "const": "css",
+          "description": "Respect the default value of CSS `display` property."
+        },
+        {
+          "const": "strict",
+          "description": "Whitespace (or the lack of it) around all tags is considered significant."
+        },
+        {
+          "const": "ignore",
+          "description": "Whitespace (or the lack of it) around all tags is considered insignificant."
+        },
+        {
+          "const": null,
+          "description": "Use the value of `whitespaceSensitivity` option."
+        }
+      ],
       "default": null
     },
     "doctypeKeywordCase": {
+      "description": "Control the case of \"doctype\" keyword in `<!DOCTYPE>`.",
       "type": "string",
-      "enum": ["ignore", "upper", "lower"],
+      "oneOf": [
+        {
+          "const": "ignore",
+          "description": "Keep the case as-is."
+        },
+        {
+          "const": "upper",
+          "description": "Print \"DOCTYPE\" in upper case."
+        },
+        {
+          "const": "lower",
+          "description": "Print \"doctype\" in lower case."
+        }
+      ],
       "default": "upper"
     },
     "vBindStyle": {
+      "description": "Control Vue `v-bind` directive style.",
       "type": ["string", "null"],
-      "enum": ["short", "long", null],
+      "oneOf": [
+        {
+          "const": "short",
+          "description": "Use short-hand form like `:value`."
+        },
+        {
+          "const": "long",
+          "description": "Use long-hand form like `v-bind:value`."
+        },
+        {
+          "const": null,
+          "description": "Style of `v-bind` directive won't be changed."
+        }
+      ],
       "default": null
     },
     "vOnStyle": {
+      "description": "Control Vue `v-on` directive style.",
       "type": ["string", "null"],
-      "enum": ["short", "long", null],
+      "oneOf": [
+        {
+          "const": "short",
+          "description": "Use short-hand form like `@click`."
+        },
+        {
+          "const": "long",
+          "description": "Use long-hand form like `v-on:click`."
+        },
+        {
+          "const": null,
+          "description": "Style of `v-on` directive won't be changed."
+        }
+      ],
       "default": null
     },
     "vForDelimiterStyle": {
+      "description": "Control Vue `v-for` directive delimiter style.",
       "type": ["string", "null"],
-      "enum": ["in", "of", null],
+      "oneOf": [
+        {
+          "const": "in",
+          "description": "Use `in` as `v-for` delimiter."
+        },
+        {
+          "const": "of",
+          "description": "Use `of` as `v-for` delimiter."
+        },
+        {
+          "const": null,
+          "description": "Style of `v-for` directive delimiter won't be changed."
+        }
+      ],
       "default": null
     },
     "vSlotStyle": {
+      "description": "Control Vue `v-slot` directive style.",
       "type": ["string", "null"],
-      "enum": ["short", "long", "vSlot", null],
+      "oneOf": [
+        {
+          "const": "short",
+          "description": "Use short-hand form like `#default` or `#named`."
+        },
+        {
+          "const": "long",
+          "description": "Use long-hand form like `v-slot:default` or `v-slot:named`."
+        },
+        {
+          "const": "vSlot",
+          "description": "For default slot, use `v-slot` (shorter than `#default`); otherwise, use short-hand form."
+        },
+        {
+          "const": null,
+          "description": "Style of `v-slot` directive won't be changed."
+        }
+      ],
       "default": null
     },
     "component.vSlotStyle": {
+      "description": "Control Vue `v-slot` directive style for Vue components.",
       "type": ["string", "null"],
       "enum": ["short", "long", "vSlot", null],
       "default": null
     },
     "default.vSlotStyle": {
+      "description": "Control Vue `v-slot` directive style for default slot.",
       "type": ["string", "null"],
       "enum": ["short", "long", "vSlot", null],
       "default": null
     },
     "named.vSlotStyle": {
+      "description": "Control Vue `v-slot` directive style for named slot.",
       "type": ["string", "null"],
       "enum": ["short", "long", "vSlot", null],
       "default": null
     },
     "vBindSameNameShortHand": {
+      "description": "Control whether Vue attribute should be written in short-hand form or not if attribute name and value are same.",
       "type": ["boolean", "null"],
       "default": null
     },
     "strictSvelteAttr": {
+      "description": "Control whether Svelte attribute value should be in strict mode or not.",
       "type": "boolean",
       "default": false
     },
     "svelteAttrShorthand": {
+      "description": "Control whether Svelte attribute should be written in short-hand form or not when possible.",
       "type": ["boolean", "null"],
       "default": null
     },
     "svelteDirectiveShorthand": {
+      "description": "Control whether Svelte directive should be written in short-hand form or not when possible.",
       "type": ["boolean", "null"],
       "default": null
     },
     "astroAttrShorthand": {
+      "description": "Control whether Astro attribute should be written in short-hand form or not when possible.",
       "type": ["boolean", "null"],
       "default": null
     }
