@@ -32,12 +32,6 @@ pub struct Doctype<'s> {
     pub value: &'s str,
 }
 
-pub struct VueDirective<'s> {
-    pub name: &'s str,
-    pub arg_and_modifiers: Option<&'s str>,
-    pub value: Option<&'s str>,
-}
-
 pub struct Element<'s> {
     pub tag_name: &'s str,
     pub attrs: Vec<Attribute<'s>>,
@@ -189,6 +183,12 @@ pub struct VentoTag<'s> {
 pub enum VentoTagOrChildren<'s> {
     Tag(VentoTag<'s>),
     Children(Vec<Node<'s>>),
+}
+
+pub struct VueDirective<'s> {
+    pub name: &'s str,
+    pub arg_and_modifiers: Option<&'s str>,
+    pub value: Option<&'s str>,
 }
 
 pub struct VueInterpolation<'s> {
