@@ -13,7 +13,6 @@ pub struct SyntaxError {
 pub enum SyntaxErrorKind {
     ExpectAstroAttr,
     ExpectAstroExpr,
-    ExpectAstroFrontMatter,
     ExpectAttrName,
     ExpectAttrValue,
     ExpectChar(char),
@@ -21,6 +20,7 @@ pub enum SyntaxErrorKind {
     ExpectComment,
     ExpectDoctype,
     ExpectElement,
+    ExpectFrontMatter,
     ExpectIdentifier,
     ExpectJinjaBlockEnd,
     ExpectJinjaTag,
@@ -50,7 +50,6 @@ impl fmt::Display for SyntaxError {
         let reason: Cow<_> = match self.kind {
             SyntaxErrorKind::ExpectAstroAttr => "expect Astro attribute".into(),
             SyntaxErrorKind::ExpectAstroExpr => "expect Astro expression".into(),
-            SyntaxErrorKind::ExpectAstroFrontMatter => "expect Astro front matter".into(),
             SyntaxErrorKind::ExpectAttrName => "expect attribute name".into(),
             SyntaxErrorKind::ExpectAttrValue => "expect attribute value".into(),
             SyntaxErrorKind::ExpectChar(c) => format!("expect char '{c}'").into(),
@@ -58,6 +57,7 @@ impl fmt::Display for SyntaxError {
             SyntaxErrorKind::ExpectComment => "expect comment".into(),
             SyntaxErrorKind::ExpectDoctype => "expect HTML doctype".into(),
             SyntaxErrorKind::ExpectElement => "expect element".into(),
+            SyntaxErrorKind::ExpectFrontMatter => "expect front matter".into(),
             SyntaxErrorKind::ExpectIdentifier => "expect identifier".into(),
             SyntaxErrorKind::ExpectJinjaBlockEnd => "expect Jinja block end".into(),
             SyntaxErrorKind::ExpectJinjaTag => "expect Jinja tag".into(),

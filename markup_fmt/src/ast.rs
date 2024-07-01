@@ -12,10 +12,6 @@ pub enum AstroExprChild<'s> {
     Template(Vec<Node<'s>>),
 }
 
-pub struct AstroFrontMatter<'s> {
-    pub raw: &'s str,
-}
-
 pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
     Native(NativeAttribute<'s>),
@@ -39,6 +35,10 @@ pub struct Element<'s> {
     pub children: Vec<Node<'s>>,
     pub self_closing: bool,
     pub void_element: bool,
+}
+
+pub struct FrontMatter<'s> {
+    pub raw: &'s str,
 }
 
 pub struct JinjaBlock<'s> {
@@ -69,10 +69,10 @@ pub struct NativeAttribute<'s> {
 
 pub enum Node<'s> {
     AstroExpr(AstroExpr<'s>),
-    AstroFrontMatter(AstroFrontMatter<'s>),
     Comment(Comment<'s>),
     Doctype(Doctype<'s>),
     Element(Element<'s>),
+    FrontMatter(FrontMatter<'s>),
     JinjaBlock(JinjaBlock<'s>),
     JinjaComment(JinjaComment<'s>),
     JinjaInterpolation(JinjaInterpolation<'s>),

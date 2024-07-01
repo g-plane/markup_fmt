@@ -34,7 +34,7 @@ pub struct Parser<'s> {
 
 #[derive(Default)]
 struct ParserState {
-    has_astro_front_matter: bool,
+    has_front_matter: bool,
 }
 
 impl<'s> Parser<'s> {
@@ -201,84 +201,6 @@ impl<'s> Parser<'s> {
         }
 
         Ok(AstroExpr { children })
-    }
-
-    fn parse_astro_front_matter(&mut self) -> PResult<AstroFrontMatter<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '-')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
-        else {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectAstroFrontMatter));
-        };
-        let start = start + 1;
-
-        let mut pair_stack = vec![];
-        let mut end = start;
-        loop {
-            match self.chars.next() {
-                Some((i, '-')) if pair_stack.is_empty() => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == '-')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '-'))
-                        .is_some()
-                    {
-                        end = i;
-                        self.chars = chars;
-                        break;
-                    }
-                }
-                Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
-                    if pair_stack.last().map(|last| *last == c).unwrap_or_default() {
-                        pair_stack.pop();
-                    } else if matches!(pair_stack.last(), Some('$' | '{') | None) {
-                        pair_stack.push(c);
-                    }
-                }
-                Some((_, '$')) if matches!(pair_stack.last(), Some('`')) => {
-                    if self.chars.next_if(|(_, c)| *c == '{').is_some() {
-                        pair_stack.push('$');
-                    }
-                }
-                Some((_, '{')) if matches!(pair_stack.last(), Some('$' | '{') | None) => {
-                    pair_stack.push('{');
-                }
-                Some((_, '}')) if matches!(pair_stack.last(), Some('$' | '{')) => {
-                    pair_stack.pop();
-                }
-                Some((_, '/')) if matches!(pair_stack.last(), Some('$' | '}') | None) => {
-                    if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
-                        pair_stack.push(c);
-                    }
-                }
-                Some((_, '\n')) => {
-                    if let Some('/') = pair_stack.last() {
-                        pair_stack.pop();
-                    }
-                }
-                Some((_, '*')) => {
-                    if self
-                        .chars
-                        .next_if(|(_, c)| *c == '/' && matches!(pair_stack.last(), Some('*')))
-                        .is_some()
-                    {
-                        pair_stack.pop();
-                    }
-                }
-                Some((_, '\\')) if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
-                    self.chars.next();
-                }
-                Some(..) => continue,
-                None => break,
-            }
-        }
-
-        self.state.has_astro_front_matter = true;
-        Ok(AstroFrontMatter {
-            raw: unsafe { self.source.get_unchecked(start..end) },
-        })
     }
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
@@ -578,6 +500,84 @@ impl<'s> Parser<'s> {
             children,
             self_closing: false,
             void_element,
+        })
+    }
+
+    fn parse_front_matter(&mut self) -> PResult<FrontMatter<'s>> {
+        let Some((start, _)) = self
+            .chars
+            .next_if(|(_, c)| *c == '-')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectFrontMatter));
+        };
+        let start = start + 1;
+
+        let mut pair_stack = vec![];
+        let mut end = start;
+        loop {
+            match self.chars.next() {
+                Some((i, '-')) if pair_stack.is_empty() => {
+                    let mut chars = self.chars.clone();
+                    if chars
+                        .next_if(|(_, c)| *c == '-')
+                        .and_then(|_| chars.next_if(|(_, c)| *c == '-'))
+                        .is_some()
+                    {
+                        end = i;
+                        self.chars = chars;
+                        break;
+                    }
+                }
+                Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
+                    if pair_stack.last().map(|last| *last == c).unwrap_or_default() {
+                        pair_stack.pop();
+                    } else if matches!(pair_stack.last(), Some('$' | '{') | None) {
+                        pair_stack.push(c);
+                    }
+                }
+                Some((_, '$')) if matches!(pair_stack.last(), Some('`')) => {
+                    if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+                        pair_stack.push('$');
+                    }
+                }
+                Some((_, '{')) if matches!(pair_stack.last(), Some('$' | '{') | None) => {
+                    pair_stack.push('{');
+                }
+                Some((_, '}')) if matches!(pair_stack.last(), Some('$' | '{')) => {
+                    pair_stack.pop();
+                }
+                Some((_, '/')) if matches!(pair_stack.last(), Some('$' | '}') | None) => {
+                    if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
+                        pair_stack.push(c);
+                    }
+                }
+                Some((_, '\n')) => {
+                    if let Some('/') = pair_stack.last() {
+                        pair_stack.pop();
+                    }
+                }
+                Some((_, '*')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == '/' && matches!(pair_stack.last(), Some('*')))
+                        .is_some()
+                    {
+                        pair_stack.pop();
+                    }
+                }
+                Some((_, '\\')) if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                    self.chars.next();
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        self.state.has_front_matter = true;
+        Ok(FrontMatter {
+            raw: unsafe { self.source.get_unchecked(start..end) },
         })
     }
 
@@ -897,13 +897,13 @@ impl<'s> Parser<'s> {
                 }
             }
             Some((_, '-'))
-                if matches!(self.language, Language::Astro)
-                    && !self.state.has_astro_front_matter =>
+                if matches!(self.language, Language::Astro | Language::Jinja)
+                    && !self.state.has_front_matter =>
             {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
-                    self.parse_astro_front_matter().map(Node::AstroFrontMatter)
+                    self.parse_front_matter().map(Node::FrontMatter)
                 } else {
                     self.parse_text_node().map(Node::Text)
                 }
@@ -1604,8 +1604,7 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some((i, '-'))
-                    if matches!(self.language, Language::Astro)
-                        && !self.state.has_astro_front_matter =>
+                    if matches!(self.language, Language::Astro) && !self.state.has_front_matter =>
                 {
                     let i = *i;
                     let mut chars = self.chars.clone();

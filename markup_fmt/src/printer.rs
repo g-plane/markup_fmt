@@ -106,20 +106,6 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
     }
 }
 
-impl<'s> DocGen<'s> for AstroFrontMatter<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
-    where
-        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
-    {
-        let formatted = ctx.format_script(self.raw, "tsx");
-        Doc::text("---")
-            .append(Doc::hard_line())
-            .concat(reflow_with_indent(formatted.trim()))
-            .append(Doc::hard_line())
-            .append(Doc::text("---"))
-    }
-}
-
 impl<'s> DocGen<'s> for Attribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -533,6 +519,26 @@ impl<'s> DocGen<'s> for Element<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for FrontMatter<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        if matches!(ctx.language, Language::Astro) {
+            let formatted = ctx.format_script(self.raw, "tsx");
+            Doc::text("---")
+                .append(Doc::hard_line())
+                .concat(reflow_with_indent(formatted.trim()))
+                .append(Doc::hard_line())
+                .append(Doc::text("---"))
+        } else {
+            Doc::text("---")
+                .concat(reflow_raw(self.raw))
+                .append(Doc::text("---"))
+        }
+    }
+}
+
 impl<'s> DocGen<'s> for JinjaBlock<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -696,10 +702,10 @@ impl<'s> DocGen<'s> for Node<'s> {
     {
         match self {
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
-            Node::AstroFrontMatter(astro_front_matter) => astro_front_matter.doc(ctx, state),
             Node::Comment(comment) => comment.doc(ctx, state),
             Node::Doctype(doctype) => doctype.doc(ctx, state),
             Node::Element(element) => element.doc(ctx, state),
+            Node::FrontMatter(front_matter) => front_matter.doc(ctx, state),
             Node::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
             Node::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
             Node::JinjaInterpolation(jinja_interpolation) => jinja_interpolation.doc(ctx, state),
