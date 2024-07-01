@@ -356,41 +356,20 @@ impl<'s> DocGen<'s> for Element<'s> {
         };
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
 
-        let leading_ws = if is_whitespace_sensitive {
-            format_ws_sensitive_leading_ws(&self.children)
-        } else if has_two_more_non_text_children
-            || self
-                .children
-                .first()
-                .map(|child| match child {
-                    Node::Text(text_node) => text_node.line_breaks > 0,
-                    _ => false,
-                })
-                .unwrap_or_default()
-        {
-            Doc::hard_line()
-        } else if is_empty {
-            Doc::nil()
+        let (leading_ws, trailing_ws) = if is_empty {
+            (Doc::nil(), Doc::nil())
+        } else if is_whitespace_sensitive {
+            (
+                format_ws_sensitive_leading_ws(&self.children),
+                format_ws_sensitive_trailing_ws(&self.children),
+            )
+        } else if has_two_more_non_text_children {
+            (Doc::hard_line(), Doc::hard_line())
         } else {
-            Doc::line_or_nil()
-        };
-        let trailing_ws = if is_whitespace_sensitive {
-            format_ws_sensitive_trailing_ws(&self.children)
-        } else if has_two_more_non_text_children
-            || self
-                .children
-                .last()
-                .map(|child| match child {
-                    Node::Text(text_node) => text_node.line_breaks > 0,
-                    _ => false,
-                })
-                .unwrap_or_default()
-        {
-            Doc::hard_line()
-        } else if is_empty {
-            Doc::nil()
-        } else {
-            Doc::line_or_nil()
+            (
+                format_ws_insensitive_leading_ws(&self.children),
+                format_ws_insensitive_trailing_ws(&self.children),
+            )
         };
 
         if tag_name.eq_ignore_ascii_case("script") {
@@ -1522,11 +1501,7 @@ fn should_add_whitespace_after_text_node<'s>(
 }
 
 fn has_two_more_non_text_children(children: &[Node]) -> bool {
-    children
-        .iter()
-        .filter(|child| !matches!(child, Node::Text(_)))
-        .count()
-        > 1
+    children.iter().filter(|child| !is_text_like(child)).count() > 1
 }
 
 fn format_attr_value<'a>(
@@ -1577,16 +1552,7 @@ where
             .fold(
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
-                    let is_current_text_like = match child {
-                        Node::Text(..)
-                        | Node::VueInterpolation(..)
-                        | Node::SvelteInterpolation(..)
-                        | Node::AstroExpr(..)
-                        | Node::JinjaInterpolation(..)
-                        | Node::VentoInterpolation(..) => true,
-                        Node::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
-                        _ => false,
-                    };
+                    let is_current_text_like = is_text_like(child);
                     let maybe_hard_line = if is_prev_text_like || is_current_text_like {
                         None
                     } else {
@@ -1632,6 +1598,21 @@ where
             .0,
     )
     .group()
+}
+
+/// Determines if a given node is "text-like".
+/// Text-like nodes should remain on the same line whenever possible.
+fn is_text_like(node: &Node) -> bool {
+    match node {
+        Node::Text(..)
+        | Node::VueInterpolation(..)
+        | Node::SvelteInterpolation(..)
+        | Node::AstroExpr(..)
+        | Node::JinjaInterpolation(..)
+        | Node::VentoInterpolation(..) => true,
+        Node::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
+        _ => false,
+    }
 }
 
 fn format_children_without_inserting_linebreak<'s, E, F>(
@@ -1747,7 +1728,18 @@ fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
         Doc::nil()
     }
 }
-
+fn format_ws_insensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
+    match children.first() {
+        Some(Node::Text(text_node)) if text_node.line_breaks > 0 => Doc::hard_line(),
+        _ => Doc::line_or_nil(),
+    }
+}
+fn format_ws_insensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
+    match children.last() {
+        Some(Node::Text(text_node)) if text_node.line_breaks > 0 => Doc::hard_line(),
+        _ => Doc::line_or_nil(),
+    }
+}
 fn format_v_for<'s, E, F>(
     left: &str,
     delimiter: &'static str,
