@@ -548,7 +548,7 @@ impl<'s> Parser<'s> {
                 Some((_, '}')) if matches!(pair_stack.last(), Some('$' | '{')) => {
                     pair_stack.pop();
                 }
-                Some((_, '/')) if matches!(pair_stack.last(), Some('$' | '}') | None) => {
+                Some((_, '/')) => {
                     if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
                         pair_stack.push(c);
                     }

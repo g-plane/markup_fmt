@@ -1,0 +1,12 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+---
+({
+    // '
+});
+let a = '"'
+let b = ""
+---
+
+<p>Blah</p>
