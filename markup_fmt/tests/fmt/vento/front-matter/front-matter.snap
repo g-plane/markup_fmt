@@ -1,0 +1,9 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+---
+foo: "bar"
+baz: true
+---
+
+<h1>Hello world</h1>
