@@ -667,6 +667,11 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         Cow::from(value)
                     }
                 }
+                Language::Angular
+                    if self.name.starts_with(['[', '(']) && self.name.ends_with([']', ')']) =>
+                {
+                    Cow::from(ctx.format_general_expr(value))
+                }
                 _ => Cow::from(value),
             };
             name.append(Doc::text("=")).append(format_attr_value(
