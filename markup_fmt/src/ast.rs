@@ -1,3 +1,7 @@
+pub struct AngularInterpolation<'s> {
+    pub expr: &'s str,
+}
+
 pub struct AstroAttribute<'s> {
     pub name: Option<&'s str>,
     pub expr: &'s str,
@@ -68,6 +72,7 @@ pub struct NativeAttribute<'s> {
 }
 
 pub enum Node<'s> {
+    AngularInterpolation(AngularInterpolation<'s>),
     AstroExpr(AstroExpr<'s>),
     Comment(Comment<'s>),
     Doctype(Doctype<'s>),

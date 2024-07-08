@@ -862,6 +862,9 @@ impl<'s> Parser<'s> {
                                 Language::Jinja => {
                                     Node::JinjaInterpolation(JinjaInterpolation { expr })
                                 }
+                                Language::Angular => {
+                                    Node::AngularInterpolation(AngularInterpolation { expr })
+                                }
                                 _ => unreachable!(),
                             })
                     }

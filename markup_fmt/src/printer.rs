@@ -16,6 +16,21 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
+impl<'s> DocGen<'s> for AngularInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{")
+            .append(Doc::line_or_space())
+            .concat(reflow_with_indent(&ctx.format_general_expr(self.expr)))
+            .nest_with_ctx(ctx)
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
 impl<'s> DocGen<'s> for AstroAttribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
@@ -706,6 +721,9 @@ impl<'s> DocGen<'s> for Node<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
+            Node::AngularInterpolation(angular_interpolation) => {
+                angular_interpolation.doc(ctx, state)
+            }
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
             Node::Comment(comment) => comment.doc(ctx, state),
             Node::Doctype(doctype) => doctype.doc(ctx, state),
