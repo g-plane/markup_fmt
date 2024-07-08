@@ -21,6 +21,7 @@ pub enum Language {
     Vue,
     Svelte,
     Astro,
+    Angular,
     Jinja,
     Vento,
 }
@@ -205,7 +206,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento => {
+            Language::Html | Language::Jinja | Language::Vento | Language::Angular => {
                 self.parse_native_attr().map(Attribute::Native)
             }
             Language::Vue => self
@@ -849,7 +850,12 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, '{')) if matches!(self.language, Language::Vue | Language::Jinja) => {
+                    Some((_, '{'))
+                        if matches!(
+                            self.language,
+                            Language::Vue | Language::Jinja | Language::Angular
+                        ) =>
+                    {
                         self.parse_mustache_interpolation()
                             .map(|expr| match self.language {
                                 Language::Vue => Node::VueInterpolation(VueInterpolation { expr }),
@@ -1534,7 +1540,14 @@ impl<'s> Parser<'s> {
 
     fn parse_text_node(&mut self) -> PResult<TextNode<'s>> {
         let Some((start, first_char)) = self.chars.next_if(|(_, c)| {
-            if let Language::Vue | Language::Svelte = self.language {
+            if matches!(
+                self.language,
+                Language::Vue
+                    | Language::Svelte
+                    | Language::Jinja
+                    | Language::Vento
+                    | Language::Angular
+            ) {
                 *c != '{'
             } else {
                 true
@@ -1543,8 +1556,10 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         };
 
-        if matches!(self.language, Language::Vue)
-            && first_char == '{'
+        if matches!(
+            self.language,
+            Language::Vue | Language::Jinja | Language::Vento | Language::Angular
+        ) && first_char == '{'
             && matches!(self.chars.peek(), Some((_, '{')))
         {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
@@ -1558,7 +1573,7 @@ impl<'s> Parser<'s> {
                     Language::Html => {
                         self.chars.next();
                     }
-                    Language::Vue | Language::Vento => {
+                    Language::Vue | Language::Vento | Language::Angular => {
                         let i = *i;
                         let mut chars = self.chars.clone();
                         chars.next();

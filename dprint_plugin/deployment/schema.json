@@ -144,7 +144,7 @@
       "default": null
     },
     "component.selfClosing": {
-      "description": "Control whether Vue/Svelte/Astro component should be self-closed or not if it doesn't have children.",
+      "description": "Control whether Vue/Svelte/Astro/Angular component should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],
       "default": null
     },
