@@ -98,6 +98,150 @@ impl<'s> Parser<'s> {
         {}
     }
 
+    fn parse_angular_control_flow_children(&mut self) -> PResult<Vec<Node<'s>>> {
+        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('{')));
+        }
+
+        let mut children = vec![];
+        while let Some((_, c)) = self.chars.peek() {
+            if *c == '}' {
+                self.chars.next();
+                break;
+            } else {
+                children.push(self.parse_node()?);
+            }
+        }
+        Ok(children)
+    }
+
+    fn parse_angular_if(&mut self) -> PResult<AngularIf<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularIf));
+        }
+        self.skip_ws();
+
+        let (expr, reference) = self.parse_angular_if_cond()?;
+        self.skip_ws();
+        let children = self.parse_angular_control_flow_children()?;
+
+        let mut else_if_blocks = vec![];
+        let mut else_children = None;
+        'alter: loop {
+            let mut chars = self.chars.clone();
+            'peek: loop {
+                match chars.next() {
+                    Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
+                    Some((_, '@')) => {
+                        self.chars = chars;
+                        break 'peek;
+                    }
+                    _ => break 'alter,
+                }
+            }
+            if self
+                .chars
+                .next_if(|(_, c)| *c == 'e')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+                .is_none()
+            {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("else")));
+            }
+            self.skip_ws();
+
+            if self
+                .chars
+                .next_if(|(_, c)| *c == 'i')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+                .is_some()
+            {
+                self.skip_ws();
+                let (expr, reference) = self.parse_angular_if_cond()?;
+                self.skip_ws();
+                let children = self.parse_angular_control_flow_children()?;
+                else_if_blocks.push(AngularElseIf {
+                    expr,
+                    reference,
+                    children,
+                });
+            } else {
+                else_children = Some(self.parse_angular_control_flow_children()?);
+                break;
+            }
+        }
+
+        Ok(AngularIf {
+            expr,
+            reference,
+            children,
+            else_if_blocks,
+            else_children,
+        })
+    }
+
+    fn parse_angular_if_cond(&mut self) -> PResult<(&'s str, Option<&'s str>)> {
+        let mut expr = "";
+        let mut reference = None;
+
+        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+        };
+        let start = start + 1;
+
+        let mut ref_start = None;
+        let mut chars_stack = vec![];
+        loop {
+            match self.chars.next() {
+                Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
+                    if chars_stack.last().is_some_and(|last| *last == c) {
+                        chars_stack.pop();
+                    } else {
+                        chars_stack.push(c);
+                    }
+                }
+                Some((_, '(')) => chars_stack.push('('),
+                Some((i, ')')) => {
+                    if chars_stack.is_empty() {
+                        if let Some(ref_start) = ref_start {
+                            reference = Some(unsafe { self.source.get_unchecked(ref_start..i) });
+                        } else {
+                            expr = unsafe { self.source.get_unchecked(start..i) };
+                        }
+                        break;
+                    } else if chars_stack.last().is_some_and(|last| *last == '(') {
+                        chars_stack.pop();
+                    }
+                }
+                Some((i, ';')) if chars_stack.is_empty() => {
+                    expr = unsafe { self.source.get_unchecked(start..i) };
+                    self.skip_ws();
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == 'a')
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+                        .is_none()
+                    {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("as")));
+                    }
+                    self.skip_ws();
+                    ref_start = self.chars.peek().map(|(i, _)| *i);
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        Ok((expr, reference))
+    }
+
     fn parse_astro_attr(&mut self) -> PResult<AstroAttribute<'s>> {
         let name = if self.chars.next_if(|(_, c)| *c == '{').is_some() {
             None
@@ -919,6 +1063,9 @@ impl<'s> Parser<'s> {
                     self.parse_text_node().map(Node::Text)
                 }
             }
+            Some((_, '@')) if matches!(self.language, Language::Angular) => {
+                self.parse_angular_if().map(Node::AngularIf)
+            }
             Some(..) => self.parse_text_node().map(Node::Text),
             None => Err(self.emit_error(SyntaxErrorKind::ExpectElement)),
         }
@@ -1634,6 +1781,10 @@ impl<'s> Parser<'s> {
                         break;
                     }
                     self.chars.next();
+                }
+                Some((i, '}' | '@')) if matches!(self.language, Language::Angular) => {
+                    end = *i;
+                    break;
                 }
                 Some((_, c)) => {
                     if *c == '\n' {

@@ -16,6 +16,67 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
+impl<'s> DocGen<'s> for AngularElseIf<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@else if ("));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        if let Some(reference) = self.reference {
+            docs.push(Doc::text("; as "));
+            docs.push(Doc::text(ctx.format_binding(reference)));
+        }
+        docs.push(Doc::text(") {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for AngularIf<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@if ("));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        if let Some(reference) = self.reference {
+            docs.push(Doc::text("; as "));
+            docs.push(Doc::text(ctx.format_binding(reference)));
+        }
+        docs.push(Doc::text(") {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+
+        docs.extend(
+            self.else_if_blocks
+                .iter()
+                .flat_map(|block| [Doc::space(), block.doc(ctx, state)]),
+        );
+
+        if let Some(children) = &self.else_children {
+            docs.push(Doc::text(" @else {"));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
+            docs.push(Doc::text("}"));
+        }
+
+        Doc::list(docs)
+    }
+}
+
 impl<'s> DocGen<'s> for AngularInterpolation<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
     where
@@ -721,6 +782,7 @@ impl<'s> DocGen<'s> for Node<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
+            Node::AngularIf(angular_if) => angular_if.doc(ctx, state),
             Node::AngularInterpolation(angular_interpolation) => {
                 angular_interpolation.doc(ctx, state)
             }

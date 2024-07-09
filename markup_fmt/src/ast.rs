@@ -1,3 +1,17 @@
+pub struct AngularElseIf<'s> {
+    pub expr: &'s str,
+    pub reference: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
+}
+
+pub struct AngularIf<'s> {
+    pub expr: &'s str,
+    pub reference: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
+    pub else_if_blocks: Vec<AngularElseIf<'s>>,
+    pub else_children: Option<Vec<Node<'s>>>,
+}
+
 pub struct AngularInterpolation<'s> {
     pub expr: &'s str,
 }
@@ -72,6 +86,7 @@ pub struct NativeAttribute<'s> {
 }
 
 pub enum Node<'s> {
+    AngularIf(AngularIf<'s>),
     AngularInterpolation(AngularInterpolation<'s>),
     AstroExpr(AstroExpr<'s>),
     Comment(Comment<'s>),
