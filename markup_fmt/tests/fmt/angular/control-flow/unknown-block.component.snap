@@ -1,0 +1,6 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+@unknown (foo) {
+} @unknown (foo) {
+}

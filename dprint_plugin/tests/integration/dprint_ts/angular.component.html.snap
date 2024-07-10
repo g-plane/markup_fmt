@@ -24,3 +24,5 @@ source: dprint_plugin/tests/integration.rs
 @switch (should.be.formatted) {
   @case (should.be.formatted) {}
 }
+
+<div>{{ a?.b() }}</div>
