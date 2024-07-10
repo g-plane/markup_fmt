@@ -39,6 +39,48 @@ impl<'s> DocGen<'s> for AngularElseIf<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for AngularFor<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@for ("));
+        docs.push(Doc::text(ctx.format_binding(self.binding)));
+        docs.push(Doc::text(" of "));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        if let Some(track) = self.track {
+            docs.push(Doc::text("; track "));
+            docs.push(Doc::text(ctx.format_general_expr(track)));
+        }
+        if let Some(aliases) = self.aliases {
+            docs.push(Doc::text("; "));
+            docs.extend(reflow_with_indent(
+                ctx.format_script(aliases, "js")
+                    .trim()
+                    .trim_end_matches(';'),
+            ));
+        }
+        docs.push(Doc::text(") {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+
+        if let Some(children) = &self.empty {
+            docs.push(Doc::text(" @empty {"));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
+            docs.push(Doc::text("}"));
+        }
+
+        Doc::list(docs)
+    }
+}
+
 impl<'s> DocGen<'s> for AngularIf<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -782,6 +824,7 @@ impl<'s> DocGen<'s> for Node<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
+            Node::AngularFor(angular_for) => angular_for.doc(ctx, state),
             Node::AngularIf(angular_if) => angular_if.doc(ctx, state),
             Node::AngularInterpolation(angular_interpolation) => {
                 angular_interpolation.doc(ctx, state)

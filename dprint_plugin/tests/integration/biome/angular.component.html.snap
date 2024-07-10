@@ -14,3 +14,10 @@ source: dprint_plugin/tests/integration.rs
     <span>{{ value }}</span>
   }
 </div>
+
+<ul>
+  @for ({ id, name } of getItems(); track id.value; let idx = $index,
+  e = $even) {
+    <li>{{ name }}</li>
+  }
+</ul>
