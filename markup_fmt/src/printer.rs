@@ -16,6 +16,23 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
+impl<'s> DocGen<'s> for AngularCase<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("@case (")
+            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(") {"))
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
+            .append(Doc::text("}"))
+    }
+}
+
 impl<'s> DocGen<'s> for AngularElseIf<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -131,6 +148,36 @@ impl<'s> DocGen<'s> for AngularInterpolation<'s> {
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
             .group()
+    }
+}
+
+impl<'s> DocGen<'s> for AngularSwitch<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@switch ("));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        docs.push(Doc::text(") {"));
+
+        docs.extend(
+            self.cases
+                .iter()
+                .flat_map(|case| [Doc::hard_line(), case.doc(ctx, state)]),
+        );
+
+        if let Some(default) = self.default.as_ref() {
+            docs.push(Doc::hard_line());
+            docs.push(Doc::text("@default {"));
+            docs.push(format_control_structure_block_children(default, ctx, state));
+            docs.push(Doc::text("}"));
+        }
+
+        Doc::list(docs)
+            .nest_with_ctx(ctx)
+            .append(Doc::hard_line())
+            .append(Doc::text("}"))
     }
 }
 
@@ -829,6 +876,7 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::AngularInterpolation(angular_interpolation) => {
                 angular_interpolation.doc(ctx, state)
             }
+            Node::AngularSwitch(angular_switch) => angular_switch.doc(ctx, state),
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
             Node::Comment(comment) => comment.doc(ctx, state),
             Node::Doctype(doctype) => doctype.doc(ctx, state),

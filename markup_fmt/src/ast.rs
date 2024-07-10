@@ -1,3 +1,8 @@
+pub struct AngularCase<'s> {
+    pub expr: &'s str,
+    pub children: Vec<Node<'s>>,
+}
+
 pub struct AngularElseIf<'s> {
     pub expr: &'s str,
     pub reference: Option<&'s str>,
@@ -23,6 +28,12 @@ pub struct AngularIf<'s> {
 
 pub struct AngularInterpolation<'s> {
     pub expr: &'s str,
+}
+
+pub struct AngularSwitch<'s> {
+    pub expr: &'s str,
+    pub cases: Vec<AngularCase<'s>>,
+    pub default: Option<Vec<Node<'s>>>,
 }
 
 pub struct AstroAttribute<'s> {
@@ -98,6 +109,7 @@ pub enum Node<'s> {
     AngularFor(AngularFor<'s>),
     AngularIf(AngularIf<'s>),
     AngularInterpolation(AngularInterpolation<'s>),
+    AngularSwitch(AngularSwitch<'s>),
     AstroExpr(AstroExpr<'s>),
     Comment(Comment<'s>),
     Doctype(Doctype<'s>),

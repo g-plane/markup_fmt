@@ -20,3 +20,7 @@ source: dprint_plugin/tests/integration.rs
     <li>{{ name }}</li>
   }
 </ul>
+
+@switch (should.be.formatted) {
+  @case (should.be.formatted) {}
+}

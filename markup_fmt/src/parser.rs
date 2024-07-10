@@ -369,6 +369,99 @@ impl<'s> Parser<'s> {
         Ok(unsafe { self.source.get_unchecked(start..end) })
     }
 
+    fn parse_angular_switch(&mut self) -> PResult<AngularSwitch<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularSwitch));
+        }
+        self.skip_ws();
+
+        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+        };
+        let expr = self.parse_angular_inline_script(start + 1)?;
+        if self.chars.next_if(|(_, c)| *c == ')').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
+        }
+
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('{')));
+        }
+        self.skip_ws();
+
+        let mut cases = Vec::with_capacity(2);
+        let mut default = None;
+        while let Some((_, '@')) = self.chars.peek() {
+            self.chars.next();
+            match self.chars.peek() {
+                Some((_, 'c')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == 'c')
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+                        .is_none()
+                    {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case")));
+                    }
+                    self.skip_ws();
+                    let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+                    };
+                    let expr = self.parse_angular_inline_script(start + 1)?;
+                    if self.chars.next_if(|(_, c)| *c == ')').is_none() {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
+                    }
+                    self.skip_ws();
+                    let children = self.parse_angular_control_flow_children()?;
+                    cases.push(AngularCase { expr, children });
+                    self.skip_ws();
+                }
+                Some((_, 'd')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == 'd')
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'u'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+                        .is_none()
+                    {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("default")));
+                    }
+                    self.skip_ws();
+                    default = Some(self.parse_angular_control_flow_children()?);
+                    break;
+                }
+                _ => return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case"))),
+            }
+        }
+
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '}').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}')));
+        }
+
+        Ok(AngularSwitch {
+            expr,
+            cases,
+            default,
+        })
+    }
+
     fn parse_astro_attr(&mut self) -> PResult<AstroAttribute<'s>> {
         let name = if self.chars.next_if(|(_, c)| *c == '{').is_some() {
             None
@@ -1196,6 +1289,7 @@ impl<'s> Parser<'s> {
                 match chars.next() {
                     Some((_, 'i')) => self.parse_angular_if().map(Node::AngularIf),
                     Some((_, 'f')) => self.parse_angular_for().map(Node::AngularFor),
+                    Some((_, 's')) => self.parse_angular_switch().map(Node::AngularSwitch),
                     _ => self.parse_text_node().map(Node::Text),
                 }
             }
