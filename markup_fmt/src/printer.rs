@@ -360,8 +360,10 @@ impl<'s> DocGen<'s> for Element<'s> {
             ctx.options
                 .html_normal_self_closing
                 .unwrap_or(self.self_closing)
-        } else if matches!(ctx.language, Language::Vue | Language::Svelte)
-            && helpers::is_component(self.tag_name)
+        } else if matches!(
+            ctx.language,
+            Language::Vue | Language::Svelte | Language::Angular
+        ) && helpers::is_component(self.tag_name)
         {
             ctx.options
                 .component_self_closing
