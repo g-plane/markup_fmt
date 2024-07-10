@@ -247,21 +247,21 @@ impl<'s> Parser<'s> {
                 match chars.next() {
                     Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
                     Some((_, '@')) => {
-                        self.chars = chars;
-                        break 'peek;
+                        if chars
+                            .next_if(|(_, c)| *c == 'e')
+                            .and_then(|_| chars.next_if(|(_, c)| *c == 'l'))
+                            .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
+                            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
+                            .is_some()
+                        {
+                            self.chars = chars;
+                            break 'peek;
+                        } else {
+                            break 'alter;
+                        }
                     }
                     _ => break 'alter,
                 }
-            }
-            if self
-                .chars
-                .next_if(|(_, c)| *c == 'e')
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-                .is_none()
-            {
-                return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("else")));
             }
             self.skip_ws();
 
