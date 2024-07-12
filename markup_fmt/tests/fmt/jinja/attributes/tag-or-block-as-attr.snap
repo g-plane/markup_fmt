@@ -1,0 +1,101 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{# Jinja tags/block inside html element opening tag #}
+
+<div {% if id %} id="{{ id }}" {% endif %} class="flex gap-10"></div>
+
+<input
+  type="text"
+  hidden
+  {%
+  if
+  widget.required
+  is
+  not
+  False
+  %}required{%
+  endif
+  %}
+/>
+
+<details {% if category %}open{% endif %}>
+  <summary>Details</summary>
+  Something small enough to escape casual notice.
+</details>
+
+<details {% if category %}open{% endif %} class="group"></details>
+
+<form
+  class="fff"
+  {%
+  if
+  reload
+  %}
+  action="{{ request.get_full_path }}"
+  {%
+  else
+  %}
+  data-url="{{ request.get_full_path }}"
+  {%
+  endif
+  %}
+>
+</form>
+
+<div class="input">
+  {% if unit and unit_side == "left" %}
+    <span
+      class="{% if not unit_bg %}input__unit{% endif %}{% if unit_bg %} input__bg-unit{% endif %}"
+    >{{ unit }}</span>
+  {% endif %}
+  {% include "django/forms/widgets/input.html" %}
+  {% if unit and unit_side == "right" %}
+    <span
+      class="{% if not unit_bg %}input__unit{% endif %}{% if unit_bg %} input__bg-unit{% endif %}"
+    >{{ unit }}</span>
+  {% endif %}
+</div>
+
+<div
+  class="calendar__data hidden"
+  {%
+  if
+  widget_datepicker
+  %}
+  {%
+  for
+  key,
+  value
+  in
+  widget_datepicker.working_hours.items
+  %}
+  data-{{key}}="{{value}}"
+  {%
+  endfor
+  %}
+  {%
+  elif
+  datepicker
+  %}
+  {%
+  if
+  datepicker.should_delay
+  %}
+  data-should_delay
+  {%
+  endif
+  %}
+  {%
+  else
+  %}
+  data-start="08:30:00"
+  data-end="20:30:00"
+  data-start_day='{% now "Y-m-d" %}'
+  data-saturday_start="08:30:00"
+  data-saturday_end="20:30:00"
+  {%
+  endif
+  %}
+>
+</div>
