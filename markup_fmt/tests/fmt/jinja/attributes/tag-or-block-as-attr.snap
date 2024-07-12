@@ -3,7 +3,9 @@ source: markup_fmt/tests/fmt.rs
 ---
 {# Jinja tags/block inside html element opening tag #}
 
-<div {% if id %} id="{{ id }}" {% endif %} class="flex gap-10"></div>
+<div {% if id %} id="{{ id }}" {% endif %}class="flex gap-10"></div>
+
+<div {% if id !="1" %}class="active" {% endif %}></div>
 
 <input
   type="text"
