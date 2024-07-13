@@ -3,12 +3,15 @@ source: markup_fmt/tests/fmt.rs
 ---
 <div></div>
 <div />
+<div></div>
 
 <input>
 <input />
 
 <circle></circle>
 <circle />
+<circle></circle>
 
 <abs></abs>
 <abs />
+<abs> </abs>
