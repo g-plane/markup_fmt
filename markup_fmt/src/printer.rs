@@ -1444,14 +1444,14 @@ fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> +
 }
 
 fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
-    match &children[..] {
+    match &children {
         [] => true,
         [Node::Text(text_node)] => {
             !is_whitespace_sensitive
                 && text_node
-                .raw
-                .trim_matches(|c: char| c.is_ascii_whitespace())
-                .is_empty()
+                    .raw
+                    .trim_matches(|c: char| c.is_ascii_whitespace())
+                    .is_empty()
         }
         _ => false,
     }
