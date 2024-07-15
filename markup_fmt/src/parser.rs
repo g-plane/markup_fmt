@@ -236,7 +236,7 @@ impl<'s> Parser<'s> {
         unsafe { Ok(self.source.get_unchecked(start..=end)) }
     }
 
-    fn parse_attr_value(&mut self) -> PResult<&'s str> {
+    fn parse_attr_value(&mut self) -> PResult<(Option<char>, &'s str)> {
         let quote = self.chars.next_if(|(_, c)| *c == '"' || *c == '\'');
 
         if let Some((start, quote)) = quote {
@@ -269,7 +269,9 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            Ok(unsafe { self.source.get_unchecked(start..end) })
+            Ok((Some(quote), unsafe {
+                self.source.get_unchecked(start..end)
+            }))
         } else {
             fn is_unquoted_attr_value_char(c: char) -> bool {
                 !c.is_ascii_whitespace() && !matches!(c, '"' | '\'' | '=' | '<' | '>' | '`')
@@ -305,7 +307,7 @@ impl<'s> Parser<'s> {
                 }
             }
 
-            unsafe { Ok(self.source.get_unchecked(start..=end)) }
+            unsafe { Ok((None, self.source.get_unchecked(start..=end))) }
         }
     }
 
@@ -808,13 +810,22 @@ impl<'s> Parser<'s> {
     fn parse_native_attr(&mut self) -> PResult<NativeAttribute<'s>> {
         let name = self.parse_attr_name()?;
         self.skip_ws();
-        let value = if self.chars.next_if(|(_, c)| *c == '=').is_some() {
+
+        if self.chars.next_if(|(_, c)| *c == '=').is_some() {
             self.skip_ws();
-            Some(self.parse_attr_value()?)
+            let (initial_quote, value) = self.parse_attr_value()?;
+            Ok(NativeAttribute {
+                name,
+                initial_quote,
+                value: Some(value),
+            })
         } else {
-            None
-        };
-        Ok(NativeAttribute { name, value })
+            Ok(NativeAttribute {
+                name,
+                initial_quote: None,
+                value: None,
+            })
+        }
     }
 
     fn parse_node(&mut self) -> PResult<Node<'s>> {
@@ -1768,7 +1779,7 @@ impl<'s> Parser<'s> {
         self.skip_ws();
         let value = if self.chars.next_if(|(_, c)| *c == '=').is_some() {
             self.skip_ws();
-            Some(self.parse_attr_value()?)
+            Some(self.parse_attr_value()?.1)
         } else {
             None
         };

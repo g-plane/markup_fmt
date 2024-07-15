@@ -672,6 +672,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             name.append(Doc::text("=")).append(format_attr_value(
                 value,
                 &ctx.options.quotes,
+                self.initial_quote,
                 self.name.eq_ignore_ascii_case("class"),
                 false,
             ))
@@ -682,7 +683,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 let value = format!("{{{binding_name}}}");
                 name.append(Doc::text("="))
                     .append(if ctx.options.strict_svelte_attr {
-                        format_attr_value(value, &ctx.options.quotes, false, true)
+                        format_attr_value(value, &ctx.options.quotes, None, false, true)
                     } else {
                         Doc::text(value)
                     })
@@ -805,6 +806,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                         name.append(format_attr_value(
                             format!("{{{expr_code}}}"),
                             &ctx.options.quotes,
+                            None,
                             false,
                             true,
                         ))
@@ -819,6 +821,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                 name.append(format_attr_value(
                     format!("{{{expr_code}}}"),
                     &ctx.options.quotes,
+                    None,
                     false,
                     true,
                 ))
@@ -1370,7 +1373,13 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
             {
                 docs.push(Doc::text("="));
-                docs.push(format_attr_value(value, &ctx.options.quotes, false, true));
+                docs.push(format_attr_value(
+                    value,
+                    &ctx.options.quotes,
+                    None,
+                    false,
+                    true,
+                ));
             }
         } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false)) && is_v_bind {
             if let Some(arg_and_modifiers) = self.arg_and_modifiers {
@@ -1378,6 +1387,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 docs.push(format_attr_value(
                     arg_and_modifiers,
                     &ctx.options.quotes,
+                    None,
                     false,
                     true,
                 ));
@@ -1513,13 +1523,22 @@ fn has_two_more_non_text_children(children: &[Node]) -> bool {
 fn format_attr_value<'a>(
     value: impl AsRef<str>,
     quotes: &Quotes,
+    initial_quote: Option<char>,
     split_whitespaces: bool,
     indent: bool,
 ) -> Doc<'a> {
     let value = value.as_ref();
-    let quote = if value.contains('"') {
+    let contains_double_quotes = value.contains('"');
+    let contains_single_quotes = value.contains('\'');
+
+    let quote = if contains_double_quotes && contains_single_quotes {
+        // If value contains both types of quotes, use initial_quote if provided
+        initial_quote
+            .map(|q| Doc::text(q.to_string()))
+            .unwrap_or(Doc::text("\""))
+    } else if contains_double_quotes {
         Doc::text("'")
-    } else if value.contains('\'') {
+    } else if contains_single_quotes {
         Doc::text("\"")
     } else if let Quotes::Double = quotes {
         Doc::text("\"")

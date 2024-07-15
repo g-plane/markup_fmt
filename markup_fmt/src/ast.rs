@@ -64,6 +64,7 @@ pub enum JinjaTagOrChildren<'s> {
 
 pub struct NativeAttribute<'s> {
     pub name: &'s str,
+    pub initial_quote: Option<char>,
     pub value: Option<&'s str>,
 }
 
