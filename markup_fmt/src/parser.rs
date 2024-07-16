@@ -369,6 +369,38 @@ impl<'s> Parser<'s> {
         Ok(unsafe { self.source.get_unchecked(start..end) })
     }
 
+    fn parse_angular_let(&mut self) -> PResult<AngularLet<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularLet));
+        }
+        self.skip_ws();
+
+        let name = self.parse_identifier()?;
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '=').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('=')));
+        }
+        self.skip_ws();
+        let start = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
+        let expr = self.parse_angular_inline_script(start)?;
+        if self.chars.next_if(|(_, c)| *c == ';').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar(';')));
+        }
+
+        Ok(AngularLet { name, expr })
+    }
+
     fn parse_angular_switch(&mut self) -> PResult<AngularSwitch<'s>> {
         if self
             .chars
@@ -1290,6 +1322,7 @@ impl<'s> Parser<'s> {
                     Some((_, 'i')) => self.parse_angular_if().map(Node::AngularIf),
                     Some((_, 'f')) => self.parse_angular_for().map(Node::AngularFor),
                     Some((_, 's')) => self.parse_angular_switch().map(Node::AngularSwitch),
+                    Some((_, 'l')) => self.parse_angular_let().map(Node::AngularLet),
                     _ => self.parse_text_node().map(Node::Text),
                 }
             }

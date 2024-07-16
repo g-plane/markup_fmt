@@ -26,3 +26,5 @@ source: dprint_plugin/tests/integration.rs
 }
 
 <div>{{ a?.b() }}</div>
+
+@let user = getUser(1);

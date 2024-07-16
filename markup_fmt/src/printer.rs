@@ -151,6 +151,19 @@ impl<'s> DocGen<'s> for AngularInterpolation<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for AngularLet<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("@let ")
+            .append(Doc::text(self.name))
+            .append(Doc::text(" = "))
+            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(";"))
+    }
+}
+
 impl<'s> DocGen<'s> for AngularSwitch<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -878,6 +891,7 @@ impl<'s> DocGen<'s> for Node<'s> {
             Node::AngularInterpolation(angular_interpolation) => {
                 angular_interpolation.doc(ctx, state)
             }
+            Node::AngularLet(angular_let) => angular_let.doc(ctx, state),
             Node::AngularSwitch(angular_switch) => angular_switch.doc(ctx, state),
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
             Node::Comment(comment) => comment.doc(ctx, state),

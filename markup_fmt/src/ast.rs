@@ -30,6 +30,11 @@ pub struct AngularInterpolation<'s> {
     pub expr: &'s str,
 }
 
+pub struct AngularLet<'s> {
+    pub name: &'s str,
+    pub expr: &'s str,
+}
+
 pub struct AngularSwitch<'s> {
     pub expr: &'s str,
     pub cases: Vec<AngularCase<'s>>,
@@ -109,6 +114,7 @@ pub enum Node<'s> {
     AngularFor(AngularFor<'s>),
     AngularIf(AngularIf<'s>),
     AngularInterpolation(AngularInterpolation<'s>),
+    AngularLet(AngularLet<'s>),
     AngularSwitch(AngularSwitch<'s>),
     AstroExpr(AstroExpr<'s>),
     Comment(Comment<'s>),
