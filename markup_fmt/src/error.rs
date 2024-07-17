@@ -46,7 +46,6 @@ pub enum SyntaxErrorKind {
     ExpectTextNode,
     ExpectVentoBlockEnd,
     ExpectVueDirective,
-    UnknownSvelteBlock,
 }
 
 impl fmt::Display for SyntaxError {
@@ -91,7 +90,6 @@ impl fmt::Display for SyntaxError {
             SyntaxErrorKind::ExpectTextNode => "expect text node".into(),
             SyntaxErrorKind::ExpectVentoBlockEnd => "expect Vento block end".into(),
             SyntaxErrorKind::ExpectVueDirective => "expect Vue directive".into(),
-            SyntaxErrorKind::UnknownSvelteBlock => "unknown Svelte block".into(),
         };
 
         write!(

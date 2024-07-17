@@ -1267,24 +1267,21 @@ impl<'s> Parser<'s> {
                     Some((_, '{')) if matches!(self.language, Language::Vento) => {
                         self.parse_vento_tag_or_block(None)
                     }
-                    Some((pos, '#')) if matches!(self.language, Language::Svelte) => self
-                        .try_parse(Parser::parse_svelte_if_block)
-                        .map(Node::SvelteIfBlock)
-                        .or_else(|_| {
-                            self.try_parse(Parser::parse_svelte_each_block)
-                                .map(Node::SvelteEachBlock)
-                        })
-                        .or_else(|_| {
-                            self.try_parse(Parser::parse_svelte_await_block)
-                                .map(Node::SvelteAwaitBlock)
-                        })
-                        .or_else(|_| {
-                            self.try_parse(Parser::parse_svelte_key_block)
-                                .map(Node::SvelteKeyBlock)
-                        })
-                        .map_err(|_| {
-                            self.emit_error_with_pos(SyntaxErrorKind::UnknownSvelteBlock, pos)
-                        }),
+                    Some((_, '#')) if matches!(self.language, Language::Svelte) => {
+                        match chars.next() {
+                            Some((_, 'i')) => self.parse_svelte_if_block().map(Node::SvelteIfBlock),
+                            Some((_, 'e')) => {
+                                self.parse_svelte_each_block().map(Node::SvelteEachBlock)
+                            }
+                            Some((_, 'a')) => {
+                                self.parse_svelte_await_block().map(Node::SvelteAwaitBlock)
+                            }
+                            Some((_, 'k')) => {
+                                self.parse_svelte_key_block().map(Node::SvelteKeyBlock)
+                            }
+                            _ => self.parse_text_node().map(Node::Text),
+                        }
+                    }
                     Some((_, '#')) if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_comment().map(Node::JinjaComment)
                     }
