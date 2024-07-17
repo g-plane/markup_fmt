@@ -99,8 +99,19 @@ where
 
 /// Detect language from file extension.
 pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
-    match path.as_ref().extension().and_then(std::ffi::OsStr::to_str) {
-        Some("html") => Some(Language::Html),
+    let path = path.as_ref();
+    match path.extension().and_then(std::ffi::OsStr::to_str) {
+        Some("html") => {
+            if path
+                .file_stem()
+                .map(|file_stem| file_stem.to_string_lossy().ends_with(".component"))
+                .unwrap_or_default()
+            {
+                Some(Language::Angular)
+            } else {
+                Some(Language::Html)
+            }
+        }
         Some("vue") => Some(Language::Vue),
         Some("svelte") => Some(Language::Svelte),
         Some("astro") => Some(Language::Astro),

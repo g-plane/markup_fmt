@@ -302,7 +302,7 @@ There're several options:
 
 - `html.normal.selfClosing`: This option affects on HTML normal elements.
 - `html.void.selfClosing`: This option affects on HTML void elements.
-- `component.selfClosing`: This option affects on Vue/Svelte/Astro components.
+- `component.selfClosing`: This option affects on Vue/Svelte/Astro/Angular components.
 - `svg.selfClosing`: This option affects on SVG elements.
 - `mathml.selfClosing`: This option affects on MathML elements.
 
@@ -375,7 +375,7 @@ Possible options:
 
 Default option is `"css"`.
 
-This option can be overridden for Vue/Svelte/Astro components by the following option:
+This option can be overridden for Vue/Svelte/Astro/Angular components by the following option:
 
 - `component.whitespaceSensitivity`
 

@@ -1,0 +1,21 @@
+<ul>
+@for (item of collection; track item.id; let index = $index, first = $first) {
+
+<li><strong>{{item.name}}</strong> index={{index}} first={{first}}</li>
+
+}
+</ul>
+
+<ul>
+@for (item of emptyCollection; track item.id;) {
+<li><strong>{{item.name}}</strong></li>
+}
+@empty {
+  <span>The collection is empty</span>
+}
+</ul>
+
+<div>
+  @for ( item of items; track item){
+  }
+</div>

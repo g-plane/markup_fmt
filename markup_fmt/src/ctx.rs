@@ -33,7 +33,7 @@ where
 {
     pub(crate) fn script_indent(&self) -> bool {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento => self
+            Language::Html | Language::Jinja | Language::Vento | Language::Angular => self
                 .options
                 .html_script_indent
                 .unwrap_or(self.options.script_indent),
@@ -54,7 +54,7 @@ where
 
     pub(crate) fn style_indent(&self) -> bool {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento => self
+            Language::Html | Language::Jinja | Language::Vento | Language::Angular => self
                 .options
                 .html_style_indent
                 .unwrap_or(self.options.style_indent),
@@ -75,7 +75,7 @@ where
 
     pub(crate) fn is_whitespace_sensitive(&self, tag_name: &str) -> bool {
         match self.language {
-            Language::Vue | Language::Svelte | Language::Astro
+            Language::Vue | Language::Svelte | Language::Astro | Language::Angular
                 if helpers::is_component(tag_name) =>
             {
                 matches!(

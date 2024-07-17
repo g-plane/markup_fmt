@@ -16,6 +16,184 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
 }
 
+impl<'s> DocGen<'s> for AngularCase<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("@case (")
+            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(") {"))
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
+            .append(Doc::text("}"))
+    }
+}
+
+impl<'s> DocGen<'s> for AngularElseIf<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@else if ("));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        if let Some(reference) = self.reference {
+            docs.push(Doc::text("; as "));
+            docs.push(Doc::text(ctx.format_binding(reference)));
+        }
+        docs.push(Doc::text(") {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for AngularFor<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@for ("));
+        docs.push(Doc::text(ctx.format_binding(self.binding)));
+        docs.push(Doc::text(" of "));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        if let Some(track) = self.track {
+            docs.push(Doc::text("; track "));
+            docs.push(Doc::text(ctx.format_general_expr(track)));
+        }
+        if let Some(aliases) = self.aliases {
+            docs.push(Doc::text("; "));
+            docs.extend(reflow_with_indent(
+                ctx.format_script(aliases, "js")
+                    .trim()
+                    .trim_end_matches(';'),
+            ));
+        }
+        docs.push(Doc::text(") {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+
+        if let Some(children) = &self.empty {
+            docs.push(Doc::text(" @empty {"));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
+            docs.push(Doc::text("}"));
+        }
+
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for AngularIf<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@if ("));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        if let Some(reference) = self.reference {
+            docs.push(Doc::text("; as "));
+            docs.push(Doc::text(ctx.format_binding(reference)));
+        }
+        docs.push(Doc::text(") {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+
+        docs.extend(
+            self.else_if_blocks
+                .iter()
+                .flat_map(|block| [Doc::space(), block.doc(ctx, state)]),
+        );
+
+        if let Some(children) = &self.else_children {
+            docs.push(Doc::text(" @else {"));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
+            docs.push(Doc::text("}"));
+        }
+
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for AngularInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{{")
+            .append(Doc::line_or_space())
+            .concat(reflow_with_indent(&ctx.format_general_expr(self.expr)))
+            .nest_with_ctx(ctx)
+            .append(Doc::line_or_space())
+            .append(Doc::text("}}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for AngularLet<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("@let ")
+            .append(Doc::text(self.name))
+            .append(Doc::text(" = "))
+            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(";"))
+    }
+}
+
+impl<'s> DocGen<'s> for AngularSwitch<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@switch ("));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        docs.push(Doc::text(") {"));
+
+        docs.extend(
+            self.cases
+                .iter()
+                .flat_map(|case| [Doc::hard_line(), case.doc(ctx, state)]),
+        );
+
+        if let Some(default) = self.default.as_ref() {
+            docs.push(Doc::hard_line());
+            docs.push(Doc::text("@default {"));
+            docs.push(format_control_structure_block_children(default, ctx, state));
+            docs.push(Doc::text("}"));
+        }
+
+        Doc::list(docs)
+            .nest_with_ctx(ctx)
+            .append(Doc::hard_line())
+            .append(Doc::text("}"))
+    }
+}
+
 impl<'s> DocGen<'s> for AstroAttribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<E, F>, _: &State<'s>) -> Doc<'s>
     where
@@ -195,8 +373,10 @@ impl<'s> DocGen<'s> for Element<'s> {
             ctx.options
                 .html_normal_self_closing
                 .unwrap_or(self.self_closing)
-        } else if matches!(ctx.language, Language::Vue | Language::Svelte)
-            && helpers::is_component(self.tag_name)
+        } else if matches!(
+            ctx.language,
+            Language::Vue | Language::Svelte | Language::Angular
+        ) && helpers::is_component(self.tag_name)
         {
             ctx.options
                 .component_self_closing
@@ -667,6 +847,11 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         Cow::from(value)
                     }
                 }
+                Language::Angular
+                    if self.name.starts_with(['[', '(']) && self.name.ends_with([']', ')']) =>
+                {
+                    Cow::from(ctx.format_general_expr(value))
+                }
                 _ => Cow::from(value),
             };
             name.append(Doc::text("=")).append(format_attr_value(
@@ -701,6 +886,13 @@ impl<'s> DocGen<'s> for Node<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
+            Node::AngularFor(angular_for) => angular_for.doc(ctx, state),
+            Node::AngularIf(angular_if) => angular_if.doc(ctx, state),
+            Node::AngularInterpolation(angular_interpolation) => {
+                angular_interpolation.doc(ctx, state)
+            }
+            Node::AngularLet(angular_let) => angular_let.doc(ctx, state),
+            Node::AngularSwitch(angular_switch) => angular_switch.doc(ctx, state),
             Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
             Node::Comment(comment) => comment.doc(ctx, state),
             Node::Doctype(doctype) => doctype.doc(ctx, state),

@@ -1,3 +1,46 @@
+pub struct AngularCase<'s> {
+    pub expr: &'s str,
+    pub children: Vec<Node<'s>>,
+}
+
+pub struct AngularElseIf<'s> {
+    pub expr: &'s str,
+    pub reference: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
+}
+
+pub struct AngularFor<'s> {
+    pub binding: &'s str,
+    pub expr: &'s str,
+    pub track: Option<&'s str>,
+    pub aliases: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
+    pub empty: Option<Vec<Node<'s>>>,
+}
+
+pub struct AngularIf<'s> {
+    pub expr: &'s str,
+    pub reference: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
+    pub else_if_blocks: Vec<AngularElseIf<'s>>,
+    pub else_children: Option<Vec<Node<'s>>>,
+}
+
+pub struct AngularInterpolation<'s> {
+    pub expr: &'s str,
+}
+
+pub struct AngularLet<'s> {
+    pub name: &'s str,
+    pub expr: &'s str,
+}
+
+pub struct AngularSwitch<'s> {
+    pub expr: &'s str,
+    pub cases: Vec<AngularCase<'s>>,
+    pub default: Option<Vec<Node<'s>>>,
+}
+
 pub struct AstroAttribute<'s> {
     pub name: Option<&'s str>,
     pub expr: &'s str,
@@ -68,6 +111,11 @@ pub struct NativeAttribute<'s> {
 }
 
 pub enum Node<'s> {
+    AngularFor(AngularFor<'s>),
+    AngularIf(AngularIf<'s>),
+    AngularInterpolation(AngularInterpolation<'s>),
+    AngularLet(AngularLet<'s>),
+    AngularSwitch(AngularSwitch<'s>),
     AstroExpr(AstroExpr<'s>),
     Comment(Comment<'s>),
     Doctype(Doctype<'s>),

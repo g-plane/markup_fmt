@@ -1,0 +1,5 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<span>@if (test) {text}</span>
+<div>@if (test) {text}</div>

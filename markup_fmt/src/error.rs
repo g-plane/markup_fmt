@@ -11,6 +11,10 @@ pub struct SyntaxError {
 
 #[derive(Clone, Debug)]
 pub enum SyntaxErrorKind {
+    ExpectAngularFor,
+    ExpectAngularIf,
+    ExpectAngularLet,
+    ExpectAngularSwitch,
     ExpectAstroAttr,
     ExpectAstroExpr,
     ExpectAttrName,
@@ -48,6 +52,10 @@ pub enum SyntaxErrorKind {
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let reason: Cow<_> = match self.kind {
+            SyntaxErrorKind::ExpectAngularFor => "expect Angular `@for`".into(),
+            SyntaxErrorKind::ExpectAngularIf => "expect Angular `@if`".into(),
+            SyntaxErrorKind::ExpectAngularLet => "expect Angular `@let`".into(),
+            SyntaxErrorKind::ExpectAngularSwitch => "expect Angular `@switch`".into(),
             SyntaxErrorKind::ExpectAstroAttr => "expect Astro attribute".into(),
             SyntaxErrorKind::ExpectAstroExpr => "expect Astro expression".into(),
             SyntaxErrorKind::ExpectAttrName => "expect attribute name".into(),

@@ -21,6 +21,7 @@ pub enum Language {
     Vue,
     Svelte,
     Astro,
+    Angular,
     Jinja,
     Vento,
 }
@@ -95,6 +96,402 @@ impl<'s> Parser<'s> {
             .next_if(|(_, c)| c.is_ascii_whitespace())
             .is_some()
         {}
+    }
+
+    fn parse_angular_control_flow_children(&mut self) -> PResult<Vec<Node<'s>>> {
+        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('{')));
+        }
+
+        let mut children = vec![];
+        while let Some((_, c)) = self.chars.peek() {
+            if *c == '}' {
+                self.chars.next();
+                break;
+            } else {
+                children.push(self.parse_node()?);
+            }
+        }
+        Ok(children)
+    }
+
+    fn parse_angular_for(&mut self) -> PResult<AngularFor<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'o'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularFor));
+        }
+        self.skip_ws();
+
+        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+        };
+
+        let Some((binding, expr)) = self
+            .parse_angular_inline_script(start + 1)?
+            .split_once(" of ")
+            .map(|(binding, expr)| (binding.trim_end(), expr.trim_start()))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("of")));
+        };
+
+        let mut track = None;
+        if self.chars.next_if(|(_, c)| *c == ';').is_some() {
+            self.skip_ws();
+            if self
+                .chars
+                .next_if(|(_, c)| *c == 't')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
+                .is_some()
+            {
+                self.skip_ws();
+                if let Some((start, _)) = self.chars.peek() {
+                    let start = *start;
+                    track = Some(self.parse_angular_inline_script(start)?);
+                }
+            }
+        }
+
+        let mut aliases = None;
+        if self.chars.next_if(|(_, c)| *c == ';').is_some() {
+            self.skip_ws();
+            let mut chars = self.chars.clone();
+            if chars
+                .next_if(|(_, c)| *c == 'l')
+                .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
+                .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
+                .is_some()
+            {
+                if let Some((start, _)) = self.chars.peek() {
+                    let start = *start;
+                    aliases = Some(self.parse_angular_inline_script(start)?);
+                }
+            }
+        }
+
+        self.chars.next_if(|(_, c)| *c == ';');
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == ')').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
+        };
+        self.skip_ws();
+        let children = self.parse_angular_control_flow_children()?;
+
+        let mut empty = None;
+        'empty: {
+            let mut chars = self.chars.clone();
+            'peek: loop {
+                match chars.next() {
+                    Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
+                    Some((_, '@')) => {
+                        self.chars = chars;
+                        break 'peek;
+                    }
+                    _ => break 'empty,
+                }
+            }
+            if self
+                .chars
+                .next_if(|(_, c)| *c == 'e')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'm'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'y'))
+                .is_none()
+            {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("empty")));
+            }
+            self.skip_ws();
+            empty = Some(self.parse_angular_control_flow_children()?);
+        }
+
+        Ok(AngularFor {
+            binding,
+            expr,
+            track,
+            aliases,
+            children,
+            empty,
+        })
+    }
+
+    fn parse_angular_if(&mut self) -> PResult<AngularIf<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularIf));
+        }
+        self.skip_ws();
+
+        let (expr, reference) = self.parse_angular_if_cond()?;
+        self.skip_ws();
+        let children = self.parse_angular_control_flow_children()?;
+
+        let mut else_if_blocks = vec![];
+        let mut else_children = None;
+        'alter: loop {
+            let mut chars = self.chars.clone();
+            'peek: loop {
+                match chars.next() {
+                    Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
+                    Some((_, '@')) => {
+                        if chars
+                            .next_if(|(_, c)| *c == 'e')
+                            .and_then(|_| chars.next_if(|(_, c)| *c == 'l'))
+                            .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
+                            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
+                            .is_some()
+                        {
+                            self.chars = chars;
+                            break 'peek;
+                        } else {
+                            break 'alter;
+                        }
+                    }
+                    _ => break 'alter,
+                }
+            }
+            self.skip_ws();
+
+            if self
+                .chars
+                .next_if(|(_, c)| *c == 'i')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+                .is_some()
+            {
+                self.skip_ws();
+                let (expr, reference) = self.parse_angular_if_cond()?;
+                self.skip_ws();
+                let children = self.parse_angular_control_flow_children()?;
+                else_if_blocks.push(AngularElseIf {
+                    expr,
+                    reference,
+                    children,
+                });
+            } else {
+                else_children = Some(self.parse_angular_control_flow_children()?);
+                break;
+            }
+        }
+
+        Ok(AngularIf {
+            expr,
+            reference,
+            children,
+            else_if_blocks,
+            else_children,
+        })
+    }
+
+    fn parse_angular_if_cond(&mut self) -> PResult<(&'s str, Option<&'s str>)> {
+        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+        };
+
+        let expr = self.parse_angular_inline_script(start + 1)?;
+
+        let mut reference = None;
+        if self.chars.next_if(|(_, c)| *c == ';').is_some() {
+            self.skip_ws();
+            if self
+                .chars
+                .next_if(|(_, c)| *c == 'a')
+                .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+                .is_none()
+            {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("as")));
+            }
+            self.skip_ws();
+            if let Some((start, _)) = self.chars.peek() {
+                let start = *start;
+                reference = Some(self.parse_angular_inline_script(start)?);
+            }
+        }
+
+        if self.chars.next_if(|(_, c)| *c == ')').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
+        }
+
+        Ok((expr, reference))
+    }
+
+    fn parse_angular_inline_script(&mut self, start: usize) -> PResult<&'s str> {
+        let end;
+        let mut chars_stack = vec![];
+        loop {
+            match self.chars.peek() {
+                Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
+                    if chars_stack.last().is_some_and(|last| last == c) {
+                        chars_stack.pop();
+                    } else {
+                        chars_stack.push(*c);
+                    }
+                    self.chars.next();
+                }
+                Some((_, '(')) => {
+                    chars_stack.push('(');
+                    self.chars.next();
+                }
+                Some((i, ')')) => {
+                    if chars_stack.is_empty() {
+                        end = *i;
+                        break;
+                    } else if chars_stack.last().is_some_and(|last| *last == '(') {
+                        chars_stack.pop();
+                        self.chars.next();
+                    }
+                }
+                Some((i, ';')) if chars_stack.is_empty() => {
+                    end = *i;
+                    break;
+                }
+                Some(..) => {
+                    self.chars.next();
+                }
+                None => {
+                    end = start;
+                    break;
+                }
+            }
+        }
+        Ok(unsafe { self.source.get_unchecked(start..end) })
+    }
+
+    fn parse_angular_let(&mut self) -> PResult<AngularLet<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularLet));
+        }
+        self.skip_ws();
+
+        let name = self.parse_identifier()?;
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '=').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('=')));
+        }
+        self.skip_ws();
+        let start = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
+        let expr = self.parse_angular_inline_script(start)?;
+        if self.chars.next_if(|(_, c)| *c == ';').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar(';')));
+        }
+
+        Ok(AngularLet { name, expr })
+    }
+
+    fn parse_angular_switch(&mut self) -> PResult<AngularSwitch<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularSwitch));
+        }
+        self.skip_ws();
+
+        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+        };
+        let expr = self.parse_angular_inline_script(start + 1)?;
+        if self.chars.next_if(|(_, c)| *c == ')').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
+        }
+
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('{')));
+        }
+        self.skip_ws();
+
+        let mut cases = Vec::with_capacity(2);
+        let mut default = None;
+        while let Some((_, '@')) = self.chars.peek() {
+            self.chars.next();
+            match self.chars.peek() {
+                Some((_, 'c')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == 'c')
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+                        .is_none()
+                    {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case")));
+                    }
+                    self.skip_ws();
+                    let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
+                    };
+                    let expr = self.parse_angular_inline_script(start + 1)?;
+                    if self.chars.next_if(|(_, c)| *c == ')').is_none() {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
+                    }
+                    self.skip_ws();
+                    let children = self.parse_angular_control_flow_children()?;
+                    cases.push(AngularCase { expr, children });
+                    self.skip_ws();
+                }
+                Some((_, 'd')) => {
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == 'd')
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'u'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+                        .is_none()
+                    {
+                        return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("default")));
+                    }
+                    self.skip_ws();
+                    default = Some(self.parse_angular_control_flow_children()?);
+                    break;
+                }
+                _ => return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case"))),
+            }
+        }
+
+        self.skip_ws();
+        if self.chars.next_if(|(_, c)| *c == '}').is_none() {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}')));
+        }
+
+        Ok(AngularSwitch {
+            expr,
+            cases,
+            default,
+        })
     }
 
     fn parse_astro_attr(&mut self) -> PResult<AstroAttribute<'s>> {
@@ -205,7 +602,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento => {
+            Language::Html | Language::Jinja | Language::Vento | Language::Angular => {
                 self.parse_native_attr().map(Attribute::Native)
             }
             Language::Vue => self
@@ -849,12 +1246,20 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, '{')) if matches!(self.language, Language::Vue | Language::Jinja) => {
+                    Some((_, '{'))
+                        if matches!(
+                            self.language,
+                            Language::Vue | Language::Jinja | Language::Angular
+                        ) =>
+                    {
                         self.parse_mustache_interpolation()
                             .map(|expr| match self.language {
                                 Language::Vue => Node::VueInterpolation(VueInterpolation { expr }),
                                 Language::Jinja => {
                                     Node::JinjaInterpolation(JinjaInterpolation { expr })
+                                }
+                                Language::Angular => {
+                                    Node::AngularInterpolation(AngularInterpolation { expr })
                                 }
                                 _ => unreachable!(),
                             })
@@ -908,6 +1313,17 @@ impl<'s> Parser<'s> {
                     self.parse_front_matter().map(Node::FrontMatter)
                 } else {
                     self.parse_text_node().map(Node::Text)
+                }
+            }
+            Some((_, '@')) if matches!(self.language, Language::Angular) => {
+                let mut chars = self.chars.clone();
+                chars.next();
+                match chars.next() {
+                    Some((_, 'i')) => self.parse_angular_if().map(Node::AngularIf),
+                    Some((_, 'f')) => self.parse_angular_for().map(Node::AngularFor),
+                    Some((_, 's')) => self.parse_angular_switch().map(Node::AngularSwitch),
+                    Some((_, 'l')) => self.parse_angular_let().map(Node::AngularLet),
+                    _ => self.parse_text_node().map(Node::Text),
                 }
             }
             Some(..) => self.parse_text_node().map(Node::Text),
@@ -1534,7 +1950,14 @@ impl<'s> Parser<'s> {
 
     fn parse_text_node(&mut self) -> PResult<TextNode<'s>> {
         let Some((start, first_char)) = self.chars.next_if(|(_, c)| {
-            if let Language::Vue | Language::Svelte = self.language {
+            if matches!(
+                self.language,
+                Language::Vue
+                    | Language::Svelte
+                    | Language::Jinja
+                    | Language::Vento
+                    | Language::Angular
+            ) {
                 *c != '{'
             } else {
                 true
@@ -1543,8 +1966,10 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         };
 
-        if matches!(self.language, Language::Vue)
-            && first_char == '{'
+        if matches!(
+            self.language,
+            Language::Vue | Language::Jinja | Language::Vento | Language::Angular
+        ) && first_char == '{'
             && matches!(self.chars.peek(), Some((_, '{')))
         {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
@@ -1558,7 +1983,7 @@ impl<'s> Parser<'s> {
                     Language::Html => {
                         self.chars.next();
                     }
-                    Language::Vue | Language::Vento => {
+                    Language::Vue | Language::Vento | Language::Angular => {
                         let i = *i;
                         let mut chars = self.chars.clone();
                         chars.next();
@@ -1616,6 +2041,10 @@ impl<'s> Parser<'s> {
                         break;
                     }
                     self.chars.next();
+                }
+                Some((i, '}' | '@')) if matches!(self.language, Language::Angular) => {
+                    end = *i;
+                    break;
                 }
                 Some((_, c)) => {
                     if *c == '\n' {
