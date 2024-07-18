@@ -393,6 +393,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             && self.tag_name.eq_ignore_ascii_case("template")
             || state.in_svg)
             && ctx.is_whitespace_sensitive(tag_name);
+        let is_empty = is_empty_element(&self.children, is_whitespace_sensitive);
 
         let mut docs = Vec::with_capacity(5);
 
@@ -460,7 +461,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
             return Doc::list(docs).group();
         }
-        if self_closing && self.children.is_empty() {
+        if self_closing && is_empty {
             docs.push(attrs);
             docs.push(Doc::line_or_space());
             docs.push(Doc::text("/>"));
@@ -509,17 +510,6 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         }
 
-        let is_empty = match &self.children[..] {
-            [] => true,
-            [Node::Text(text_node)] => {
-                !is_whitespace_sensitive
-                    && text_node
-                        .raw
-                        .trim_matches(|c: char| c.is_ascii_whitespace())
-                        .is_empty()
-            }
-            _ => false,
-        };
         let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
 
         let (leading_ws, trailing_ws) = if is_empty {
@@ -1645,6 +1635,19 @@ fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> +
     })
 }
 
+fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
+    match &children {
+        [] => true,
+        [Node::Text(text_node)] => {
+            !is_whitespace_sensitive
+                && text_node
+                    .raw
+                    .trim_matches(|c: char| c.is_ascii_whitespace())
+                    .is_empty()
+        }
+        _ => false,
+    }
+}
 fn is_all_ascii_whitespace(s: &str) -> bool {
     !s.is_empty() && s.as_bytes().iter().all(|byte| byte.is_ascii_whitespace())
 }
