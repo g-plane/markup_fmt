@@ -1632,7 +1632,7 @@ fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> +
     s.split('\n').enumerate().flat_map(move |(i, s)| {
         let s = s.strip_suffix('\r').unwrap_or(s);
         let s = if s.starts_with([' ', '\t']) {
-            &s.get(indent..).unwrap_or(s)
+            s.get(indent..).unwrap_or(s)
         } else {
             s
         };
