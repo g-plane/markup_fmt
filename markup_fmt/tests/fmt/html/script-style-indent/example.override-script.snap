@@ -7,6 +7,14 @@ source: markup_fmt/tests/fmt.rs
     <style>
     a { text-decoration: none; }
     </style>
+    <style>
+    a {
+      text-decoration: none;
+    }
+    /* Next line is just 2 spaces */
+  
+    /* --- */
+    </style>
     <script>
       window.addEventListener('load', () => {})
     </script>
