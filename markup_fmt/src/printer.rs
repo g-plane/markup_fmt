@@ -844,12 +844,36 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 }
                 _ => Cow::from(value),
             };
-            name.append(Doc::text("=")).append(format_attr_value(
-                value,
-                &ctx.options.quotes,
-                self.name.eq_ignore_ascii_case("class"),
-                false,
-            ))
+            let has_single = value.contains('\'');
+            let has_double = value.contains('"');
+            let quote = if has_double && has_single {
+                if let Some(quote) = self.quote {
+                    Doc::text(quote.to_string())
+                } else if let Quotes::Double = ctx.options.quotes {
+                    Doc::text("\"")
+                } else {
+                    Doc::text("'")
+                }
+            } else if has_double {
+                Doc::text("'")
+            } else if has_single {
+                Doc::text("\"")
+            } else if let Quotes::Double = ctx.options.quotes {
+                Doc::text("\"")
+            } else {
+                Doc::text("'")
+            };
+            let mut docs = Vec::with_capacity(5);
+            docs.push(name);
+            docs.push(Doc::text("="));
+            docs.push(quote.clone());
+            if self.name.eq_ignore_ascii_case("class") {
+                docs.push(Doc::text(value.split_ascii_whitespace().join(" ")));
+            } else {
+                docs.extend(reflow_owned(&value));
+            }
+            docs.push(quote);
+            Doc::list(docs)
         } else if matches!(ctx.language, Language::Svelte)
             && matches!(ctx.options.svelte_directive_shorthand, Some(false))
         {
@@ -857,7 +881,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 let value = format!("{{{binding_name}}}");
                 name.append(Doc::text("="))
                     .append(if ctx.options.strict_svelte_attr {
-                        format_attr_value(value, &ctx.options.quotes, false, true)
+                        format_attr_value(value, &ctx.options.quotes)
                     } else {
                         Doc::text(value)
                     })
@@ -987,8 +1011,6 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                         name.append(format_attr_value(
                             format!("{{{expr_code}}}"),
                             &ctx.options.quotes,
-                            false,
-                            true,
                         ))
                     } else {
                         name.append(expr)
@@ -1001,8 +1023,6 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                 name.append(format_attr_value(
                     format!("{{{expr_code}}}"),
                     &ctx.options.quotes,
-                    false,
-                    true,
                 ))
             } else {
                 name.append(expr)
@@ -1552,17 +1572,12 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
             {
                 docs.push(Doc::text("="));
-                docs.push(format_attr_value(value, &ctx.options.quotes, false, true));
+                docs.push(format_attr_value(value, &ctx.options.quotes));
             }
         } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false)) && is_v_bind {
             if let Some(arg_and_modifiers) = self.arg_and_modifiers {
                 docs.push(Doc::text("="));
-                docs.push(format_attr_value(
-                    arg_and_modifiers,
-                    &ctx.options.quotes,
-                    false,
-                    true,
-                ));
+                docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
             }
         }
 
@@ -1705,12 +1720,7 @@ fn has_two_more_non_text_children(children: &[Node]) -> bool {
     children.iter().filter(|child| !is_text_like(child)).count() > 1
 }
 
-fn format_attr_value<'a>(
-    value: impl AsRef<str>,
-    quotes: &Quotes,
-    split_whitespaces: bool,
-    indent: bool,
-) -> Doc<'a> {
+fn format_attr_value<'a>(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'a> {
     let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::text("'")
@@ -1721,21 +1731,10 @@ fn format_attr_value<'a>(
     } else {
         Doc::text("'")
     };
-    if split_whitespaces {
-        quote
-            .clone()
-            .append(Doc::text(value.split_ascii_whitespace().join(" ")))
-            .append(quote)
-    } else {
-        quote
-            .clone()
-            .append(if indent {
-                Doc::list(reflow_with_indent(value).collect())
-            } else {
-                Doc::list(reflow_owned(value).collect())
-            })
-            .append(quote)
-    }
+    quote
+        .clone()
+        .append(Doc::list(reflow_with_indent(value).collect()))
+        .append(quote)
 }
 
 fn format_children_with_inserting_linebreak<'s, E, F>(
