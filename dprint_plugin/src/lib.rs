@@ -17,7 +17,7 @@ mod config;
 #[cfg(target_arch = "wasm32")]
 type Configuration = FormatOptions;
 
-pub struct MarkupFmtPluginHandler {}
+pub struct MarkupFmtPluginHandler;
 
 impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
     fn plugin_info(&mut self) -> SyncPluginInfo {
@@ -136,4 +136,4 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
 }
 
 #[cfg(target_arch = "wasm32")]
-generate_plugin_code!(MarkupFmtPluginHandler, MarkupFmtPluginHandler {});
+generate_plugin_code!(MarkupFmtPluginHandler, MarkupFmtPluginHandler);
