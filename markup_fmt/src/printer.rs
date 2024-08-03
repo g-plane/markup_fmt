@@ -294,6 +294,7 @@ impl<'s> DocGen<'s> for Attribute<'s> {
             Attribute::Svelte(svelte_attribute) => svelte_attribute.doc(ctx, state),
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
             Attribute::Astro(astro_attribute) => astro_attribute.doc(ctx, state),
+            Attribute::JinjaTagOrBlock(jinja_tag_or_block) => jinja_tag_or_block.doc(ctx, state),
         }
     }
 }

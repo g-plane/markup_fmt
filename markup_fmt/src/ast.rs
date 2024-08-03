@@ -60,6 +60,7 @@ pub enum Attribute<'s> {
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
     VueDirective(VueDirective<'s>),
+    JinjaTagOrBlock(Node<'s>),
 }
 
 pub struct Comment<'s> {
