@@ -4,14 +4,13 @@ use crate::{
 };
 use aho_corasick::AhoCorasick;
 use memchr::memchr;
-use once_cell::sync::Lazy;
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, path::Path, sync::LazyLock};
 use tiny_pretty::Doc;
 
 const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
 
-static UNESCAPING_AC: Lazy<AhoCorasick> =
-    Lazy::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());
+static UNESCAPING_AC: LazyLock<AhoCorasick> =
+    LazyLock::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());
 const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
