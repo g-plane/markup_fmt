@@ -1,3 +1,9 @@
+<div {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %} {% if colored_with_days %}colored-with-days{% endif %}>
+</div>
+
+<div class="flex" {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %} id="3">
+</div>
+
 <div{% if id %} id="{{ id }}" {% endif %}class="flex gap-10"></div>
 
 <div {% if id != 1 %}class="active"{% endif %}></div>
@@ -42,3 +48,38 @@
 <details {% if category == "active" %}open{% endif %} ></details>
 
 <input type="radio" name="{{ field.name }}" id="id_{{ field.name }}{{ forloop.count }}" value="{{ choice.0 }}" {% if choice.0 == field.value %}checked="checked"{% endif %} />
+
+<input
+    id="id_callback"
+    type="radio"
+    name="callback_method"
+    value="callback"
+    {% if not office_open %} disabled class="hidden" {% endif %}
+>
+
+<div class="flex foo"
+    id="index_id"
+    {% if index_type == "foo" %}style="display: none"{% endif %}>
+    My text that should sometimes be hidden
+</div>
+
+<div data-toggle-mobile="true"
+    {% if "adsl" not in connectivity_technology %}data-filter="fiber"{% endif %}
+    class="foo bar baz yayayayayayaya">
+    Data attributes
+</div>
+
+{% for subentry in entry.subentries %}
+    {% if subentry.url %}
+        <li>
+            <a
+                href="{{ subentry.url }}"
+                {% if subentry.active %}
+                  class="dropdown-menu-selected"
+                {% endif %}
+            >{{ subentry.name }}</a>
+        </li>
+    {% else %}
+        <li class="nav-internal-link--dropdown--separator">{{ subentry.name }}</li>
+    {% endif %}
+{% endfor %}
