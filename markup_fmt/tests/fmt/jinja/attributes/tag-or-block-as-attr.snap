@@ -1,24 +1,14 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-{# Jinja tags/block inside html element opening tag #}
+<div {% if id %} id="{{ id }}" {% endif %} class="flex gap-10"></div>
 
-<div {% if id %} id="{{ id }}" {% endif %}class="flex gap-10"></div>
-
-<div {% if id !="1" %}class="active" {% endif %}></div>
+<div {% if id != 1 %}class="active"{% endif %}></div>
 
 <input
   type="text"
   hidden
-  {%
-  if
-  widget.required
-  is
-  not
-  False
-  %}required{%
-  endif
-  %}
+  {% if widget.required is not False %}required{% endif %}
 />
 
 <details {% if category %}open{% endif %}>
@@ -30,18 +20,11 @@ source: markup_fmt/tests/fmt.rs
 
 <form
   class="fff"
-  {%
-  if
-  reload
-  %}
-  action="{{ request.get_full_path }}"
-  {%
-  else
-  %}
-  data-url="{{ request.get_full_path }}"
-  {%
-  endif
-  %}
+  {% if reload %}
+    action="{{ request.get_full_path }}"
+  {% else %}
+    data-url="{{ request.get_full_path }}"
+  {% endif %}
 >
 </form>
 
@@ -61,43 +44,27 @@ source: markup_fmt/tests/fmt.rs
 
 <div
   class="calendar__data hidden"
-  {%
-  if
-  widget_datepicker
-  %}
-  {%
-  for
-  key,
-  value
-  in
-  widget_datepicker.working_hours.items
-  %}
-  data-{{key}}="{{value}}"
-  {%
-  endfor
-  %}
-  {%
-  elif
-  datepicker
-  %}
-  {%
-  if
-  datepicker.should_delay
-  %}
-  data-should_delay
-  {%
-  endif
-  %}
-  {%
-  else
-  %}
-  data-start="08:30:00"
-  data-end="20:30:00"
-  data-start_day='{% now "Y-m-d" %}'
-  data-saturday_start="08:30:00"
-  data-saturday_end="20:30:00"
-  {%
-  endif
-  %}
+  {% if widget_datepicker %}
+    {% for key, value in widget_datepicker.working_hours.items %}
+      data-{{ key }}="{{ value }}"
+    {% endfor %}
+  {% elif datepicker %}
+    {% if datepicker.should_delay %}
+      data-should_delay
+    {% endif %}
+  {% else %}
+    data-start='08:30:00' data-end='20:30:00' data-start_day='{% now "Y-m-d" %}'
+    data-saturday_start='08:30:00' data-saturday_end='20:30:00'
+  {% endif %}
 >
 </div>
+
+<details {% if category == "active" %}open{% endif %}></details>
+
+<input
+  type="radio"
+  name="{{ field.name }}"
+  id="id_{{ field.name }}{{ forloop.count }}"
+  value="{{ choice.0 }}"
+  {% if choice.0 == field.value %}checked="checked"{% endif %}
+/>
