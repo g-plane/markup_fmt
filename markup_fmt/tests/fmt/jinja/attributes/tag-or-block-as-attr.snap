@@ -1,0 +1,124 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<div
+  {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %}
+  {% if colored_with_days %}colored-with-days{% endif %}
+>
+</div>
+
+<div
+  class="flex"
+  {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %}
+  id="3"
+>
+</div>
+
+<div {% if id %} id="{{ id }}" {% endif %} class="flex gap-10"></div>
+
+<div {% if id != 1 %}class="active"{% endif %}></div>
+
+<input
+  type="text"
+  hidden
+  {% if widget.required is not False %}required{% endif %}
+/>
+
+<details {% if category %}open{% endif %}>
+  <summary>Details</summary>
+  Something small enough to escape casual notice.
+</details>
+
+<details {% if category %}open{% endif %} class="group"></details>
+
+<form
+  class="fff"
+  {% if reload %}
+    action="{{ request.get_full_path }}"
+  {% else %}
+    data-url="{{ request.get_full_path }}"
+  {% endif %}
+>
+</form>
+
+<div class="input">
+  {% if unit and unit_side == "left" %}
+    <span
+      class="{% if not unit_bg %}input__unit{% endif %}{% if unit_bg %} input__bg-unit{% endif %}"
+    >{{ unit }}</span>
+  {% endif %}
+  {% include "django/forms/widgets/input.html" %}
+  {% if unit and unit_side == "right" %}
+    <span
+      class="{% if not unit_bg %}input__unit{% endif %}{% if unit_bg %} input__bg-unit{% endif %}"
+    >{{ unit }}</span>
+  {% endif %}
+</div>
+
+<div
+  class="calendar__data hidden"
+  {% if widget_datepicker %}
+    {% for key, value in widget_datepicker.working_hours.items %}
+      data-{{ key }}="{{ value }}"
+    {% endfor %}
+  {% elif datepicker %}
+    {% if datepicker.should_delay %}
+      data-should_delay
+    {% endif %}
+  {% else %}
+    data-start='08:30:00' data-end='20:30:00' data-start_day='{% now "Y-m-d" %}'
+    data-saturday_start='08:30:00' data-saturday_end='20:30:00'
+  {% endif %}
+>
+</div>
+
+<details {% if category == "active" %}open{% endif %}></details>
+
+<input
+  type="radio"
+  name="{{ field.name }}"
+  id="id_{{ field.name }}{{ forloop.count }}"
+  value="{{ choice.0 }}"
+  {% if choice.0 == field.value %}checked="checked"{% endif %}
+/>
+
+<input
+  id="id_callback"
+  type="radio"
+  name="callback_method"
+  value="callback"
+  {% if not office_open %}
+    disabled class="hidden"
+  {% endif %}
+>
+
+<div
+  class="flex foo"
+  id="index_id"
+  {% if index_type == "foo" %}style="display: none"{% endif %}
+>
+  My text that should sometimes be hidden
+</div>
+
+<div
+  data-toggle-mobile="true"
+  {% if "adsl" not in connectivity_technology %}data-filter="fiber"{% endif %}
+  class="foo bar baz yayayayayayaya"
+>
+  Data attributes
+</div>
+
+{% for subentry in entry.subentries %}
+  {% if subentry.url %}
+    <li>
+      <a
+        href="{{ subentry.url }}"
+        {% if subentry.active %}
+          class="dropdown-menu-selected"
+        {% endif %}
+      >{{ subentry.name }}</a>
+    </li>
+  {% else %}
+    <li class="nav-internal-link--dropdown--separator">{{ subentry.name }}</li>
+  {% endif %}
+{% endfor %}

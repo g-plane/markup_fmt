@@ -602,7 +602,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento | Language::Angular => {
+            Language::Html | Language::Vento | Language::Angular => {
                 self.parse_native_attr().map(Attribute::Native)
             }
             Language::Vue => self
@@ -616,6 +616,10 @@ impl<'s> Parser<'s> {
             Language::Astro => self
                 .try_parse(Parser::parse_astro_attr)
                 .map(Attribute::Astro)
+                .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
+            Language::Jinja => self
+                .try_parse(|parser| parser.parse_jinja_tag_or_block(None))
+                .map(Attribute::JinjaTagOrBlock)
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
         }
     }
