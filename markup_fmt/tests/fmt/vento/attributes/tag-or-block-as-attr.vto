@@ -1,0 +1,85 @@
+<div {{ if colored_with_absolute_dates }}colored-with-absolute-dates{{ /if }} {{ if colored_with_days }}colored-with-days{{ /if }}>
+</div>
+
+<div class="flex" {{ if colored_with_absolute_dates }}colored-with-absolute-dates{{ /if }} id="3">
+</div>
+
+<div{{ if id }} id="{{ id }}" {{ /if }}class="flex gap-10"></div>
+
+<div {{ if id != 1 }}class="active"{{ /if }}></div>
+
+<input type='text' hidden {{ if widget.required is not False }}required{{ /if }}/>
+
+<details {{ if category }}open{{ /if }} >
+  <summary>Details</summary>
+  Something small enough to escape casual notice.
+</details>
+
+<details {{ if category }}open{{ /if }}
+         class="group"></details>
+
+<form class="fff" {{ if reload }} action="{{ request.get_full_path }}" {{ else }}  data-url="{{ request.get_full_path }}" {{ /if }}></form>
+
+<div class="input">
+    {{ if unit and unit_side == "left" }} <span class="{{ if not unit_bg }}input__unit{{ /if }}{{ if unit_bg }} input__bg-unit{{ /if }}">{{ unit }}</span> {{ /if }}
+    {{ include "django/forms/widgets/input.html" }}
+    {{ if unit and unit_side == "right" }} <span class="{{ if not unit_bg }}input__unit{{ /if }}{{ if unit_bg }} input__bg-unit{{ /if }}">{{ unit }}</span> {{ /if }}
+</div>
+
+<div class="calendar__data hidden"
+     {{ if widget_datepicker }}
+        {{ for key, value of widget_datepicker.working_hours.items }}
+            data-{{key}}="{{value}}"
+        {{ /for }}
+    {{ else if datepicker }}
+        {{ if datepicker.should_delay }}
+            data-should_delay
+        {{ /if }}
+    {{ else }}
+        data-start='08:30:00'
+        data-end='20:30:00'
+        data-start_day='{{ now "Y-m-d" }}'
+        data-saturday_start='08:30:00'
+        data-saturday_end='20:30:00'
+    {{ /if }}
+>
+</div>
+
+<details {{ if category == "active" }}open{{ /if }} ></details>
+
+<input type="radio" name="{{ field.name }}" id="id_{{ field.name }}{{ forloop.count }}" value="{{ choice.0 }}" {{ if choice.0 == field.value }}checked="checked"{{ /if }} />
+
+<input
+    id="id_callback"
+    type="radio"
+    name="callback_method"
+    value="callback"
+    {{ if not office_open }} disabled class="hidden" {{ /if }}
+>
+
+<div class="flex foo"
+    id="index_id"
+    {{ if index_type == "foo" }}style="display: none"{{ /if }}>
+    My text that should sometimes be hidden
+</div>
+
+<div data-toggle-mobile="true"
+    {{ if "adsl" not in connectivity_technology }}data-filter="fiber"{{ /if }}
+    class="foo bar baz yayayayayayaya">
+    Data attributes
+</div>
+
+{{ for subentry in entry.subentries }}
+    {{ if subentry.url }}
+        <li>
+            <a
+                href="{{ subentry.url }}"
+                {{ if subentry.active }}
+                  class="dropdown-menu-selected"
+                {{ /if }}
+            >{{ subentry.name }}</a>
+        </li>
+    {{ else }}
+        <li class="nav-internal-link--dropdown--separator">{{ subentry.name }}</li>
+    {{ /if }}
+{{ /for }}

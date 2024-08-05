@@ -1,0 +1,11 @@
+<form class="form-control" action='{{ url "my_app:subscribe" }}' method="post">
+  {{ whatever }}
+</form>
+<a
+    href='https://{{ request.get_host }}{{ url "newsletter_verify" uuid=subscription.verification_token }}'
+>Subscribe to the newsletter!</a>
+<div
+  class="first-class {{ layout extra_classes }}{{ /layout }} modal fade"
+  aria-hidden="true"
+></div>
+<div id="cookie-modal__form" class="modal cookie-modal {{ if should_hide }}initial-hidden{{ /if }}"></div>

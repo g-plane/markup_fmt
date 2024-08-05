@@ -57,10 +57,11 @@ pub enum AstroExprChild<'s> {
 
 pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
+    JinjaTagOrBlock(Node<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
+    VentoTagOrBlock(Node<'s>),
     VueDirective(VueDirective<'s>),
-    JinjaTagOrBlock(Node<'s>),
 }
 
 pub struct Comment<'s> {

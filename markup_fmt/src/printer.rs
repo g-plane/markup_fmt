@@ -295,6 +295,7 @@ impl<'s> DocGen<'s> for Attribute<'s> {
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
             Attribute::Astro(astro_attribute) => astro_attribute.doc(ctx, state),
             Attribute::JinjaTagOrBlock(jinja_tag_or_block) => jinja_tag_or_block.doc(ctx, state),
+            Attribute::VentoTagOrBlock(vento_tag_or_block) => vento_tag_or_block.doc(ctx, state),
         }
     }
 }
