@@ -3,11 +3,11 @@ source: markup_fmt/tests/fmt.rs
 ---
 <div
   style="
-         
-         color:
-         #fFf
-         
-         "
+  
+    color:
+    #fFf
+  
+  "
 >
 </div>
 
@@ -16,25 +16,25 @@ source: markup_fmt/tests/fmt.rs
 
 <div
   style="
-         
-         all: initial;display: block;
-         contain: content;text-align: center;
-         
-         
-         
-         background: linear-gradient(to left, hotpink, #FFF00F, #ccc, hsla(240, 100%, 50%, .05), transparent);
-         background: linear-gradient(to left, hsla(240, 100%, 50%, .05), red);
-         max-width: 500px;margin: 0 auto;
-         border-radius: 8px;transition: transform .2s ease-out;
-         
-         "
+  
+    all: initial;display: block;
+    contain: content;text-align: center;
+  
+  
+  
+    background: linear-gradient(to left, hotpink, #FFF00F, #ccc, hsla(240, 100%, 50%, .05), transparent);
+    background: linear-gradient(to left, hsla(240, 100%, 50%, .05), red);
+    max-width: 500px;margin: 0 auto;
+    border-radius: 8px;transition: transform .2s ease-out;
+  
+  "
 >
 </div>
 
 <div
   style="
-         background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);
-         "
+    background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);
+  "
 >
 </div>
 
@@ -46,12 +46,12 @@ source: markup_fmt/tests/fmt.rs
 
 <div
   style="
-         
-         color: green;
-         
-         display: inline 
-         
-         "
+  
+    color: green;
+  
+    display: inline 
+  
+  "
 >
 </div>
 
@@ -173,14 +173,14 @@ source: markup_fmt/tests/fmt.rs
 <!-- Preserve multiline style argument -->
 <div
   style="
-         color: red;
-         display: inline;
-         height: auto;
-         position: absolute;
-         top: 0;
-         left: 0;
-         right: 0;
-         bottom: 0;
-         "
+    color: red;
+    display: inline;
+    height: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  "
 >
 </div>

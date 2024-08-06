@@ -884,8 +884,13 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             if self.name.eq_ignore_ascii_case("class") {
                 docs.push(Doc::text(value.split_ascii_whitespace().join(" ")));
             } else if self.name.eq_ignore_ascii_case("style") {
-                // The indent width is the length of `style="` ie 7.
-                docs.extend(format_style_attr_value(&value, 7));
+                let indent_width = if value.trim_start_matches([' ', '\t']).starts_with('\n') {
+                    ctx.indent_width
+                } else {
+                    // The indent width is the length of `style="` ie 7.
+                    7
+                };
+                docs.extend(format_style_attr_value(&value, indent_width));
             } else {
                 docs.extend(reflow_owned(&value));
             }
@@ -1646,7 +1651,7 @@ fn format_style_attr_value<'i, 'o: 'i>(
     itertools::intersperse(
         s.split('\n').enumerate().map(move |(index, line)| {
             let trimmed = line.strip_suffix('\r').unwrap_or(line).trim_start();
-            if index == 0 {
+            if index == 0 || trimmed.len() == 0 {
                 Doc::text(trimmed.to_owned())
             } else {
                 let indented = " ".repeat(indent_width) + trimmed;
