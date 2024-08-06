@@ -1,50 +1,59 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<div style="
+<div
+  style="
+         
+         color:
+         #fFf
+         
+         "
+>
+</div>
 
-color:
-#fFf
-
-"></div>
-
-<div style=" "></div>
+<div style=""></div>
 <div style></div>
 
 <div
   style="
-
-all: initial;display: block;
-contain: content;text-align: center;
-
-
-
-background: linear-gradient(to left, hotpink, #FFF00F, #ccc, hsla(240, 100%, 50%, .05), transparent);
-background: linear-gradient(to left, hsla(240, 100%, 50%, .05), red);
-max-width: 500px;margin: 0 auto;
-border-radius: 8px;transition: transform .2s ease-out;
-
-"
+         
+         all: initial;display: block;
+         contain: content;text-align: center;
+         
+         
+         
+         background: linear-gradient(to left, hotpink, #FFF00F, #ccc, hsla(240, 100%, 50%, .05), transparent);
+         background: linear-gradient(to left, hsla(240, 100%, 50%, .05), red);
+         max-width: 500px;margin: 0 auto;
+         border-radius: 8px;transition: transform .2s ease-out;
+         
+         "
 >
 </div>
 
 <div
   style="
-background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);
-"
+         background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);
+         "
 >
 </div>
 
-<div style="   color : red;
-            display    :inline "></div>
+<div
+  style="color : red;
+         display    :inline "
+>
+</div>
 
-<div style="  
-
-color: green;
-
-display: inline 
-
-"></div>
+<div
+  style="
+         
+         color: green;
+         
+         display: inline 
+         
+         "
+>
+</div>
 
 <div
   attribute-1
@@ -72,7 +81,7 @@ display: inline
 <!-- Compact style argument -->
 <div
   style="left: 50%;
-            bottom: 0"
+         bottom: 0"
   class="absolute -translate-x-1/2 data-tag data-tag--lg data-tag--borders tint-green text-24 h-36"
 >
   style is first arg
@@ -81,7 +90,7 @@ display: inline
 <div
   class="flex flex-col items-center absolute z-10 {% if title|length > 30 %}w-4/5{% else %}w-1/2{% endif %}"
   style="top:60%;
-            transform:translate(0,-50%)"
+         transform:translate(0,-50%)"
 >
   style is second arg
 </div>
@@ -89,55 +98,73 @@ display: inline
 <div
   class="flex flex-col items-center absolute z-10 {% if title|length > 30 %}w-4/5{% else %}w-1/2{% endif %}"
   style="top:60%;
-            transform:translate(0,-50%)"
+         transform:translate(0,-50%)"
   id="dfff"
 >
   style is middle arg
 </div>
 
-<div style="top:60%;
-            transform:translate(0,-50%)"></div>
+<div
+  style="top:60%;
+         transform:translate(0,-50%)"
+>
+</div>
 
 <div
   class="absolute right-0 bg-blue-020 rounded-full"
   style="height: 585px;
-            width: 585px;
-            filter: blur(86px);
-            top: 153px"
+         width: 585px;
+         filter: blur(86px);
+         top: 153px"
 >
   Big multiline style arg
 </div>
 
-<div style="top:90%;
-            transform:translate(0,-50%)">
-  <div style="top:80%;
-              transform:translate(0,-50%)">
-    <div style="top:70%;
-                transform:translate(0,-50%)">
+<div
+  style="top:90%;
+         transform:translate(0,-50%)"
+>
+  <div
+    style="top:80%;
+           transform:translate(0,-50%)"
+  >
+    <div
+      style="top:70%;
+             transform:translate(0,-50%)"
+    >
       Nested divs with multiline style attrs
     </div>
   </div>
 </div>
 
-<div style="   color : red;
-            display    :inline "></div>
 <div
-  style="   color : red;
-            display    :inline; height: auto;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0; "
+  style="color : red;
+         display    :inline "
+>
+</div>
+<div
+  style="color : red;
+         display    :inline; height: auto;
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         bottom: 0; "
 >
 </div>
 
-<div style="top:60%;
-     transform:translate(0,-50%)">
-  <div style="top:60%;
-transform:translate(0,-50%)">
-    <div style="top:60%;
-                 transform:translate(0,-50%)">
+<div
+  style="top:60%;
+         transform:translate(0,-50%)"
+>
+  <div
+    style="top:60%;
+           transform:translate(0,-50%)"
+  >
+    <div
+      style="top:60%;
+             transform:translate(0,-50%)"
+    >
       Nested divs with odd off
     </div>
   </div>
@@ -146,14 +173,14 @@ transform:translate(0,-50%)">
 <!-- Preserve multiline style argument -->
 <div
   style="
-    color: red;
-    display: inline;
-    height: auto;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  "
+         color: red;
+         display: inline;
+         height: auto;
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         bottom: 0;
+         "
 >
 </div>
