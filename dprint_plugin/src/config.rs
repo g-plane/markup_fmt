@@ -347,6 +347,12 @@ pub(crate) fn resolve_config(
                 "astroAttrShorthand",
                 &mut diagnostics,
             ),
+            ignore_comment_directive: get_value(
+                &mut config,
+                "ignoreCommentDirective",
+                "markup-fmt-ignore".into(),
+                &mut diagnostics,
+            ),
         },
     };
 

@@ -341,6 +341,11 @@
       "description": "Control whether Astro attribute should be written in short-hand form or not when possible.",
       "type": ["boolean", "null"],
       "default": null
+    },
+    "ignoreCommentDirective": {
+      "description": "Text directive for ignoring formatting specific element or node.",
+      "type": "string",
+      "default": "markup-fmt-ignore"
     }
   }
 }

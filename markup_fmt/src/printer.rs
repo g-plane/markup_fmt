@@ -479,7 +479,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .children
                     .first()
                     .is_some_and(|child| {
-                        if let Node::Text(text_node) = child {
+                        if let NodeKind::Text(text_node) = &child.kind {
                             !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
                         } else {
                             false
@@ -489,7 +489,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .children
                     .last()
                     .is_some_and(|child| {
-                        if let Node::Text(text_node) = child {
+                        if let NodeKind::Text(text_node) = &child.kind {
                             !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
                         } else {
                             false
@@ -531,7 +531,11 @@ impl<'s> DocGen<'s> for Element<'s> {
         };
 
         if tag_name.eq_ignore_ascii_case("script") {
-            if let [Node::Text(text_node)] = &self.children[..] {
+            if let [Node {
+                kind: NodeKind::Text(text_node),
+                ..
+            }] = &self.children[..]
+            {
                 if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
                     docs.push(Doc::hard_line());
                 } else {
@@ -582,7 +586,11 @@ impl<'s> DocGen<'s> for Element<'s> {
                 }
             }
         } else if tag_name.eq_ignore_ascii_case("style") {
-            if let [Node::Text(text_node)] = &self.children[..] {
+            if let [Node {
+                kind: NodeKind::Text(text_node),
+                ..
+            }] = &self.children[..]
+            {
                 if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
                     docs.push(Doc::hard_line());
                 } else {
@@ -613,7 +621,11 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {
-            if let [Node::Text(text_node)] = &self.children[..] {
+            if let [Node {
+                kind: NodeKind::Text(text_node),
+                ..
+            }] = &self.children[..]
+            {
                 if text_node.raw.contains('\n')
                     && !text_node.raw.starts_with('\n')
                     && !text_node.raw.starts_with("\r\n")
@@ -639,7 +651,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             );
             docs.push(trailing_ws);
         } else if is_whitespace_sensitive
-            && matches!(&self.children[..], [Node::Text(text_node)] if is_all_ascii_whitespace(text_node.raw))
+            && matches!(&self.children[..], [Node { kind: NodeKind::Text(text_node), .. }] if is_all_ascii_whitespace(text_node.raw))
         {
             docs.push(Doc::line_or_space());
         } else {
@@ -652,13 +664,13 @@ impl<'s> DocGen<'s> for Element<'s> {
             if is_whitespace_sensitive
                 && self.children.iter().all(|child| {
                     matches!(
-                        child,
-                        Node::VueInterpolation(..)
-                            | Node::SvelteInterpolation(..)
-                            | Node::Comment(..)
-                            | Node::AstroExpr(..)
-                            | Node::JinjaInterpolation(..)
-                            | Node::VentoInterpolation(..)
+                        &child.kind,
+                        NodeKind::VueInterpolation(..)
+                            | NodeKind::SvelteInterpolation(..)
+                            | NodeKind::Comment(..)
+                            | NodeKind::AstroExpr(..)
+                            | NodeKind::JinjaInterpolation(..)
+                            | NodeKind::VentoInterpolation(..)
                     )
                 })
             {
@@ -896,41 +908,47 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
     }
 }
 
-impl<'s> DocGen<'s> for Node<'s> {
+impl<'s> DocGen<'s> for NodeKind<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'_, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         match self {
-            Node::AngularFor(angular_for) => angular_for.doc(ctx, state),
-            Node::AngularIf(angular_if) => angular_if.doc(ctx, state),
-            Node::AngularInterpolation(angular_interpolation) => {
+            NodeKind::AngularFor(angular_for) => angular_for.doc(ctx, state),
+            NodeKind::AngularIf(angular_if) => angular_if.doc(ctx, state),
+            NodeKind::AngularInterpolation(angular_interpolation) => {
                 angular_interpolation.doc(ctx, state)
             }
-            Node::AngularLet(angular_let) => angular_let.doc(ctx, state),
-            Node::AngularSwitch(angular_switch) => angular_switch.doc(ctx, state),
-            Node::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
-            Node::Comment(comment) => comment.doc(ctx, state),
-            Node::Doctype(doctype) => doctype.doc(ctx, state),
-            Node::Element(element) => element.doc(ctx, state),
-            Node::FrontMatter(front_matter) => front_matter.doc(ctx, state),
-            Node::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
-            Node::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
-            Node::JinjaInterpolation(jinja_interpolation) => jinja_interpolation.doc(ctx, state),
-            Node::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
-            Node::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx, state),
-            Node::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx, state),
-            Node::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx, state),
-            Node::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx, state),
-            Node::SvelteInterpolation(svelte_interpolation) => svelte_interpolation.doc(ctx, state),
-            Node::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx, state),
-            Node::Text(text_node) => text_node.doc(ctx, state),
-            Node::VentoBlock(vento_block) => vento_block.doc(ctx, state),
-            Node::VentoComment(vento_comment) => vento_comment.doc(ctx, state),
-            Node::VentoEval(vento_eval) => vento_eval.doc(ctx, state),
-            Node::VentoInterpolation(vento_interpolation) => vento_interpolation.doc(ctx, state),
-            Node::VentoTag(vento_tag) => vento_tag.doc(ctx, state),
-            Node::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx, state),
+            NodeKind::AngularLet(angular_let) => angular_let.doc(ctx, state),
+            NodeKind::AngularSwitch(angular_switch) => angular_switch.doc(ctx, state),
+            NodeKind::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
+            NodeKind::Comment(comment) => comment.doc(ctx, state),
+            NodeKind::Doctype(doctype) => doctype.doc(ctx, state),
+            NodeKind::Element(element) => element.doc(ctx, state),
+            NodeKind::FrontMatter(front_matter) => front_matter.doc(ctx, state),
+            NodeKind::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
+            NodeKind::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
+            NodeKind::JinjaInterpolation(jinja_interpolation) => {
+                jinja_interpolation.doc(ctx, state)
+            }
+            NodeKind::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
+            NodeKind::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx, state),
+            NodeKind::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx, state),
+            NodeKind::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx, state),
+            NodeKind::SvelteIfBlock(svelte_if_block) => svelte_if_block.doc(ctx, state),
+            NodeKind::SvelteInterpolation(svelte_interpolation) => {
+                svelte_interpolation.doc(ctx, state)
+            }
+            NodeKind::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx, state),
+            NodeKind::Text(text_node) => text_node.doc(ctx, state),
+            NodeKind::VentoBlock(vento_block) => vento_block.doc(ctx, state),
+            NodeKind::VentoComment(vento_comment) => vento_comment.doc(ctx, state),
+            NodeKind::VentoEval(vento_eval) => vento_eval.doc(ctx, state),
+            NodeKind::VentoInterpolation(vento_interpolation) => {
+                vento_interpolation.doc(ctx, state)
+            }
+            NodeKind::VentoTag(vento_tag) => vento_tag.doc(ctx, state),
+            NodeKind::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx, state),
         }
     }
 }
@@ -940,9 +958,9 @@ impl<'s> DocGen<'s> for Root<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let is_whole_document_like = self.children.iter().any(|child| match child {
-            Node::Doctype(..) => true,
-            Node::Element(element) => element.tag_name.eq_ignore_ascii_case("html"),
+        let is_whole_document_like = self.children.iter().any(|child| match &child.kind {
+            NodeKind::Doctype(..) => true,
+            NodeKind::Element(element) => element.tag_name.eq_ignore_ascii_case("html"),
             _ => false,
         });
         let is_whitespace_sensitive = matches!(
@@ -1655,7 +1673,10 @@ fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> +
 fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
     match &children {
         [] => true,
-        [Node::Text(text_node)] => {
+        [Node {
+            kind: NodeKind::Text(text_node),
+            ..
+        }] => {
             !is_whitespace_sensitive
                 && text_node
                     .raw
@@ -1667,6 +1688,43 @@ fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
 }
 fn is_all_ascii_whitespace(s: &str) -> bool {
     !s.is_empty() && s.as_bytes().iter().all(|byte| byte.is_ascii_whitespace())
+}
+
+fn should_ignore_node<E, F>(index: usize, nodes: &[Node], ctx: &Ctx<E, F>) -> bool
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    match index.checked_sub(1).and_then(|i| nodes.get(i)) {
+        Some(Node {
+            kind: NodeKind::Comment(comment),
+            ..
+        }) => has_ignore_directive(&comment, ctx),
+        Some(Node {
+            kind: NodeKind::Text(text_node),
+            ..
+        }) if is_all_ascii_whitespace(text_node.raw) => {
+            if let Some(Node {
+                kind: NodeKind::Comment(comment),
+                ..
+            }) = index.checked_sub(2).and_then(|i| nodes.get(i))
+            {
+                has_ignore_directive(&comment, ctx)
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+fn has_ignore_directive<E, F>(comment: &Comment, ctx: &Ctx<E, F>) -> bool
+where
+    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+{
+    comment
+        .raw
+        .trim_start()
+        .strip_prefix(&ctx.options.ignore_comment_directive)
+        .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_whitespace()) || rest.is_empty())
 }
 
 fn should_add_whitespace_before_text_node<'s>(
@@ -1755,45 +1813,54 @@ where
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
                     let is_current_text_like = is_text_like(child);
-                    let maybe_hard_line = if is_prev_text_like || is_current_text_like {
-                        None
+                    if should_ignore_node(i, children, ctx) {
+                        let raw = child.raw.trim_end_matches(|c| c == ' ' || c == '\t');
+                        let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
+                        docs.extend(reflow_raw(last_line_break_removed.unwrap_or(raw)));
+                        if i < children.len() - 1 && last_line_break_removed.is_some() {
+                            docs.push(Doc::hard_line());
+                        }
                     } else {
-                        Some(Doc::hard_line())
-                    };
-                    match child {
-                        Node::Text(text_node) => {
-                            let is_first = i == 0;
-                            let is_last = i + 1 == children.len();
-                            if is_all_ascii_whitespace(text_node.raw) {
-                                if !is_first && !is_last {
-                                    if text_node.line_breaks > 1 {
-                                        docs.push(Doc::empty_line());
+                        let maybe_hard_line = if is_prev_text_like || is_current_text_like {
+                            None
+                        } else {
+                            Some(Doc::hard_line())
+                        };
+                        match &child.kind {
+                            NodeKind::Text(text_node) => {
+                                let is_first = i == 0;
+                                let is_last = i + 1 == children.len();
+                                if is_all_ascii_whitespace(text_node.raw) {
+                                    if !is_first && !is_last {
+                                        if text_node.line_breaks > 1 {
+                                            docs.push(Doc::empty_line());
+                                        }
+                                        docs.push(Doc::hard_line());
                                     }
-                                    docs.push(Doc::hard_line());
+                                } else {
+                                    if let Some(hard_line) = maybe_hard_line {
+                                        docs.push(hard_line);
+                                    } else if let Some(doc) =
+                                        should_add_whitespace_before_text_node(text_node, is_first)
+                                    {
+                                        docs.push(doc);
+                                    }
+                                    docs.push(text_node.doc(ctx, state));
+                                    if let Some(doc) =
+                                        should_add_whitespace_after_text_node(text_node, is_last)
+                                    {
+                                        docs.push(doc);
+                                    }
                                 }
-                            } else {
+                            }
+                            child => {
                                 if let Some(hard_line) = maybe_hard_line {
                                     docs.push(hard_line);
-                                } else if let Some(doc) =
-                                    should_add_whitespace_before_text_node(text_node, is_first)
-                                {
-                                    docs.push(doc);
                                 }
-                                docs.push(text_node.doc(ctx, state));
-                                if let Some(doc) =
-                                    should_add_whitespace_after_text_node(text_node, is_last)
-                                {
-                                    docs.push(doc);
-                                }
+                                docs.push(child.doc(ctx, state));
                             }
                         }
-                        child => {
-                            if let Some(hard_line) = maybe_hard_line {
-                                docs.push(hard_line);
-                            }
-                            docs.push(child.doc(ctx, state));
-                        }
-                    };
+                    }
                     (docs, is_current_text_like)
                 },
             )
@@ -1805,14 +1872,14 @@ where
 /// Determines if a given node is "text-like".
 /// Text-like nodes should remain on the same line whenever possible.
 fn is_text_like(node: &Node) -> bool {
-    match node {
-        Node::Text(..)
-        | Node::VueInterpolation(..)
-        | Node::SvelteInterpolation(..)
-        | Node::AstroExpr(..)
-        | Node::JinjaInterpolation(..)
-        | Node::VentoInterpolation(..) => true,
-        Node::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
+    match &node.kind {
+        NodeKind::Text(..)
+        | NodeKind::VueInterpolation(..)
+        | NodeKind::SvelteInterpolation(..)
+        | NodeKind::AstroExpr(..)
+        | NodeKind::JinjaInterpolation(..)
+        | NodeKind::VentoInterpolation(..) => true,
+        NodeKind::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
         _ => false,
     }
 }
@@ -1830,31 +1897,49 @@ where
         children
             .iter()
             .enumerate()
-            .map(|(i, child)| match child {
-                Node::Text(text_node) => {
-                    let is_first = i == 0;
-                    let is_last = i + 1 == children.len();
-                    if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                        return if text_node.line_breaks > 1 {
-                            Doc::empty_line().append(Doc::hard_line())
-                        } else if has_two_more_non_text_children {
-                            Doc::hard_line()
-                        } else {
-                            Doc::line_or_space()
-                        };
+            .map(|(i, child)| {
+                if should_ignore_node(i, children, ctx) {
+                    let raw = child.raw.trim_end_matches(|c| c == ' ' || c == '\t');
+                    let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
+                    let doc =
+                        Doc::list(reflow_raw(last_line_break_removed.unwrap_or(raw)).collect());
+                    if i < children.len() - 1 && last_line_break_removed.is_some() {
+                        doc.append(Doc::hard_line())
+                    } else {
+                        doc
                     }
+                } else {
+                    match &child.kind {
+                        NodeKind::Text(text_node) => {
+                            let is_first = i == 0;
+                            let is_last = i + 1 == children.len();
+                            if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
+                                return if text_node.line_breaks > 1 {
+                                    Doc::empty_line().append(Doc::hard_line())
+                                } else if has_two_more_non_text_children {
+                                    Doc::hard_line()
+                                } else {
+                                    Doc::line_or_space()
+                                };
+                            }
 
-                    let mut docs = Vec::with_capacity(3);
-                    if let Some(doc) = should_add_whitespace_before_text_node(text_node, is_first) {
-                        docs.push(doc);
+                            let mut docs = Vec::with_capacity(3);
+                            if let Some(doc) =
+                                should_add_whitespace_before_text_node(text_node, is_first)
+                            {
+                                docs.push(doc);
+                            }
+                            docs.push(text_node.doc(ctx, state));
+                            if let Some(doc) =
+                                should_add_whitespace_after_text_node(text_node, is_last)
+                            {
+                                docs.push(doc);
+                            }
+                            Doc::list(docs)
+                        }
+                        child => child.doc(ctx, state),
                     }
-                    docs.push(text_node.doc(ctx, state));
-                    if let Some(doc) = should_add_whitespace_after_text_node(text_node, is_last) {
-                        docs.push(doc);
-                    }
-                    Doc::list(docs)
                 }
-                child => child.doc(ctx, state),
             })
             .collect(),
     )
@@ -1900,7 +1985,11 @@ fn format_v_slot(style: VSlotStyle, slot: &str) -> Doc<'_> {
 }
 
 fn format_ws_sensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
-    if let Some(Node::Text(text_node)) = children.first() {
+    if let Some(Node {
+        kind: NodeKind::Text(text_node),
+        ..
+    }) = children.first()
+    {
         if text_node.raw.starts_with(|c: char| c.is_ascii_whitespace()) {
             if text_node.line_breaks > 0 {
                 Doc::hard_line()
@@ -1916,7 +2005,11 @@ fn format_ws_sensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
 }
 
 fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
-    if let Some(Node::Text(text_node)) = children.last() {
+    if let Some(Node {
+        kind: NodeKind::Text(text_node),
+        ..
+    }) = children.last()
+    {
         if text_node.raw.ends_with(|c: char| c.is_ascii_whitespace()) {
             if text_node.line_breaks > 0 {
                 Doc::hard_line()
@@ -1932,13 +2025,19 @@ fn format_ws_sensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
 }
 fn format_ws_insensitive_leading_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
     match children.first() {
-        Some(Node::Text(text_node)) if text_node.line_breaks > 0 => Doc::hard_line(),
+        Some(Node {
+            kind: NodeKind::Text(text_node),
+            ..
+        }) if text_node.line_breaks > 0 => Doc::hard_line(),
         _ => Doc::line_or_nil(),
     }
 }
 fn format_ws_insensitive_trailing_ws<'s>(children: &[Node<'s>]) -> Doc<'s> {
     match children.last() {
-        Some(Node::Text(text_node)) if text_node.line_breaks > 0 => Doc::hard_line(),
+        Some(Node {
+            kind: NodeKind::Text(text_node),
+            ..
+        }) if text_node.line_breaks > 0 => Doc::hard_line(),
         _ => Doc::line_or_nil(),
     }
 }
@@ -1969,7 +2068,10 @@ where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
     match children {
-        [Node::Text(text_node)] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
+        [Node {
+            kind: NodeKind::Text(text_node),
+            ..
+        }] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
         _ => format_ws_sensitive_leading_ws(children)
             .append(format_children_without_inserting_linebreak(
                 children,

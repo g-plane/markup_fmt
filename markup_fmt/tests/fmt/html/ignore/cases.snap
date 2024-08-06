@@ -1,0 +1,6 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+123<!--markup-fmt-ignore-->456
+
+<span></span><!--markup-fmt-ignore--><span></span>

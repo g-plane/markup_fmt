@@ -98,6 +98,24 @@ impl<'s> Parser<'s> {
         {}
     }
 
+    fn with_taken<T, F>(&mut self, parser: F) -> PResult<(T, &'s str)>
+    where
+        F: FnOnce(&mut Self) -> PResult<T>,
+    {
+        let start = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
+        let parsed = parser(self)?;
+        let end = self
+            .chars
+            .peek()
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len());
+        Ok((parsed, unsafe { self.source.get_unchecked(start..end) }))
+    }
+
     fn parse_angular_control_flow_children(&mut self) -> PResult<Vec<Node<'s>>> {
         if self.chars.next_if(|(_, c)| *c == '{').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('{')));
@@ -563,10 +581,13 @@ impl<'s> Parser<'s> {
                             // do nothing
                         } else if prev.chars().all(|c| c.is_ascii_whitespace()) {
                             if let Some(AstroExprChild::Template(nodes)) = children.last_mut() {
-                                nodes.push(Node::Text(TextNode {
+                                nodes.push(Node {
+                                    kind: NodeKind::Text(TextNode {
+                                        raw: prev,
+                                        line_breaks: prev.chars().filter(|c| *c == '\n').count(),
+                                    }),
                                     raw: prev,
-                                    line_breaks: prev.chars().filter(|c| *c == '\n').count(),
-                                }));
+                                });
                             }
                         } else {
                             children.push(AstroExprChild::Script(prev));
@@ -853,8 +874,12 @@ impl<'s> Parser<'s> {
             || tag_name.eq_ignore_ascii_case("textarea")
         {
             let text_node = self.parse_raw_text_node(tag_name)?;
-            if !text_node.raw.is_empty() {
-                children.push(Node::Text(text_node));
+            let raw = text_node.raw;
+            if !raw.is_empty() {
+                children.push(Node {
+                    kind: NodeKind::Text(text_node),
+                    raw,
+                });
             }
         }
 
@@ -886,7 +911,13 @@ impl<'s> Parser<'s> {
                             || tag_name.eq_ignore_ascii_case("pre")
                             || tag_name.eq_ignore_ascii_case("textarea")
                         {
-                            self.parse_raw_text_node(tag_name).map(Node::Text)?
+                            self.parse_raw_text_node(tag_name).map(|text_node| {
+                                let raw = text_node.raw;
+                                Node {
+                                    kind: NodeKind::Text(text_node),
+                                    raw,
+                                }
+                            })?
                         } else {
                             self.parse_node()?
                         },
@@ -1109,7 +1140,10 @@ impl<'s> Parser<'s> {
         })
     }
 
-    fn parse_jinja_tag_or_block(&mut self, first_tag: Option<JinjaTag<'s>>) -> PResult<Node<'s>> {
+    fn parse_jinja_tag_or_block(
+        &mut self,
+        first_tag: Option<JinjaTag<'s>>,
+    ) -> PResult<NodeKind<'s>> {
         let first_tag = if let Some(first_tag) = first_tag {
             first_tag
         } else {
@@ -1159,19 +1193,24 @@ impl<'s> Parser<'s> {
                     {
                         body.push(JinjaTagOrChildren::Tag(next_tag));
                     } else if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
-                        nodes.push(self.parse_jinja_tag_or_block(Some(next_tag))?);
+                        nodes.push(
+                            self.with_taken(|parser| {
+                                parser.parse_jinja_tag_or_block(Some(next_tag))
+                            })
+                            .map(|(kind, raw)| Node { kind, raw })?,
+                        );
                     } else {
-                        body.push(JinjaTagOrChildren::Children(vec![
-                            self.parse_jinja_tag_or_block(Some(next_tag))?
-                        ]));
+                        body.push(JinjaTagOrChildren::Children(vec![self
+                            .with_taken(|parser| parser.parse_jinja_tag_or_block(Some(next_tag)))
+                            .map(|(kind, raw)| Node { kind, raw })?]));
                     }
                 } else {
                     break;
                 }
             }
-            Ok(Node::JinjaBlock(JinjaBlock { body }))
+            Ok(NodeKind::JinjaBlock(JinjaBlock { body }))
         } else {
-            Ok(Node::JinjaTag(first_tag))
+            Ok(NodeKind::JinjaTag(first_tag))
         }
     }
 
@@ -1226,31 +1265,38 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_node(&mut self) -> PResult<Node<'s>> {
+        let (kind, raw) = self.with_taken(Parser::parse_node_kind)?;
+        Ok(Node { kind, raw })
+    }
+
+    fn parse_node_kind(&mut self) -> PResult<NodeKind<'s>> {
         match self.chars.peek() {
             Some((_, '<')) => {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, c)) if is_tag_name_char(c) => self.parse_element().map(Node::Element),
+                    Some((_, c)) if is_tag_name_char(c) => {
+                        self.parse_element().map(NodeKind::Element)
+                    }
                     Some((_, '!')) => {
                         if matches!(
                             self.language,
                             Language::Html | Language::Astro | Language::Jinja | Language::Vento
                         ) {
                             self.try_parse(Parser::parse_comment)
-                                .map(Node::Comment)
+                                .map(NodeKind::Comment)
                                 .or_else(|_| {
-                                    self.try_parse(Parser::parse_doctype).map(Node::Doctype)
+                                    self.try_parse(Parser::parse_doctype).map(NodeKind::Doctype)
                                 })
-                                .or_else(|_| self.parse_text_node().map(Node::Text))
+                                .or_else(|_| self.parse_text_node().map(NodeKind::Text))
                         } else {
-                            self.parse_comment().map(Node::Comment)
+                            self.parse_comment().map(NodeKind::Comment)
                         }
                     }
                     Some((_, '>')) if matches!(self.language, Language::Astro) => {
-                        self.parse_element().map(Node::Element)
+                        self.parse_element().map(NodeKind::Element)
                     }
-                    _ => self.parse_text_node().map(Node::Text),
+                    _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
             Some((_, '{')) => {
@@ -1265,12 +1311,14 @@ impl<'s> Parser<'s> {
                     {
                         self.parse_mustache_interpolation()
                             .map(|expr| match self.language {
-                                Language::Vue => Node::VueInterpolation(VueInterpolation { expr }),
+                                Language::Vue => {
+                                    NodeKind::VueInterpolation(VueInterpolation { expr })
+                                }
                                 Language::Jinja => {
-                                    Node::JinjaInterpolation(JinjaInterpolation { expr })
+                                    NodeKind::JinjaInterpolation(JinjaInterpolation { expr })
                                 }
                                 Language::Angular => {
-                                    Node::AngularInterpolation(AngularInterpolation { expr })
+                                    NodeKind::AngularInterpolation(AngularInterpolation { expr })
                                 }
                                 _ => unreachable!(),
                             })
@@ -1280,32 +1328,34 @@ impl<'s> Parser<'s> {
                     }
                     Some((_, '#')) if matches!(self.language, Language::Svelte) => {
                         match chars.next() {
-                            Some((_, 'i')) => self.parse_svelte_if_block().map(Node::SvelteIfBlock),
-                            Some((_, 'e')) => {
-                                self.parse_svelte_each_block().map(Node::SvelteEachBlock)
+                            Some((_, 'i')) => {
+                                self.parse_svelte_if_block().map(NodeKind::SvelteIfBlock)
                             }
-                            Some((_, 'a')) => {
-                                self.parse_svelte_await_block().map(Node::SvelteAwaitBlock)
-                            }
+                            Some((_, 'e')) => self
+                                .parse_svelte_each_block()
+                                .map(NodeKind::SvelteEachBlock),
+                            Some((_, 'a')) => self
+                                .parse_svelte_await_block()
+                                .map(NodeKind::SvelteAwaitBlock),
                             Some((_, 'k')) => {
-                                self.parse_svelte_key_block().map(Node::SvelteKeyBlock)
+                                self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock)
                             }
-                            _ => self.parse_text_node().map(Node::Text),
+                            _ => self.parse_text_node().map(NodeKind::Text),
                         }
                     }
                     Some((_, '#')) if matches!(self.language, Language::Jinja) => {
-                        self.parse_jinja_comment().map(Node::JinjaComment)
+                        self.parse_jinja_comment().map(NodeKind::JinjaComment)
                     }
-                    Some((_, '@')) => self.parse_svelte_at_tag().map(Node::SvelteAtTag),
+                    Some((_, '@')) => self.parse_svelte_at_tag().map(NodeKind::SvelteAtTag),
                     Some((_, '%')) if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_tag_or_block(None)
                     }
                     _ => match self.language {
                         Language::Svelte => self
                             .parse_svelte_interpolation()
-                            .map(Node::SvelteInterpolation),
-                        Language::Astro => self.parse_astro_expr().map(Node::AstroExpr),
-                        _ => self.parse_text_node().map(Node::Text),
+                            .map(NodeKind::SvelteInterpolation),
+                        Language::Astro => self.parse_astro_expr().map(NodeKind::AstroExpr),
+                        _ => self.parse_text_node().map(NodeKind::Text),
                     },
                 }
             }
@@ -1318,23 +1368,23 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
-                    self.parse_front_matter().map(Node::FrontMatter)
+                    self.parse_front_matter().map(NodeKind::FrontMatter)
                 } else {
-                    self.parse_text_node().map(Node::Text)
+                    self.parse_text_node().map(NodeKind::Text)
                 }
             }
             Some((_, '@')) if matches!(self.language, Language::Angular) => {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, 'i')) => self.parse_angular_if().map(Node::AngularIf),
-                    Some((_, 'f')) => self.parse_angular_for().map(Node::AngularFor),
-                    Some((_, 's')) => self.parse_angular_switch().map(Node::AngularSwitch),
-                    Some((_, 'l')) => self.parse_angular_let().map(Node::AngularLet),
-                    _ => self.parse_text_node().map(Node::Text),
+                    Some((_, 'i')) => self.parse_angular_if().map(NodeKind::AngularIf),
+                    Some((_, 'f')) => self.parse_angular_for().map(NodeKind::AngularFor),
+                    Some((_, 's')) => self.parse_angular_switch().map(NodeKind::AngularSwitch),
+                    Some((_, 'l')) => self.parse_angular_let().map(NodeKind::AngularLet),
+                    _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
-            Some(..) => self.parse_text_node().map(Node::Text),
+            Some(..) => self.parse_text_node().map(NodeKind::Text),
             None => Err(self.emit_error(SyntaxErrorKind::ExpectElement)),
         }
     }
@@ -2094,7 +2144,7 @@ impl<'s> Parser<'s> {
         Ok(children)
     }
 
-    fn parse_vento_tag_or_block(&mut self, first_tag: Option<&'s str>) -> PResult<Node<'s>> {
+    fn parse_vento_tag_or_block(&mut self, first_tag: Option<&'s str>) -> PResult<NodeKind<'s>> {
         let first_tag = if let Some(first_tag) = first_tag {
             first_tag
         } else {
@@ -2105,9 +2155,9 @@ impl<'s> Parser<'s> {
             .strip_prefix('#')
             .and_then(|s| s.strip_suffix('#'))
         {
-            return Ok(Node::VentoComment(VentoComment { raw }));
+            return Ok(NodeKind::VentoComment(VentoComment { raw }));
         } else if let Some(raw) = first_tag.strip_prefix('>') {
-            return Ok(Node::VentoEval(VentoEval { raw }));
+            return Ok(NodeKind::VentoEval(VentoEval { raw }));
         }
 
         let (tag_name, tag_rest) = helpers::parse_vento_tag(first_tag);
@@ -2142,7 +2192,9 @@ impl<'s> Parser<'s> {
                     if tag_name == "if" && next_tag_name == "else" {
                         body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
                     } else {
-                        let node = self.parse_vento_tag_or_block(Some(next_tag))?;
+                        let node = self
+                            .with_taken(|parser| parser.parse_vento_tag_or_block(Some(next_tag)))
+                            .map(|(kind, raw)| Node { kind, raw })?;
                         if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
                             nodes.push(node);
                         } else {
@@ -2153,13 +2205,13 @@ impl<'s> Parser<'s> {
                     break;
                 }
             }
-            Ok(Node::VentoBlock(VentoBlock { body }))
+            Ok(NodeKind::VentoBlock(VentoBlock { body }))
         } else if is_vento_interpolation(tag_name) {
-            Ok(Node::VentoInterpolation(VentoInterpolation {
+            Ok(NodeKind::VentoInterpolation(VentoInterpolation {
                 expr: first_tag,
             }))
         } else {
-            Ok(Node::VentoTag(VentoTag { tag: first_tag }))
+            Ok(NodeKind::VentoTag(VentoTag { tag: first_tag }))
         }
     }
 

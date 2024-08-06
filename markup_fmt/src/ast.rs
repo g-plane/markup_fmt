@@ -57,10 +57,10 @@ pub enum AstroExprChild<'s> {
 
 pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
-    JinjaTagOrBlock(Node<'s>),
+    JinjaTagOrBlock(NodeKind<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
-    VentoTagOrBlock(Node<'s>),
+    VentoTagOrBlock(NodeKind<'s>),
     VueDirective(VueDirective<'s>),
 }
 
@@ -113,7 +113,12 @@ pub struct NativeAttribute<'s> {
     pub quote: Option<char>,
 }
 
-pub enum Node<'s> {
+pub struct Node<'s> {
+    pub kind: NodeKind<'s>,
+    pub raw: &'s str,
+}
+
+pub enum NodeKind<'s> {
     AngularFor(AngularFor<'s>),
     AngularIf(AngularIf<'s>),
     AngularInterpolation(AngularInterpolation<'s>),
