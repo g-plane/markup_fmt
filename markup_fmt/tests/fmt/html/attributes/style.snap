@@ -68,3 +68,92 @@ display: inline
 <div style="{{ ...styles }}"></div>
 
 <div style="color: red; {{ otherStyles }}"></div>
+
+<!-- Compact style argument -->
+<div
+  style="left: 50%;
+            bottom: 0"
+  class="absolute -translate-x-1/2 data-tag data-tag--lg data-tag--borders tint-green text-24 h-36"
+>
+  style is first arg
+</div>
+
+<div
+  class="flex flex-col items-center absolute z-10 {% if title|length > 30 %}w-4/5{% else %}w-1/2{% endif %}"
+  style="top:60%;
+            transform:translate(0,-50%)"
+>
+  style is second arg
+</div>
+
+<div
+  class="flex flex-col items-center absolute z-10 {% if title|length > 30 %}w-4/5{% else %}w-1/2{% endif %}"
+  style="top:60%;
+            transform:translate(0,-50%)"
+  id="dfff"
+>
+  style is middle arg
+</div>
+
+<div style="top:60%;
+            transform:translate(0,-50%)"></div>
+
+<div
+  class="absolute right-0 bg-blue-020 rounded-full"
+  style="height: 585px;
+            width: 585px;
+            filter: blur(86px);
+            top: 153px"
+>
+  Big multiline style arg
+</div>
+
+<div style="top:90%;
+            transform:translate(0,-50%)">
+  <div style="top:80%;
+              transform:translate(0,-50%)">
+    <div style="top:70%;
+                transform:translate(0,-50%)">
+      Nested divs with multiline style attrs
+    </div>
+  </div>
+</div>
+
+<div style="   color : red;
+            display    :inline "></div>
+<div
+  style="   color : red;
+            display    :inline; height: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0; "
+>
+</div>
+
+<div style="top:60%;
+     transform:translate(0,-50%)">
+  <div style="top:60%;
+transform:translate(0,-50%)">
+    <div style="top:60%;
+                 transform:translate(0,-50%)">
+      Nested divs with odd off
+    </div>
+  </div>
+</div>
+
+<!-- Preserve multiline style argument -->
+<div
+  style="
+    color: red;
+    display: inline;
+    height: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  "
+>
+</div>
