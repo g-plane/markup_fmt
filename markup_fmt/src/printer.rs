@@ -1232,6 +1232,13 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         }))
                         .collect::<String>(),
                 ));
+            } else if self.name.eq_ignore_ascii_case("accept")
+                && state
+                    .current_tag_name
+                    .map(|name| name.eq_ignore_ascii_case("input"))
+                    .unwrap_or_default()
+            {
+                docs.push(Doc::text(value.split(',').map(|s| s.trim()).join(", ")));
             } else {
                 quote = compute_attr_value_quote(&value, self.quote, ctx);
                 docs.extend(reflow_owned(&value));
