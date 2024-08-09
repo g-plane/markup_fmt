@@ -20,4 +20,8 @@ markup_fmt = { path = "../markup_fmt", features = ["config_serde"] }
 serde_json = "1.0"
 
 [dev-dependencies]
+dprint-plugin-biome = "0.0"
+dprint-plugin-json = { version = "0.19", features = ["wasm"] }
+dprint-plugin-typescript = { version = "0.91", features = ["wasm"] }
 insta = { version = "1.38", features = ["glob"] }
+malva = { version = "0.8", features = ["config_serde"] }

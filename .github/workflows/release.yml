@@ -32,14 +32,10 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           registry-url: "https://registry.npmjs.org"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4.0.0
-        with:
-          version: latest
-          run_install: true
       - name: Publish npm package
         run: |
           cp target/wasm32-unknown-unknown/release/dprint_plugin_markup.wasm dprint_plugin/deployment/npm/plugin.wasm
-          pnpm -F dprint-plugin-markup publish --no-git-checks --provenance --access public
+          cd dprint_plugin/deployment/npm
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

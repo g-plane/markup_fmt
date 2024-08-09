@@ -84,30 +84,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
             language,
             config,
             |path, code, print_width| {
-                let mut additional_config = ConfigKeyMap::new();
-                additional_config.insert("lineWidth".into(), (print_width as i32).into());
-                additional_config.insert("printWidth".into(), (print_width as i32).into());
-
-                let file_name = path.file_name().and_then(|s| s.to_str());
-                if let Some("expr.ts" | "binding.ts" | "type_params.ts") = &file_name {
-                    // dprint-plugin-typescript
-                    additional_config.insert("semiColons".into(), "asi".into());
-                    // Biome
-                    additional_config.insert("semicolons".into(), "asNeeded".into());
-                }
-                if let Some("attr_expr.tsx") = &file_name {
-                    // Only for dprint-plugin-typescript currently,
-                    // because it conflicts with the `quoteStyle` option in Biome.
-                    match config.language.quotes {
-                        Quotes::Double => {
-                            additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
-                        }
-                        Quotes::Single => {
-                            additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
-                        }
-                    }
-                }
-
+                let additional_config = build_additional_config(path, print_width, config);
                 format_with_host(path, code.into(), &additional_config).and_then(|result| {
                     match result {
                         Some(code) => String::from_utf8(code)
@@ -137,3 +114,36 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
 
 #[cfg(target_arch = "wasm32")]
 generate_plugin_code!(MarkupFmtPluginHandler, MarkupFmtPluginHandler);
+
+#[doc(hidden)]
+pub fn build_additional_config(
+    path: &Path,
+    print_width: usize,
+    config: &FormatOptions,
+) -> ConfigKeyMap {
+    let mut additional_config = ConfigKeyMap::new();
+    additional_config.insert("lineWidth".into(), (print_width as i32).into());
+    additional_config.insert("printWidth".into(), (print_width as i32).into());
+
+    let file_name = path.file_name().and_then(|s| s.to_str());
+    if let Some("expr.ts" | "binding.ts" | "type_params.ts") = &file_name {
+        // dprint-plugin-typescript
+        additional_config.insert("semiColons".into(), "asi".into());
+        // Biome
+        additional_config.insert("semicolons".into(), "asNeeded".into());
+    }
+    if let Some("attr_expr.tsx") = &file_name {
+        // Only for dprint-plugin-typescript currently,
+        // because it conflicts with the `quoteStyle` option in Biome.
+        match config.language.quotes {
+            Quotes::Double => {
+                additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
+            }
+            Quotes::Single => {
+                additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
+            }
+        }
+    }
+
+    additional_config
+}
