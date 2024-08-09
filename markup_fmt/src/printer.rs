@@ -883,6 +883,13 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             docs.push(quote.clone());
             if self.name.eq_ignore_ascii_case("class") {
                 docs.push(Doc::text(value.split_ascii_whitespace().join(" ")));
+            } else if self.name.eq_ignore_ascii_case("accept")
+                && state
+                    .current_tag_name
+                    .map(|name| name.eq_ignore_ascii_case("input"))
+                    .unwrap_or_default()
+            {
+                docs.push(Doc::text(value.split(',').map(|s| s.trim()).join(", ")));
             } else {
                 docs.extend(reflow_owned(&value));
             }
