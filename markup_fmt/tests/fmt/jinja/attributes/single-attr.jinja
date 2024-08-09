@@ -1,0 +1,23 @@
+<tr {% if targeted_fooo and not foo_bar_bar_bar == mykey %} class="collapse"{% endif %}></tr>
+
+<div
+    {% if not line.fields|length_is:'1' %}
+        class="field-box{% if field.field.name %}
+            field-{{ field.field.name }}{% endif %}{% if not field.is_readonly and field.errors %}
+            errors{% endif %}{% if field.field.is_hidden %}
+            hidden{% endif %}"{% elif field.is_checkbox %}
+        class="checkbox-row"
+    {% endif %}
+></div>
+
+<picture
+    {% for key, val in attributes.items %}
+        {{ key }}="{{ val }}"
+    {% endfor %}
+></picture>
+
+<div
+    {% if field.field.causes_red_card %}data-red-card{%
+        elif field.field.causes_yellow_card
+    %}data-yellow-card{% endif %}
+></div>
