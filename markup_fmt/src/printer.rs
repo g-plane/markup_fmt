@@ -883,6 +883,14 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             docs.push(quote.clone());
             if self.name.eq_ignore_ascii_case("class") {
                 docs.push(Doc::text(value.split_ascii_whitespace().join(" ")));
+            } else if self.name.eq_ignore_ascii_case("style") {
+                let indent_width = if value.trim_start_matches([' ', '\t']).starts_with('\n') {
+                    ctx.indent_width
+                } else {
+                    // The indent width is the length of `style="` ie 7.
+                    7
+                };
+                docs.extend(format_style_attr_value(&value, indent_width));
             } else {
                 docs.extend(reflow_owned(&value));
             }
@@ -1636,6 +1644,23 @@ fn reflow_owned<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
     )
 }
 
+fn format_style_attr_value<'i, 'o: 'i>(
+    s: &'i str,
+    indent_width: usize,
+) -> impl Iterator<Item = Doc<'o>> + '_ {
+    itertools::intersperse(
+        s.split('\n').enumerate().map(move |(index, line)| {
+            let trimmed = line.strip_suffix('\r').unwrap_or(line).trim_start();
+            if index == 0 || trimmed.len() == 0 {
+                Doc::text(trimmed.to_owned())
+            } else {
+                let indented = " ".repeat(indent_width) + trimmed;
+                Doc::text(indented)
+            }
+        }),
+        Doc::hard_line(),
+    )
+}
 fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
     let indent = s
         .lines()
