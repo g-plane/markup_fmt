@@ -2,6 +2,5 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div></div>
-<div
-  class="long-long-long-long-long-attribute"
-></div>
+<div class="long-long-long-long-long-attribute"></div
+>
