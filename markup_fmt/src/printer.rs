@@ -367,18 +367,23 @@ impl<'s> DocGen<'s> for Element<'s> {
             .split_once(':')
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
+        let formatted_tag_name = if matches!(
+            ctx.language,
+            Language::Html | Language::Jinja | Language::Vento
+        ) && css_dataset::tags::STANDARD_HTML_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
+        {
+            Cow::from(self.tag_name.to_ascii_lowercase())
+        } else {
+            Cow::from(self.tag_name)
+        };
         let is_root = state.is_root;
         let state = State {
             current_tag_name: Some(tag_name),
             is_root: false,
             in_svg: tag_name.eq_ignore_ascii_case("svg"),
         };
-        let should_lower_cased = matches!(
-            ctx.language,
-            Language::Html | Language::Jinja | Language::Vento
-        ) && css_dataset::tags::STANDARD_HTML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
         let self_closing = if helpers::is_void_element(tag_name, ctx.language.clone()) {
             ctx.options
@@ -413,11 +418,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         let mut docs = Vec::with_capacity(5);
 
         docs.push(Doc::text("<"));
-        docs.push(Doc::text(if should_lower_cased {
-            Cow::from(self.tag_name.to_ascii_lowercase())
-        } else {
-            Cow::from(self.tag_name)
-        }));
+        docs.push(Doc::text(formatted_tag_name.clone()));
 
         match self.attrs.as_slice() {
             [single_attr] if !is_whitespace_sensitive => {
@@ -724,11 +725,7 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         docs.push(
             Doc::text("</")
-                .append(Doc::text(if should_lower_cased {
-                    Cow::from(self.tag_name.to_ascii_lowercase())
-                } else {
-                    Cow::from(self.tag_name)
-                }))
+                .append(Doc::text(formatted_tag_name))
                 .append(Doc::line_or_nil())
                 .append(Doc::text(">"))
                 .group(),
