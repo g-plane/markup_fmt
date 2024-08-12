@@ -126,23 +126,26 @@ pub fn build_additional_config(
     additional_config.insert("printWidth".into(), (print_width as i32).into());
 
     let file_name = path.file_name().and_then(|s| s.to_str());
-    if let Some("expr.ts" | "binding.ts" | "type_params.ts") = &file_name {
-        // dprint-plugin-typescript
-        additional_config.insert("semiColons".into(), "asi".into());
-        // Biome
-        additional_config.insert("semicolons".into(), "asNeeded".into());
-    }
-    if let Some("attr_expr.tsx") = &file_name {
-        // Only for dprint-plugin-typescript currently,
-        // because it conflicts with the `quoteStyle` option in Biome.
-        match config.language.quotes {
-            Quotes::Double => {
-                additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
-            }
-            Quotes::Single => {
-                additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
+    match &file_name {
+        Some("expr.ts" | "binding.ts" | "type_params.ts") => {
+            // dprint-plugin-typescript
+            additional_config.insert("semiColons".into(), "asi".into());
+            // Biome
+            additional_config.insert("semicolons".into(), "asNeeded".into());
+        }
+        Some("attr_expr.tsx") => {
+            // Only for dprint-plugin-typescript currently,
+            // because it conflicts with the `quoteStyle` option in Biome.
+            match config.language.quotes {
+                Quotes::Double => {
+                    additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
+                }
+                Quotes::Single => {
+                    additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
+                }
             }
         }
+        _ => {}
     }
 
     additional_config
