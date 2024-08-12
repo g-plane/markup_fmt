@@ -246,6 +246,23 @@ where
         )
     }
 
+    pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str) -> String {
+        self.format_with_external_formatter(
+            Path::new("style_attr.css"),
+            code,
+            code,
+            self.print_width
+                .saturating_sub(self.indent_level)
+                .saturating_sub(if self.style_indent() {
+                    self.indent_width
+                } else {
+                    0
+                }),
+        )
+        .trim_end()
+        .to_owned()
+    }
+
     pub(crate) fn format_json<'a>(&mut self, code: &'a str) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new("code.json"),
