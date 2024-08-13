@@ -138,9 +138,9 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
                 additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
             }
         }
-    }
-    if hints.ext == "css" {
-        additional_config.insert("singleLineTopLevelDeclarations".into(), true.into());
+        if hints.ext == "css" {
+            additional_config.insert("singleLineTopLevelDeclarations".into(), true.into());
+        }
     }
 
     additional_config
