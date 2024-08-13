@@ -38,12 +38,12 @@ fn run_format_test(
     options: &FormatOptions,
     language: Language,
 ) -> String {
-    let output = format_text(&input, language.clone(), &options, |_, code, _| {
+    let output = format_text(&input, language.clone(), &options, |code, _| {
         Ok::<_, ()>(code.into())
     })
     .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
     .unwrap();
-    let regression_format = format_text(&output, language, &options, |_, code, _| {
+    let regression_format = format_text(&output, language, &options, |code, _| {
         Ok::<_, ()>(code.into())
     })
     .map_err(|err| {

@@ -32,7 +32,7 @@ fn integration_with_dprint_ts_snapshot() {
                         .map_err(Error::from)
                     } else if ext == "json" {
                         dprint_plugin_json::format_text(
-                            path,
+                            &Path::new("file").with_extension(ext),
                             code,
                             &dprint_plugin_json::configuration::resolve_config(
                                 additional_config,
@@ -49,7 +49,7 @@ fn integration_with_dprint_ts_snapshot() {
                         })
                     } else {
                         dprint_plugin_typescript::format_text(
-                            path,
+                            &Path::new("file").with_extension(ext),
                             code.to_owned(),
                             &dprint_plugin_typescript::configuration::resolve_config(
                                 additional_config,
@@ -120,7 +120,7 @@ fn integration_with_biome_snapshot() {
                         .map_err(Error::from)
                     } else {
                         dprint_plugin_biome::format_text(
-                            path,
+                            &Path::new("file").with_extension(ext),
                             code,
                             &serde_json::to_value(additional_config)
                                 .and_then(serde_json::from_value)

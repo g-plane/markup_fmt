@@ -37,7 +37,7 @@ use tiny_pretty::{IndentKind, PrintOptions};
 ///     code,
 ///     Language::Html,
 ///     &Default::default(),
-///     |_, code, _| Ok::<_, std::convert::Infallible>(code.into()),
+///     |code, _| Ok::<_, std::convert::Infallible>(code.into()),
 /// ).unwrap();
 /// ```
 ///
