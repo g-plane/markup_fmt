@@ -146,7 +146,7 @@ pub fn build_additional_config(
             }
         }
         Some("style_attr.css") => {
-            additional_config.insert("topLevelDeclarations.preferSingleLine".into(), true.into());
+            additional_config.insert("singleLineTopLevelDeclarations".into(), true.into());
         }
         _ => {}
     }
