@@ -132,7 +132,6 @@ where
                 + "}</>";
             let formatted = self.format_with_external_formatter(
                 wrapped,
-                code,
                 Hints {
                     print_width: self
                         .print_width
@@ -172,7 +171,6 @@ where
                 + " = 0";
             let formatted = self.format_with_external_formatter(
                 wrapped,
-                code,
                 Hints {
                     print_width: self
                         .print_width
@@ -205,7 +203,6 @@ where
                 + "> = 0";
             let formatted = self.format_with_external_formatter(
                 wrapped,
-                code,
                 Hints {
                     print_width: self
                         .print_width
@@ -231,7 +228,6 @@ where
             let wrapped = format!("{keyword} ({code}) {{}}");
             let formatted = self.format_with_external_formatter(
                 wrapped,
-                code,
                 Hints {
                     print_width: self
                         .print_width
@@ -265,7 +261,6 @@ where
                 .unwrap_or_default()
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
-            code,
             Hints {
                 print_width: self
                     .print_width
@@ -293,7 +288,6 @@ where
                 .unwrap_or_default()
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
-            code,
             Hints {
                 print_width: self
                     .print_width
@@ -316,7 +310,6 @@ where
                 .unwrap_or_default()
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
-            code,
             Hints {
                 print_width: self
                     .print_width
@@ -341,7 +334,6 @@ where
                 .unwrap_or_default()
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
-            code,
             Hints {
                 print_width: self
                     .print_width
@@ -360,7 +352,6 @@ where
     fn format_with_external_formatter<'a>(
         &mut self,
         code: String,
-        _original_code: &'a str,
         hints: Hints<'b>,
     ) -> Cow<'a, str> {
         match (self.external_formatter)(&code, hints) {
