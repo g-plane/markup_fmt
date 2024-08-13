@@ -15,9 +15,9 @@ fn integration_with_dprint_ts_snapshot() {
                 &input,
                 detect_language(path).unwrap(),
                 &options,
-                |path, code, print_width| -> anyhow::Result<Cow<str>> {
+                |path, code, hints| -> anyhow::Result<Cow<str>> {
                     let additional_config =
-                        dprint_plugin_markup::build_additional_config(path, print_width, &options);
+                        dprint_plugin_markup::build_additional_config(hints, &options);
                     if let Some(syntax) = malva::detect_syntax(path) {
                         malva::format_text(
                             code,
@@ -100,9 +100,9 @@ fn integration_with_biome_snapshot() {
                 &input,
                 detect_language(path).unwrap(),
                 &options,
-                |path, code, print_width| -> anyhow::Result<Cow<str>> {
+                |path, code, hints| -> anyhow::Result<Cow<str>> {
                     let additional_config =
-                        dprint_plugin_markup::build_additional_config(path, print_width, &options);
+                        dprint_plugin_markup::build_additional_config(hints, &options);
                     if let Some(syntax) = malva::detect_syntax(path) {
                         malva::format_text(
                             code,

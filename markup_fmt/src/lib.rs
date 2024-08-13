@@ -10,7 +10,7 @@ mod printer;
 mod state;
 
 use crate::{config::FormatOptions, ctx::Ctx, parser::Parser, printer::DocGen, state::State};
-pub use crate::{error::*, parser::Language};
+pub use crate::{ctx::Hints, error::*, parser::Language};
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::{IndentKind, PrintOptions};
 
@@ -56,7 +56,7 @@ pub fn format_text<E, F>(
     external_formatter: F,
 ) -> Result<String, FormatError<E>>
 where
-    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&Path, &'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root().map_err(FormatError::Syntax)?;

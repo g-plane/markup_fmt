@@ -15,7 +15,7 @@ const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
 where
-    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) source: &'b str,
     pub(crate) language: Language,
@@ -29,7 +29,7 @@ where
 
 impl<'b, E, F> Ctx<'b, E, F>
 where
-    F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) fn script_indent(&self) -> bool {
         match self.language {
@@ -97,12 +97,12 @@ where
     }
 
     pub(crate) fn format_general_expr(&mut self, code: &str, start: usize) -> String {
-        self.format_expr(code, Path::new("expr.tsx"), start)
+        self.format_expr(code, Path::new("expr.tsx"), false, start)
     }
 
     pub(crate) fn format_attr_expr(&mut self, code: &str, start: usize) -> String {
         let code = UNESCAPING_AC.replace_all(code, &QUOTES);
-        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"), start);
+        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"), true, start);
         if memchr(b'\'', formatted.as_bytes()).is_some()
             && memchr(b'"', formatted.as_bytes()).is_some()
         {
@@ -115,7 +115,7 @@ where
         }
     }
 
-    fn format_expr(&mut self, code: &str, path: &Path, start: usize) -> String {
+    fn format_expr(&mut self, code: &str, path: &Path, attr: bool, start: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -134,9 +134,14 @@ where
                 path,
                 wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(2), // this is technically wrong, just workaround
+                Hints {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(2), // this is technically wrong, just workaround
+                    attr,
+                    ext: "tsx",
+                },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             let formatted = formatted
@@ -170,9 +175,14 @@ where
                 Path::new("binding.ts"),
                 wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(2), // this is technically wrong, just workaround
+                Hints {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(2), // this is technically wrong, just workaround
+                    attr: false,
+                    ext: "ts",
+                },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
@@ -199,9 +209,14 @@ where
                 Path::new("type_params.ts"),
                 wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
+                Hints {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
+                    attr: true,
+                    ext: "ts",
+                },
             );
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
@@ -221,9 +236,14 @@ where
                 Path::new("stmt_header.js"),
                 wrapped,
                 code,
-                self.print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+                Hints {
+                    print_width: self
+                        .print_width
+                        .saturating_sub(self.indent_level)
+                        .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+                    attr: false,
+                    ext: "js",
+                },
             );
             formatted
                 .strip_prefix(keyword)
@@ -240,7 +260,7 @@ where
     pub(crate) fn format_script<'a>(
         &mut self,
         code: &'a str,
-        lang: &str,
+        lang: &'b str,
         start: usize,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
@@ -251,20 +271,25 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.script_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            Hints {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.script_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                attr: false,
+                ext: lang,
+            },
         )
     }
 
     pub(crate) fn format_style<'a>(
         &mut self,
         code: &'a str,
-        lang: &str,
+        lang: &'b str,
         start: usize,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
@@ -275,13 +300,18 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.style_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            Hints {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.style_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                attr: false,
+                ext: lang,
+            },
         )
     }
 
@@ -294,13 +324,18 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.style_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            Hints {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.style_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                attr: true,
+                ext: "css",
+            },
         )
         .trim()
         .to_owned()
@@ -315,13 +350,18 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             code,
-            self.print_width
-                .saturating_sub(self.indent_level)
-                .saturating_sub(if self.script_indent() {
-                    self.indent_width
-                } else {
-                    0
-                }),
+            Hints {
+                print_width: self
+                    .print_width
+                    .saturating_sub(self.indent_level)
+                    .saturating_sub(if self.script_indent() {
+                        self.indent_width
+                    } else {
+                        0
+                    }),
+                attr: false,
+                ext: "json",
+            },
         )
     }
 
@@ -330,9 +370,9 @@ where
         path: &Path,
         code: String,
         _original_code: &'a str,
-        print_width: usize,
+        hints: Hints<'b>,
     ) -> Cow<'a, str> {
-        match (self.external_formatter)(path, &code, print_width) {
+        match (self.external_formatter)(path, &code, hints) {
             Ok(Cow::Owned(formatted)) => Cow::from(formatted),
             Ok(Cow::Borrowed(..)) => Cow::from(code),
             Err(e) => {
@@ -343,16 +383,25 @@ where
     }
 }
 
+/// Hints provide some useful additional information to the external formatter.
+pub struct Hints<'s> {
+    pub print_width: usize,
+    /// Whether the code is inside attribute.
+    pub attr: bool,
+    /// Fake file extension.
+    pub ext: &'s str,
+}
+
 pub(crate) trait NestWithCtx {
     fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
-        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>;
+        F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>;
 }
 
 impl NestWithCtx for Doc<'_> {
     fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
-        F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
     {
         ctx.indent_level += ctx.indent_width;
         let doc = self.nest(ctx.indent_width);

@@ -8,7 +8,7 @@ use dprint_core::{
 };
 use markup_fmt::{
     config::{FormatOptions, Quotes},
-    detect_language, format_text, FormatError,
+    detect_language, format_text, FormatError, Hints,
 };
 use std::path::Path;
 
@@ -83,8 +83,8 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
             std::str::from_utf8(&file_text)?,
             language,
             config,
-            |path, code, print_width| {
-                let additional_config = build_additional_config(path, print_width, config);
+            |path, code, hints| {
+                let additional_config = build_additional_config(hints, config);
                 format_with_host(path, code.into(), &additional_config).and_then(|result| {
                     match result {
                         Some(code) => String::from_utf8(code)
@@ -116,39 +116,25 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
 generate_plugin_code!(MarkupFmtPluginHandler, MarkupFmtPluginHandler);
 
 #[doc(hidden)]
-pub fn build_additional_config(
-    path: &Path,
-    print_width: usize,
-    config: &FormatOptions,
-) -> ConfigKeyMap {
+pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKeyMap {
     let mut additional_config = ConfigKeyMap::new();
-    additional_config.insert("lineWidth".into(), (print_width as i32).into());
-    additional_config.insert("printWidth".into(), (print_width as i32).into());
+    additional_config.insert("lineWidth".into(), (hints.print_width as i32).into());
+    additional_config.insert("printWidth".into(), (hints.print_width as i32).into());
 
-    let file_name = path.file_name().and_then(|s| s.to_str());
-    match &file_name {
-        Some("expr.ts" | "binding.ts" | "type_params.ts") => {
-            // dprint-plugin-typescript
-            additional_config.insert("semiColons".into(), "asi".into());
-            // Biome
-            additional_config.insert("semicolons".into(), "asNeeded".into());
-        }
-        Some("attr_expr.tsx") => {
-            // Only for dprint-plugin-typescript currently,
-            // because it conflicts with the `quoteStyle` option in Biome.
-            match config.language.quotes {
-                Quotes::Double => {
-                    additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
-                }
-                Quotes::Single => {
-                    additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
-                }
+    if hints.attr {
+        // Only for dprint-plugin-typescript currently,
+        // because it conflicts with the `quoteStyle` option in Biome.
+        match config.language.quotes {
+            Quotes::Double => {
+                additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
+            }
+            Quotes::Single => {
+                additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
             }
         }
-        Some("style_attr.css") => {
-            additional_config.insert("singleLineTopLevelDeclarations".into(), true.into());
-        }
-        _ => {}
+    }
+    if hints.ext == "css" {
+        additional_config.insert("singleLineTopLevelDeclarations".into(), true.into());
     }
 
     additional_config
