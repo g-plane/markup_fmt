@@ -22,7 +22,7 @@ impl<'s> DocGen<'s> for AngularCase<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("@case (")
-            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)))
             .append(Doc::text(") {"))
             .append(format_control_structure_block_children(
                 &self.children,
@@ -40,10 +40,10 @@ impl<'s> DocGen<'s> for AngularElseIf<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@else if ("));
-        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
-        if let Some(reference) = self.reference {
+        docs.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
+        if let Some((reference, start)) = self.reference {
             docs.push(Doc::text("; as "));
-            docs.push(Doc::text(ctx.format_binding(reference)));
+            docs.push(Doc::text(ctx.format_binding(reference, start)));
         }
         docs.push(Doc::text(") {"));
         docs.push(format_control_structure_block_children(
@@ -63,17 +63,19 @@ impl<'s> DocGen<'s> for AngularFor<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@for ("));
-        docs.push(Doc::text(ctx.format_binding(self.binding)));
+        docs.push(Doc::text(
+            ctx.format_binding(self.binding.0, self.binding.1),
+        ));
         docs.push(Doc::text(" of "));
-        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
-        if let Some(track) = self.track {
+        docs.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
+        if let Some((track, start)) = self.track {
             docs.push(Doc::text("; track "));
-            docs.push(Doc::text(ctx.format_general_expr(track)));
+            docs.push(Doc::text(ctx.format_general_expr(track, start)));
         }
-        if let Some(aliases) = self.aliases {
+        if let Some((aliases, start)) = self.aliases {
             docs.push(Doc::text("; "));
             docs.extend(reflow_with_indent(
-                ctx.format_script(aliases, "js")
+                ctx.format_script(aliases, "js", start)
                     .trim()
                     .trim_end_matches(';'),
             ));
@@ -105,10 +107,10 @@ impl<'s> DocGen<'s> for AngularIf<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@if ("));
-        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
-        if let Some(reference) = self.reference {
+        docs.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
+        if let Some((reference, start)) = self.reference {
             docs.push(Doc::text("; as "));
-            docs.push(Doc::text(ctx.format_binding(reference)));
+            docs.push(Doc::text(ctx.format_binding(reference, start)));
         }
         docs.push(Doc::text(") {"));
         docs.push(format_control_structure_block_children(
@@ -143,7 +145,9 @@ impl<'s> DocGen<'s> for AngularInterpolation<'s> {
     {
         Doc::text("{{")
             .append(Doc::line_or_space())
-            .concat(reflow_with_indent(&ctx.format_general_expr(self.expr)))
+            .concat(reflow_with_indent(
+                &ctx.format_general_expr(self.expr, self.start),
+            ))
             .nest_with_ctx(ctx)
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
@@ -159,7 +163,7 @@ impl<'s> DocGen<'s> for AngularLet<'s> {
         Doc::text("@let ")
             .append(Doc::text(self.name))
             .append(Doc::text(" = "))
-            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)))
             .append(Doc::text(";"))
     }
 }
@@ -171,7 +175,7 @@ impl<'s> DocGen<'s> for AngularSwitch<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@switch ("));
-        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
         docs.push(Doc::text(") {"));
 
         docs.extend(
@@ -199,7 +203,7 @@ impl<'s> DocGen<'s> for AstroAttribute<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let expr_code = ctx.format_general_expr(self.expr);
+        let expr_code = ctx.format_general_expr(self.expr.0, self.expr.1);
         let expr = Doc::text("{")
             .concat(reflow_with_indent(&expr_code))
             .append(Doc::text("}"));
@@ -236,7 +240,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                 }
             })
             .join(PLACEHOLDER);
-        let formatted_script = ctx.format_general_expr(&script);
+        let formatted_script = ctx.format_general_expr(&script, self.start);
 
         let templates = self.children.iter().filter_map(|child| {
             if let AstroExprChild::Template(nodes) = child {
@@ -544,7 +548,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                             native_attr.name.eq_ignore_ascii_case("type")
                                 && native_attr
                                     .value
-                                    .map(|value| {
+                                    .map(|(value, _)| {
                                         value == "importmap" || value == "application/json"
                                     })
                                     .unwrap_or_default()
@@ -553,7 +557,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                         }
                     });
                     let formatted = if is_json {
-                        ctx.format_json(text_node.raw)
+                        ctx.format_json(text_node.raw, text_node.start)
                     } else {
                         ctx.format_script(
                             text_node.raw,
@@ -563,7 +567,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                     Attribute::Native(native_attribute)
                                         if native_attribute.name.eq_ignore_ascii_case("lang") =>
                                     {
-                                        native_attribute.value
+                                        native_attribute.value.map(|(value, _)| value)
                                     }
                                     _ => None,
                                 })
@@ -572,6 +576,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 } else {
                                     "js"
                                 }),
+                            text_node.start,
                         )
                     };
                     let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
@@ -602,11 +607,12 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 Attribute::Native(native_attribute)
                                     if native_attribute.name.eq_ignore_ascii_case("lang") =>
                                 {
-                                    native_attribute.value
+                                    native_attribute.value.map(|(value, _)| value)
                                 }
                                 _ => None,
                             })
                             .unwrap_or("css"),
+                        text_node.start,
                     );
                     let doc = Doc::hard_line().concat(reflow_with_indent(formatted.trim()));
                     docs.push(
@@ -709,7 +715,7 @@ impl<'s> DocGen<'s> for FrontMatter<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         if matches!(ctx.language, Language::Astro) {
-            let formatted = ctx.format_script(self.raw, "tsx");
+            let formatted = ctx.format_script(self.raw, "tsx", self.start);
             Doc::text("---")
                 .append(Doc::hard_line())
                 .concat(reflow_with_indent(formatted.trim()))
@@ -811,7 +817,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let name = Doc::text(self.name);
-        if let Some(value) = self.value {
+        if let Some((value, value_start)) = self.value {
             let value = match ctx.language {
                 Language::Vue => {
                     if state
@@ -820,14 +826,14 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         .unwrap_or_default()
                         && self.name == "generic"
                     {
-                        Cow::from(ctx.format_type_params(value))
+                        Cow::from(ctx.format_type_params(value, value_start))
                     } else {
                         Cow::from(value)
                     }
                 }
                 Language::Svelte if !ctx.options.strict_svelte_attr => {
                     if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                        let formatted_expr = ctx.format_general_expr(expr);
+                        let formatted_expr = ctx.format_general_expr(expr, value_start);
                         return match self.name.split_once(':') {
                             Some((_, name))
                                 if matches!(ctx.options.svelte_directive_shorthand, Some(true))
@@ -854,7 +860,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 Language::Angular
                     if self.name.starts_with(['[', '(']) && self.name.ends_with([']', ')']) =>
                 {
-                    Cow::from(ctx.format_general_expr(value))
+                    Cow::from(ctx.format_general_expr(value, value_start))
                 }
                 _ => Cow::from(value),
             };
@@ -884,7 +890,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             if self.name.eq_ignore_ascii_case("class") {
                 docs.push(Doc::text(value.split_ascii_whitespace().join(" ")));
             } else if self.name.eq_ignore_ascii_case("style") {
-                docs.push(Doc::text(ctx.format_style_attr(&value)));
+                docs.push(Doc::text(ctx.format_style_attr(&value, value_start)));
             } else {
                 docs.extend(reflow_owned(&value));
             }
@@ -1000,7 +1006,7 @@ impl<'s> DocGen<'s> for SvelteAtTag<'s> {
         Doc::text("{@")
             .append(Doc::text(self.name))
             .append(Doc::space())
-            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)))
             .append(Doc::text("}"))
     }
 }
@@ -1010,7 +1016,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     where
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
-        let expr_code = ctx.format_general_expr(self.expr);
+        let expr_code = ctx.format_general_expr(self.expr.0, self.expr.1);
         let expr = Doc::text("{")
             .concat(reflow_with_indent(&expr_code))
             .append(Doc::text("}"));
@@ -1062,18 +1068,18 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
     {
         let mut head = Vec::with_capacity(5);
         head.push(Doc::text("{#await "));
-        head.push(Doc::text(ctx.format_general_expr(self.expr)));
+        head.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
 
-        if let Some(then_binding) = self.then_binding {
+        if let Some((then_binding, start)) = self.then_binding {
             head.push(Doc::line_or_space());
             head.push(Doc::text("then "));
-            head.push(Doc::text(ctx.format_binding(then_binding)));
+            head.push(Doc::text(ctx.format_binding(then_binding, start)));
         }
 
-        if let Some(catch_binding) = self.catch_binding {
+        if let Some((catch_binding, start)) = self.catch_binding {
             head.push(Doc::line_or_space());
             head.push(Doc::text("catch "));
-            head.push(Doc::text(ctx.format_binding(catch_binding)));
+            head.push(Doc::text(ctx.format_binding(catch_binding, start)));
         }
 
         let mut docs = Vec::with_capacity(5);
@@ -1109,9 +1115,9 @@ impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         let children = format_control_structure_block_children(&self.children, ctx, state);
-        if let Some(binding) = self.binding {
+        if let Some((binding, start)) = self.binding {
             Doc::text("{:catch ")
-                .append(Doc::text(ctx.format_binding(binding)))
+                .append(Doc::text(ctx.format_binding(binding, start)))
                 .append(Doc::text("}"))
                 .append(children)
         } else {
@@ -1127,21 +1133,23 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
     {
         let mut head = Vec::with_capacity(5);
         head.push(Doc::text("{#each "));
-        head.push(Doc::text(ctx.format_general_expr(self.expr)));
+        head.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
         head.push(Doc::text(" as"));
         head.push(Doc::line_or_space());
-        head.push(Doc::text(ctx.format_binding(self.binding)));
+        head.push(Doc::text(
+            ctx.format_binding(self.binding.0, self.binding.1),
+        ));
 
         if let Some(index) = self.index {
             head.push(Doc::text(","));
             head.push(Doc::line_or_space());
-            head.push(Doc::text(ctx.format_binding(index)));
+            head.push(Doc::text(index));
         }
 
-        if let Some(key) = self.key {
+        if let Some((key, start)) = self.key {
             head.push(Doc::line_or_space());
             head.push(Doc::text("("));
-            head.push(Doc::text(ctx.format_general_expr(key)));
+            head.push(Doc::text(ctx.format_general_expr(key, start)));
             head.push(Doc::text(")"));
         }
 
@@ -1177,7 +1185,7 @@ impl<'s> DocGen<'s> for SvelteElseIfBlock<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{:else if ")
-            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)))
             .append(Doc::text("}"))
             .append(format_control_structure_block_children(
                 &self.children,
@@ -1194,7 +1202,7 @@ impl<'s> DocGen<'s> for SvelteIfBlock<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("{#if "));
-        docs.push(Doc::text(ctx.format_general_expr(self.expr)));
+        docs.push(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)));
         docs.push(Doc::text("}"));
         docs.push(format_control_structure_block_children(
             &self.children,
@@ -1227,7 +1235,9 @@ impl<'s> DocGen<'s> for SvelteInterpolation<'s> {
     {
         Doc::text("{")
             .append(Doc::line_or_nil())
-            .concat(reflow_with_indent(&ctx.format_general_expr(self.expr)))
+            .concat(reflow_with_indent(
+                &ctx.format_general_expr(self.expr.0, self.expr.1),
+            ))
             .nest_with_ctx(ctx)
             .append(Doc::line_or_nil())
             .append(Doc::text("}"))
@@ -1241,7 +1251,7 @@ impl<'s> DocGen<'s> for SvelteKeyBlock<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{#key ")
-            .append(Doc::text(ctx.format_general_expr(self.expr)))
+            .append(Doc::text(ctx.format_general_expr(self.expr.0, self.expr.1)))
             .append(Doc::text("}"))
             .append(format_control_structure_block_children(
                 &self.children,
@@ -1258,7 +1268,9 @@ impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
         F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{:then ")
-            .append(Doc::text(ctx.format_binding(self.binding)))
+            .append(Doc::text(
+                ctx.format_binding(self.binding.0, self.binding.1),
+            ))
             .append(Doc::text("}"))
             .append(format_control_structure_block_children(
                 &self.children,
@@ -1332,7 +1344,7 @@ impl<'s> DocGen<'s> for VentoEval<'s> {
         Doc::text("{{>")
             .append(Doc::line_or_space())
             .concat(reflow_with_indent(
-                ctx.format_script(self.raw, "js")
+                ctx.format_script(self.raw, "js", self.start)
                     .trim()
                     .trim_end_matches(';'),
             ))
@@ -1352,7 +1364,9 @@ impl<'s> DocGen<'s> for VentoInterpolation<'s> {
             .append(Doc::line_or_space())
             .concat(itertools::intersperse(
                 self.expr.split("|>").map(|expr| {
-                    Doc::list(reflow_with_indent(&ctx.format_general_expr(expr)).collect())
+                    Doc::list(
+                        reflow_with_indent(&ctx.format_general_expr(expr, self.start)).collect(),
+                    )
                 }),
                 Doc::line_or_space()
                     .append(Doc::text("|>"))
@@ -1416,13 +1430,13 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
                             let (template, data) = rest.split_at(index);
                             Doc::text(tag_name.to_string())
                                 .append(Doc::space())
-                                .concat(reflow_with_indent(&ctx.format_general_expr(template)))
+                                .concat(reflow_with_indent(&ctx.format_general_expr(template, 0)))
                                 .append(Doc::text(" "))
-                                .concat(reflow_with_indent(&ctx.format_general_expr(data)))
+                                .concat(reflow_with_indent(&ctx.format_general_expr(data, 0)))
                         } else {
-                            Doc::text(tag_name.to_string())
-                                .append(Doc::space())
-                                .concat(reflow_with_indent(&ctx.format_general_expr(parsed_tag.1)))
+                            Doc::text(tag_name.to_string()).append(Doc::space()).concat(
+                                reflow_with_indent(&ctx.format_general_expr(parsed_tag.1, 0)),
+                            )
                         }
                     } else if parsed_tag.0 == "function" || parsed_tag.1.starts_with("function") {
                         // unsupported at present
@@ -1431,18 +1445,20 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
                         if let Some((binding, expr)) = rest.trim().split_once('=') {
                             Doc::text(tag_name.to_string())
                                 .append(Doc::space())
-                                .concat(reflow_with_indent(&ctx.format_binding(binding)))
+                                .concat(reflow_with_indent(&ctx.format_binding(binding, 0)))
                                 .append(Doc::text(" = "))
-                                .concat(reflow_with_indent(&ctx.format_general_expr(expr)))
+                                .concat(reflow_with_indent(&ctx.format_general_expr(expr, 0)))
                         } else {
                             Doc::text(tag_name.to_string())
                                 .append(Doc::space())
-                                .concat(reflow_with_indent(&ctx.format_binding(rest)))
+                                .concat(reflow_with_indent(&ctx.format_binding(rest, 0)))
                         }
                     } else if let ("import", _) = parsed_tag {
                         Doc::list(
                             reflow_with_indent(
-                                ctx.format_script(item, "js").trim().trim_end_matches(';'),
+                                ctx.format_script(item, "js", 0)
+                                    .trim()
+                                    .trim_end_matches(';'),
                             )
                             .collect(),
                         )
@@ -1560,7 +1576,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
             }
         };
 
-        if let Some(value) = self.value {
+        if let Some((value, value_start)) = self.value {
             let value = match self.name {
                 "for" => {
                     use crate::config::VForDelimiterStyle;
@@ -1572,7 +1588,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         } else {
                             "in"
                         };
-                        format_v_for(left, delimiter, right, ctx)
+                        format_v_for(left, delimiter, right, value_start, ctx)
                     } else if let Some((left, right)) = value.split_once(" of ") {
                         let delimiter = if let Some(VForDelimiterStyle::In) =
                             ctx.options.v_for_delimiter_style
@@ -1581,13 +1597,13 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         } else {
                             "of"
                         };
-                        format_v_for(left, delimiter, right, ctx)
+                        format_v_for(left, delimiter, right, value_start, ctx)
                     } else {
-                        ctx.format_attr_expr(value)
+                        ctx.format_attr_expr(value, value_start)
                     }
                 }
-                "#" | "slot" => ctx.format_binding(value),
-                _ => ctx.format_attr_expr(value),
+                "#" | "slot" => ctx.format_binding(value, value_start),
+                _ => ctx.format_attr_expr(value, value_start),
             };
             if !(matches!(ctx.options.v_bind_same_name_short_hand, Some(true))
                 && is_v_bind
@@ -1614,7 +1630,9 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
     {
         Doc::text("{{")
             .append(Doc::line_or_space())
-            .concat(reflow_with_indent(&ctx.format_general_expr(self.expr)))
+            .concat(reflow_with_indent(
+                &ctx.format_general_expr(self.expr, self.start),
+            ))
             .nest_with_ctx(ctx)
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
@@ -2047,13 +2065,14 @@ fn format_v_for<'s, E, F>(
     left: &str,
     delimiter: &'static str,
     right: &str,
+    start: usize,
     ctx: &mut Ctx<'_, E, F>,
 ) -> String
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
-    let left = ctx.format_general_expr(left);
-    let right = ctx.format_general_expr(right);
+    let left = ctx.format_general_expr(left, start);
+    let right = ctx.format_general_expr(right, start + 4);
     if left.contains(',') && !left.contains('(') {
         format!("({left}) {delimiter} {right}")
     } else {

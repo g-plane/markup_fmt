@@ -1,26 +1,26 @@
 pub struct AngularCase<'s> {
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
     pub children: Vec<Node<'s>>,
 }
 
 pub struct AngularElseIf<'s> {
-    pub expr: &'s str,
-    pub reference: Option<&'s str>,
+    pub expr: (&'s str, usize),
+    pub reference: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
 }
 
 pub struct AngularFor<'s> {
-    pub binding: &'s str,
-    pub expr: &'s str,
-    pub track: Option<&'s str>,
-    pub aliases: Option<&'s str>,
+    pub binding: (&'s str, usize),
+    pub expr: (&'s str, usize),
+    pub track: Option<(&'s str, usize)>,
+    pub aliases: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub empty: Option<Vec<Node<'s>>>,
 }
 
 pub struct AngularIf<'s> {
-    pub expr: &'s str,
-    pub reference: Option<&'s str>,
+    pub expr: (&'s str, usize),
+    pub reference: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub else_if_blocks: Vec<AngularElseIf<'s>>,
     pub else_children: Option<Vec<Node<'s>>>,
@@ -28,26 +28,28 @@ pub struct AngularIf<'s> {
 
 pub struct AngularInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }
 
 pub struct AngularLet<'s> {
     pub name: &'s str,
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
 }
 
 pub struct AngularSwitch<'s> {
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
     pub cases: Vec<AngularCase<'s>>,
     pub default: Option<Vec<Node<'s>>>,
 }
 
 pub struct AstroAttribute<'s> {
     pub name: Option<&'s str>,
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
 }
 
 pub struct AstroExpr<'s> {
     pub children: Vec<AstroExprChild<'s>>,
+    pub start: usize,
 }
 
 pub enum AstroExprChild<'s> {
@@ -84,6 +86,7 @@ pub struct Element<'s> {
 
 pub struct FrontMatter<'s> {
     pub raw: &'s str,
+    pub start: usize,
 }
 
 pub struct JinjaBlock<'s> {
@@ -109,7 +112,7 @@ pub enum JinjaTagOrChildren<'s> {
 
 pub struct NativeAttribute<'s> {
     pub name: &'s str,
-    pub value: Option<&'s str>,
+    pub value: Option<(&'s str, usize)>,
     pub quote: Option<char>,
 }
 
@@ -154,66 +157,67 @@ pub struct Root<'s> {
 
 pub struct SvelteAtTag<'s> {
     pub name: &'s str,
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
 }
 
 pub struct SvelteAttribute<'s> {
     pub name: Option<&'s str>,
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
 }
 
 pub struct SvelteAwaitBlock<'s> {
-    pub expr: &'s str,
-    pub then_binding: Option<&'s str>,
-    pub catch_binding: Option<&'s str>,
+    pub expr: (&'s str, usize),
+    pub then_binding: Option<(&'s str, usize)>,
+    pub catch_binding: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub then_block: Option<SvelteThenBlock<'s>>,
     pub catch_block: Option<SvelteCatchBlock<'s>>,
 }
 
 pub struct SvelteCatchBlock<'s> {
-    pub binding: Option<&'s str>,
+    pub binding: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
 }
 
 pub struct SvelteEachBlock<'s> {
-    pub expr: &'s str,
-    pub binding: &'s str,
+    pub expr: (&'s str, usize),
+    pub binding: (&'s str, usize),
     pub index: Option<&'s str>,
-    pub key: Option<&'s str>,
+    pub key: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub else_children: Option<Vec<Node<'s>>>,
 }
 
 pub struct SvelteElseIfBlock<'s> {
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
     pub children: Vec<Node<'s>>,
 }
 
 pub struct SvelteIfBlock<'s> {
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
     pub children: Vec<Node<'s>>,
     pub else_if_blocks: Vec<SvelteElseIfBlock<'s>>,
     pub else_children: Option<Vec<Node<'s>>>,
 }
 
 pub struct SvelteInterpolation<'s> {
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
 }
 
 pub struct SvelteKeyBlock<'s> {
-    pub expr: &'s str,
+    pub expr: (&'s str, usize),
     pub children: Vec<Node<'s>>,
 }
 
 pub struct SvelteThenBlock<'s> {
-    pub binding: &'s str,
+    pub binding: (&'s str, usize),
     pub children: Vec<Node<'s>>,
 }
 
 pub struct TextNode<'s> {
     pub raw: &'s str,
     pub line_breaks: usize,
+    pub start: usize,
 }
 
 pub struct VentoBlock<'s> {
@@ -226,10 +230,12 @@ pub struct VentoComment<'s> {
 
 pub struct VentoEval<'s> {
     pub raw: &'s str,
+    pub start: usize,
 }
 
 pub struct VentoInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }
 
 pub struct VentoTag<'s> {
@@ -244,9 +250,10 @@ pub enum VentoTagOrChildren<'s> {
 pub struct VueDirective<'s> {
     pub name: &'s str,
     pub arg_and_modifiers: Option<&'s str>,
-    pub value: Option<&'s str>,
+    pub value: Option<(&'s str, usize)>,
 }
 
 pub struct VueInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }

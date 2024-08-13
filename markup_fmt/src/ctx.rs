@@ -17,6 +17,7 @@ pub(crate) struct Ctx<'b, E, F>
 where
     F: for<'a> FnMut(&Path, &'a str, usize) -> Result<Cow<'a, str>, E>,
 {
+    pub(crate) source: &'b str,
     pub(crate) language: Language,
     pub(crate) indent_width: usize,
     pub(crate) print_width: usize,
@@ -95,13 +96,13 @@ where
         }
     }
 
-    pub(crate) fn format_general_expr(&mut self, code: &str) -> String {
-        self.format_expr(code, Path::new("expr.tsx"))
+    pub(crate) fn format_general_expr(&mut self, code: &str, start: usize) -> String {
+        self.format_expr(code, Path::new("expr.tsx"), start)
     }
 
-    pub(crate) fn format_attr_expr(&mut self, code: &str) -> String {
+    pub(crate) fn format_attr_expr(&mut self, code: &str, start: usize) -> String {
         let code = UNESCAPING_AC.replace_all(code, &QUOTES);
-        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"));
+        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"), start);
         if memchr(b'\'', formatted.as_bytes()).is_some()
             && memchr(b'"', formatted.as_bytes()).is_some()
         {
@@ -114,24 +115,30 @@ where
         }
     }
 
-    fn format_expr(&mut self, code: &str, path: &Path) -> String {
+    fn format_expr(&mut self, code: &str, path: &Path, start: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
             // Trim original code before sending it to the external formatter.
             // This makes sure the code will be trimmed
             // though external formatter isn't available.
-            let wrapped = format!("<>{{{}}}</>", code.trim());
+            let wrapped = self
+                .source
+                .get(0..start.saturating_sub(3))
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + "<>{"
+                + code.trim()
+                + "}</>";
             let formatted = self.format_with_external_formatter(
                 path,
-                &wrapped,
+                wrapped,
                 code,
                 self.print_width
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
             );
-            let formatted =
-                formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
+            let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             let formatted = formatted
                 .strip_prefix("<>")
                 .and_then(|s| s.strip_suffix("</>"))
@@ -147,14 +154,21 @@ where
         }
     }
 
-    pub(crate) fn format_binding(&mut self, code: &str) -> String {
+    pub(crate) fn format_binding(&mut self, code: &str, start: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
-            let wrapped = format!("let {} = 0", code.trim());
+            let wrapped = self
+                .source
+                .get(0..start.saturating_sub(4))
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + "let "
+                + code.trim()
+                + " = 0";
             let formatted = self.format_with_external_formatter(
                 Path::new("binding.ts"),
-                &wrapped,
+                wrapped,
                 code,
                 self.print_width
                     .saturating_sub(self.indent_level)
@@ -169,14 +183,21 @@ where
         }
     }
 
-    pub(crate) fn format_type_params(&mut self, code: &str) -> String {
+    pub(crate) fn format_type_params(&mut self, code: &str, start: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
-            let wrapped = format!("type T<{}> = 0", code.trim());
+            let wrapped = self
+                .source
+                .get(0..start.saturating_sub(7))
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + "type T<"
+                + code.trim()
+                + "> = 0";
             let formatted = self.format_with_external_formatter(
                 Path::new("type_params.ts"),
-                &wrapped,
+                wrapped,
                 code,
                 self.print_width
                     .saturating_sub(self.indent_level)
@@ -198,7 +219,7 @@ where
             let wrapped = format!("{keyword} ({code}) {{}}");
             let formatted = self.format_with_external_formatter(
                 Path::new("stmt_header.js"),
-                &wrapped,
+                wrapped,
                 code,
                 self.print_width
                     .saturating_sub(self.indent_level)
@@ -216,10 +237,19 @@ where
         }
     }
 
-    pub(crate) fn format_script<'a>(&mut self, code: &'a str, lang: &str) -> Cow<'a, str> {
+    pub(crate) fn format_script<'a>(
+        &mut self,
+        code: &'a str,
+        lang: &str,
+        start: usize,
+    ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new(&format!("script.{lang}")),
-            code,
+            self.source
+                .get(0..start)
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + code,
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
@@ -231,10 +261,19 @@ where
         )
     }
 
-    pub(crate) fn format_style<'a>(&mut self, code: &'a str, lang: &str) -> Cow<'a, str> {
+    pub(crate) fn format_style<'a>(
+        &mut self,
+        code: &'a str,
+        lang: &str,
+        start: usize,
+    ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new(&format!("style.{lang}")),
-            code,
+            self.source
+                .get(0..start)
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + code,
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
@@ -246,10 +285,14 @@ where
         )
     }
 
-    pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str) -> String {
+    pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str, start: usize) -> String {
         self.format_with_external_formatter(
             Path::new("style_attr.css"),
-            code,
+            self.source
+                .get(0..start)
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + code,
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
@@ -259,14 +302,18 @@ where
                     0
                 }),
         )
-        .trim_end()
+        .trim()
         .to_owned()
     }
 
-    pub(crate) fn format_json<'a>(&mut self, code: &'a str) -> Cow<'a, str> {
+    pub(crate) fn format_json<'a>(&mut self, code: &'a str, start: usize) -> Cow<'a, str> {
         self.format_with_external_formatter(
             Path::new("code.json"),
-            code,
+            self.source
+                .get(0..start)
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + code,
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
@@ -281,12 +328,13 @@ where
     fn format_with_external_formatter<'a>(
         &mut self,
         path: &Path,
-        code: &'a str,
+        code: String,
         _original_code: &'a str,
         print_width: usize,
     ) -> Cow<'a, str> {
-        match (self.external_formatter)(path, code, print_width) {
-            Ok(code) => code,
+        match (self.external_formatter)(path, &code, print_width) {
+            Ok(Cow::Owned(formatted)) => Cow::from(formatted),
+            Ok(Cow::Borrowed(..)) => Cow::from(code),
             Err(e) => {
                 self.external_formatter_errors.push(e);
                 code.into()

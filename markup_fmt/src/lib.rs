@@ -61,6 +61,7 @@ where
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root().map_err(FormatError::Syntax)?;
     let mut ctx = Ctx {
+        source: code,
         language,
         indent_width: options.layout.indent_width,
         print_width: options.layout.print_width,
