@@ -138,10 +138,8 @@ where
                     .saturating_sub(self.indent_level)
                     .saturating_sub(2), // this is technically wrong, just workaround
             );
-            let formatted =
-                formatted.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';');
+            let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             let formatted = formatted
-                .trim_start()
                 .strip_prefix("<>")
                 .and_then(|s| s.strip_suffix("</>"))
                 .unwrap_or(formatted)
@@ -304,7 +302,7 @@ where
                     0
                 }),
         )
-        .trim_end()
+        .trim()
         .to_owned()
     }
 

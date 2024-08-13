@@ -1,18 +1,14 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<div style="
-
-color:
+<div style="color:
 #fFf"></div>
 
 <div style=""></div>
 <div style></div>
 
 <div
-  style="
-
-all: initial;display: block;
+  style="all: initial;display: block;
 contain: content;text-align: center;
 
 
@@ -25,17 +21,14 @@ border-radius: 8px;transition: transform .2s ease-out;"
 </div>
 
 <div
-  style="
-background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);"
+  style="background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);"
 >
 </div>
 
-<div style="   color : red;
+<div style="color : red;
             display    :inline"></div>
 
-<div style="  
-
-color: green;
+<div style="color: green;
 
 display: inline"></div>
 
