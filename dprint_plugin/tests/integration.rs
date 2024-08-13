@@ -15,10 +15,13 @@ fn integration_with_dprint_ts_snapshot() {
                 &input,
                 detect_language(path).unwrap(),
                 &options,
-                |path, code, hints| -> anyhow::Result<Cow<str>> {
+                |code, hints| -> anyhow::Result<Cow<str>> {
+                    let ext = hints.ext;
                     let additional_config =
                         dprint_plugin_markup::build_additional_config(hints, &options);
-                    if let Some(syntax) = malva::detect_syntax(path) {
+                    if let Some(syntax) =
+                        malva::detect_syntax(&Path::new("file").with_extension(ext))
+                    {
                         malva::format_text(
                             code,
                             syntax,
@@ -27,7 +30,7 @@ fn integration_with_dprint_ts_snapshot() {
                         )
                         .map(Cow::from)
                         .map_err(Error::from)
-                    } else if path.extension().unwrap().to_str().unwrap() == "json" {
+                    } else if ext == "json" {
                         dprint_plugin_json::format_text(
                             path,
                             code,
@@ -100,10 +103,13 @@ fn integration_with_biome_snapshot() {
                 &input,
                 detect_language(path).unwrap(),
                 &options,
-                |path, code, hints| -> anyhow::Result<Cow<str>> {
+                |code, hints| -> anyhow::Result<Cow<str>> {
+                    let ext = hints.ext;
                     let additional_config =
                         dprint_plugin_markup::build_additional_config(hints, &options);
-                    if let Some(syntax) = malva::detect_syntax(path) {
+                    if let Some(syntax) =
+                        malva::detect_syntax(&Path::new("file").with_extension(ext))
+                    {
                         malva::format_text(
                             code,
                             syntax,

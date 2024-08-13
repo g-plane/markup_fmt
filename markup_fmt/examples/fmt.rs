@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    let formatted = format_text(&code, language, &options, |_, code, _| {
+    let formatted = format_text(&code, language, &options, |code, _| {
         Ok::<_, Infallible>(code.into())
     })?;
     print!("{formatted}");

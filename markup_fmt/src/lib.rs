@@ -43,12 +43,9 @@ use tiny_pretty::{IndentKind, PrintOptions};
 ///
 /// For the external formatter closure,
 ///
-/// - The first argument is file path.
-/// Either script code or style code will be passed to this closure,
-/// so you need to check file extension with the file path.
-/// - The second argument is code that needs formatting.
-/// - The third argument is print width that you may need to pass to formatter
-/// if they support such option.
+/// - The first argument is code that needs formatting.
+/// - The second argument is hints which contains useful information for external formatters,
+///   such as file extension and print width.
 pub fn format_text<E, F>(
     code: &str,
     language: Language,
@@ -56,7 +53,7 @@ pub fn format_text<E, F>(
     external_formatter: F,
 ) -> Result<String, FormatError<E>>
 where
-    F: for<'a> FnMut(&Path, &'a str, Hints) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root().map_err(FormatError::Syntax)?;

@@ -83,15 +83,21 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
             std::str::from_utf8(&file_text)?,
             language,
             config,
-            |path, code, hints| {
+            |code, hints| {
+                let mut file_name = file_path.file_name().expect("missing file name").to_owned();
+                file_name.push("#.");
+                file_name.push(hints.ext);
                 let additional_config = build_additional_config(hints, config);
-                format_with_host(path, code.into(), &additional_config).and_then(|result| {
-                    match result {
-                        Some(code) => String::from_utf8(code)
-                            .map(|s| s.into())
-                            .map_err(anyhow::Error::from),
-                        None => Ok(code.into()),
-                    }
+                format_with_host(
+                    &file_path.with_file_name(file_name),
+                    code.into(),
+                    &additional_config,
+                )
+                .and_then(|result| match result {
+                    Some(code) => String::from_utf8(code)
+                        .map(|s| s.into())
+                        .map_err(anyhow::Error::from),
+                    None => Ok(code.into()),
                 })
             },
         );

@@ -4,7 +4,7 @@ use crate::{
 };
 use aho_corasick::AhoCorasick;
 use memchr::memchr;
-use std::{borrow::Cow, path::Path, sync::LazyLock};
+use std::{borrow::Cow, sync::LazyLock};
 use tiny_pretty::Doc;
 
 const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
@@ -15,7 +15,7 @@ const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
 where
-    F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) source: &'b str,
     pub(crate) language: Language,
@@ -29,7 +29,7 @@ where
 
 impl<'b, E, F> Ctx<'b, E, F>
 where
-    F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
 {
     pub(crate) fn script_indent(&self) -> bool {
         match self.language {
@@ -97,12 +97,12 @@ where
     }
 
     pub(crate) fn format_general_expr(&mut self, code: &str, start: usize) -> String {
-        self.format_expr(code, Path::new("expr.tsx"), false, start)
+        self.format_expr(code, false, start)
     }
 
     pub(crate) fn format_attr_expr(&mut self, code: &str, start: usize) -> String {
         let code = UNESCAPING_AC.replace_all(code, &QUOTES);
-        let formatted = self.format_expr(&code, Path::new("attr_expr.tsx"), true, start);
+        let formatted = self.format_expr(&code, true, start);
         if memchr(b'\'', formatted.as_bytes()).is_some()
             && memchr(b'"', formatted.as_bytes()).is_some()
         {
@@ -115,7 +115,7 @@ where
         }
     }
 
-    fn format_expr(&mut self, code: &str, path: &Path, attr: bool, start: usize) -> String {
+    fn format_expr(&mut self, code: &str, attr: bool, start: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -131,7 +131,6 @@ where
                 + code.trim()
                 + "}</>";
             let formatted = self.format_with_external_formatter(
-                path,
                 wrapped,
                 code,
                 Hints {
@@ -172,7 +171,6 @@ where
                 + code.trim()
                 + " = 0";
             let formatted = self.format_with_external_formatter(
-                Path::new("binding.ts"),
                 wrapped,
                 code,
                 Hints {
@@ -206,7 +204,6 @@ where
                 + code.trim()
                 + "> = 0";
             let formatted = self.format_with_external_formatter(
-                Path::new("type_params.ts"),
                 wrapped,
                 code,
                 Hints {
@@ -233,7 +230,6 @@ where
         } else {
             let wrapped = format!("{keyword} ({code}) {{}}");
             let formatted = self.format_with_external_formatter(
-                Path::new("stmt_header.js"),
                 wrapped,
                 code,
                 Hints {
@@ -264,7 +260,6 @@ where
         start: usize,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
-            Path::new(&format!("script.{lang}")),
             self.source
                 .get(0..start)
                 .unwrap_or_default()
@@ -293,7 +288,6 @@ where
         start: usize,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
-            Path::new(&format!("style.{lang}")),
             self.source
                 .get(0..start)
                 .unwrap_or_default()
@@ -317,7 +311,6 @@ where
 
     pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str, start: usize) -> String {
         self.format_with_external_formatter(
-            Path::new("style_attr.css"),
             self.source
                 .get(0..start)
                 .unwrap_or_default()
@@ -343,7 +336,6 @@ where
 
     pub(crate) fn format_json<'a>(&mut self, code: &'a str, start: usize) -> Cow<'a, str> {
         self.format_with_external_formatter(
-            Path::new("code.json"),
             self.source
                 .get(0..start)
                 .unwrap_or_default()
@@ -367,12 +359,11 @@ where
 
     fn format_with_external_formatter<'a>(
         &mut self,
-        path: &Path,
         code: String,
         _original_code: &'a str,
         hints: Hints<'b>,
     ) -> Cow<'a, str> {
-        match (self.external_formatter)(path, &code, hints) {
+        match (self.external_formatter)(&code, hints) {
             Ok(Cow::Owned(formatted)) => Cow::from(formatted),
             Ok(Cow::Borrowed(..)) => Cow::from(code),
             Err(e) => {
@@ -395,13 +386,13 @@ pub struct Hints<'s> {
 pub(crate) trait NestWithCtx {
     fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
-        F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>;
+        F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>;
 }
 
 impl NestWithCtx for Doc<'_> {
     fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
     where
-        F: for<'a> FnMut(&Path, &'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
+        F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
     {
         ctx.indent_level += ctx.indent_width;
         let doc = self.nest(ctx.indent_width);
