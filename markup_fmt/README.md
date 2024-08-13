@@ -1,4 +1,4 @@
-markup_fmt is a configurable HTML/Vue/Svelte/Astro/Angular/Jinja/Twig/Nunjucks/Vento formatter.
+markup_fmt is a configurable HTML, Vue, Svelte, Astro, Angular, Jinja, Twig, Nunjucks and Vento formatter.
 
 ## Basic Usage
 
