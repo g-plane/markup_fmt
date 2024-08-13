@@ -150,11 +150,13 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
         };
 
-        let Some((binding, expr)) = self
-            .parse_angular_inline_script(start + 1)?
-            .split_once(" of ")
-            .map(|(binding, expr)| (binding.trim_end(), expr.trim_start()))
-        else {
+        let (header, header_start) = self.parse_angular_inline_script(start + 1)?;
+        let Some((binding, expr)) = header.split_once(" of ").map(|(binding, expr)| {
+            (
+                (binding.trim_end(), header_start),
+                (expr.trim_start(), header_start + 4),
+            )
+        }) else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("of")));
         };
 
@@ -313,7 +315,7 @@ impl<'s> Parser<'s> {
         })
     }
 
-    fn parse_angular_if_cond(&mut self) -> PResult<(&'s str, Option<&'s str>)> {
+    fn parse_angular_if_cond(&mut self) -> PResult<((&'s str, usize), Option<(&'s str, usize)>)> {
         let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
         };
@@ -345,7 +347,7 @@ impl<'s> Parser<'s> {
         Ok((expr, reference))
     }
 
-    fn parse_angular_inline_script(&mut self, start: usize) -> PResult<&'s str> {
+    fn parse_angular_inline_script(&mut self, start: usize) -> PResult<(&'s str, usize)> {
         let end;
         let mut chars_stack = vec![];
         loop {
@@ -384,7 +386,7 @@ impl<'s> Parser<'s> {
                 }
             }
         }
-        Ok(unsafe { self.source.get_unchecked(start..end) })
+        Ok((unsafe { self.source.get_unchecked(start..end) }, start))
     }
 
     fn parse_angular_let(&mut self) -> PResult<AngularLet<'s>> {
@@ -536,9 +538,9 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_astro_expr(&mut self) -> PResult<AstroExpr<'s>> {
-        if self.chars.next_if(|(_, c)| *c == '{').is_none() {
+        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '{') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAstroExpr));
-        }
+        };
 
         let mut children = Vec::with_capacity(1);
         let mut braces_stack = 0u8;
@@ -585,6 +587,7 @@ impl<'s> Parser<'s> {
                                     kind: NodeKind::Text(TextNode {
                                         raw: prev,
                                         line_breaks: prev.chars().filter(|c| *c == '\n').count(),
+                                        start: pos,
                                     }),
                                     raw: prev,
                                 });
@@ -618,7 +621,10 @@ impl<'s> Parser<'s> {
             }
         }
 
-        Ok(AstroExpr { children })
+        Ok(AstroExpr {
+            children,
+            start: start + 1,
+        })
     }
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
@@ -660,7 +666,7 @@ impl<'s> Parser<'s> {
         unsafe { Ok(self.source.get_unchecked(start..=end)) }
     }
 
-    fn parse_attr_value(&mut self) -> PResult<&'s str> {
+    fn parse_attr_value(&mut self) -> PResult<(&'s str, usize)> {
         let quote = self.chars.next_if(|(_, c)| *c == '"' || *c == '\'');
 
         if let Some((start, quote)) = quote {
@@ -693,7 +699,7 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            Ok(unsafe { self.source.get_unchecked(start..end) })
+            Ok((unsafe { self.source.get_unchecked(start..end) }, start))
         } else {
             fn is_unquoted_attr_value_char(c: char) -> bool {
                 !c.is_ascii_whitespace() && !matches!(c, '"' | '\'' | '=' | '<' | '>' | '`')
@@ -716,7 +722,7 @@ impl<'s> Parser<'s> {
                         if chars.next_if(|(_, c)| *c == '{').is_some() {
                             // We use inclusive range when returning string,
                             // so we need to substract 1 here.
-                            end += self.parse_mustache_interpolation()?.len() + "{{}}".len() - 1;
+                            end += self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
                         } else {
                             self.chars.next();
                         }
@@ -729,7 +735,7 @@ impl<'s> Parser<'s> {
                 }
             }
 
-            unsafe { Ok(self.source.get_unchecked(start..=end)) }
+            Ok((unsafe { self.source.get_unchecked(start..=end) }, start))
         }
     }
 
@@ -1012,6 +1018,7 @@ impl<'s> Parser<'s> {
         self.state.has_front_matter = true;
         Ok(FrontMatter {
             raw: unsafe { self.source.get_unchecked(start..end) },
+            start,
         })
     }
 
@@ -1214,7 +1221,7 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_mustache_interpolation(&mut self) -> PResult<&'s str> {
+    fn parse_mustache_interpolation(&mut self) -> PResult<(&'s str, usize)> {
         let Some((start, _)) = self
             .chars
             .next_if(|(_, c)| *c == '{')
@@ -1244,7 +1251,7 @@ impl<'s> Parser<'s> {
             }
         }
 
-        Ok(unsafe { self.source.get_unchecked(start..end) })
+        Ok((unsafe { self.source.get_unchecked(start..end) }, start))
     }
 
     fn parse_native_attr(&mut self) -> PResult<NativeAttribute<'s>> {
@@ -1309,19 +1316,23 @@ impl<'s> Parser<'s> {
                             Language::Vue | Language::Jinja | Language::Angular
                         ) =>
                     {
-                        self.parse_mustache_interpolation()
-                            .map(|expr| match self.language {
+                        self.parse_mustache_interpolation().map(|(expr, start)| {
+                            match self.language {
                                 Language::Vue => {
-                                    NodeKind::VueInterpolation(VueInterpolation { expr })
+                                    NodeKind::VueInterpolation(VueInterpolation { expr, start })
                                 }
                                 Language::Jinja => {
                                     NodeKind::JinjaInterpolation(JinjaInterpolation { expr })
                                 }
                                 Language::Angular => {
-                                    NodeKind::AngularInterpolation(AngularInterpolation { expr })
+                                    NodeKind::AngularInterpolation(AngularInterpolation {
+                                        expr,
+                                        start,
+                                    })
                                 }
                                 _ => unreachable!(),
-                            })
+                            }
+                        })
                     }
                     Some((_, '{')) if matches!(self.language, Language::Vento) => {
                         self.parse_vento_tag_or_block(None)
@@ -1434,6 +1445,7 @@ impl<'s> Parser<'s> {
         Ok(TextNode {
             raw: unsafe { self.source.get_unchecked(start..end) },
             line_breaks,
+            start,
         })
     }
 
@@ -1562,7 +1574,7 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            unsafe { self.source.get_unchecked(start..end) }
+            (unsafe { self.source.get_unchecked(start..end) }, start)
         };
 
         self.skip_ws();
@@ -1685,11 +1697,23 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_svelte_binding(&mut self) -> PResult<&'s str> {
+    fn parse_svelte_binding(&mut self) -> PResult<(&'s str, usize)> {
         match self.chars.peek() {
-            Some((_, '{')) => self.parse_inside('{', '}', true),
-            Some((_, '[')) => self.parse_inside('[', ']', true),
-            _ => self.parse_identifier(),
+            Some((start, '{')) => {
+                let start = start + 1;
+                self.parse_inside('{', '}', true)
+                    .map(|binding| (binding, start))
+            }
+            Some((start, '[')) => {
+                let start = start + 1;
+                self.parse_inside('[', ']', true)
+                    .map(|binding| (binding, start))
+            }
+            Some((start, _)) => {
+                let start = *start;
+                self.parse_identifier().map(|ident| (ident, start))
+            }
+            _ => Err(self.emit_error(SyntaxErrorKind::ExpectIdentifier)),
         }
     }
 
@@ -1759,7 +1783,7 @@ impl<'s> Parser<'s> {
                     None => break,
                 }
             }
-            unsafe { self.source.get_unchecked(start..end) }
+            (unsafe { self.source.get_unchecked(start..end) }, start)
         };
 
         self.skip_ws();
@@ -1774,8 +1798,9 @@ impl<'s> Parser<'s> {
         };
 
         self.skip_ws();
-        let key = if matches!(self.chars.peek(), Some((_, '('))) {
-            Some(self.parse_inside('(', ')', false)?)
+        let key = if let Some((start, '(')) = self.chars.peek() {
+            let start = start + 1;
+            Some((self.parse_inside('(', ')', false)?, start))
         } else {
             None
         };
@@ -1955,7 +1980,7 @@ impl<'s> Parser<'s> {
     }
 
     /// This will consume `}`.
-    fn parse_svelte_or_astro_expr(&mut self) -> PResult<&'s str> {
+    fn parse_svelte_or_astro_expr(&mut self) -> PResult<(&'s str, usize)> {
         self.skip_ws();
 
         let start = self
@@ -1981,7 +2006,7 @@ impl<'s> Parser<'s> {
                 None => break,
             }
         }
-        Ok(unsafe { self.source.get_unchecked(start..end) })
+        Ok((unsafe { self.source.get_unchecked(start..end) }, start))
     }
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
@@ -2120,6 +2145,7 @@ impl<'s> Parser<'s> {
         Ok(TextNode {
             raw: unsafe { self.source.get_unchecked(start..end) },
             line_breaks,
+            start,
         })
     }
 
@@ -2144,8 +2170,11 @@ impl<'s> Parser<'s> {
         Ok(children)
     }
 
-    fn parse_vento_tag_or_block(&mut self, first_tag: Option<&'s str>) -> PResult<NodeKind<'s>> {
-        let first_tag = if let Some(first_tag) = first_tag {
+    fn parse_vento_tag_or_block(
+        &mut self,
+        first_tag: Option<(&'s str, usize)>,
+    ) -> PResult<NodeKind<'s>> {
+        let (first_tag, first_tag_start) = if let Some(first_tag) = first_tag {
             first_tag
         } else {
             self.parse_mustache_interpolation()?
@@ -2157,7 +2186,10 @@ impl<'s> Parser<'s> {
         {
             return Ok(NodeKind::VentoComment(VentoComment { raw }));
         } else if let Some(raw) = first_tag.strip_prefix('>') {
-            return Ok(NodeKind::VentoEval(VentoEval { raw }));
+            return Ok(NodeKind::VentoEval(VentoEval {
+                raw,
+                start: first_tag_start,
+            }));
         }
 
         let (tag_name, tag_rest) = helpers::parse_vento_tag(first_tag);
@@ -2179,7 +2211,7 @@ impl<'s> Parser<'s> {
                         body.push(VentoTagOrChildren::Children(children));
                     }
                 }
-                if let Ok(next_tag) = self.parse_mustache_interpolation() {
+                if let Ok((next_tag, next_tag_start)) = self.parse_mustache_interpolation() {
                     let (next_tag_name, _) = helpers::parse_vento_tag(next_tag);
                     if next_tag_name
                         .trim()
@@ -2193,7 +2225,9 @@ impl<'s> Parser<'s> {
                         body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
                     } else {
                         let node = self
-                            .with_taken(|parser| parser.parse_vento_tag_or_block(Some(next_tag)))
+                            .with_taken(|parser| {
+                                parser.parse_vento_tag_or_block(Some((next_tag, next_tag_start)))
+                            })
                             .map(|(kind, raw)| Node { kind, raw })?;
                         if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
                             nodes.push(node);
@@ -2209,6 +2243,7 @@ impl<'s> Parser<'s> {
         } else if is_vento_interpolation(tag_name) {
             Ok(NodeKind::VentoInterpolation(VentoInterpolation {
                 expr: first_tag,
+                start: first_tag_start,
             }))
         } else {
             Ok(NodeKind::VentoTag(VentoTag { tag: first_tag }))
