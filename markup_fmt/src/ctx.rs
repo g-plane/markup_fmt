@@ -287,10 +287,14 @@ where
         )
     }
 
-    pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str) -> String {
+    pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str, start: usize) -> String {
         self.format_with_external_formatter(
             Path::new("style_attr.css"),
-            code.to_owned(),
+            self.source
+                .get(0..start)
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + code,
             code,
             self.print_width
                 .saturating_sub(self.indent_level)
