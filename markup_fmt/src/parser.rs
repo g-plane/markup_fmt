@@ -315,7 +315,7 @@ impl<'s> Parser<'s> {
         })
     }
 
-    fn parse_angular_if_cond(&mut self) -> PResult<((&'s str, usize), Option<(&'s str, usize)>)> {
+    fn parse_angular_if_cond(&mut self) -> PResult<AngularIfCond<'s>> {
         let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
         };
@@ -2343,3 +2343,4 @@ fn is_vento_interpolation(tag_name: &str) -> bool {
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;
+type AngularIfCond<'s> = ((&'s str, usize), Option<(&'s str, usize)>);

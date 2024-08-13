@@ -303,7 +303,7 @@ where
         )
     }
 
-    pub(crate) fn format_style_attr<'a>(&mut self, code: &'a str, start: usize) -> String {
+    pub(crate) fn format_style_attr(&mut self, code: &str, start: usize) -> String {
         self.format_with_external_formatter(
             self.source
                 .get(0..start)

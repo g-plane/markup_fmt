@@ -571,12 +571,10 @@ impl<'s> DocGen<'s> for Element<'s> {
                                     }
                                     _ => None,
                                 })
-                                .unwrap_or_else(|| {
-                                    if matches!(ctx.language, Language::Astro) {
-                                        "ts"
-                                    } else {
-                                        "js"
-                                    }
+                                .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                                    "ts"
+                                } else {
+                                    "js"
                                 }),
                             text_node.start,
                         )
@@ -1720,7 +1718,7 @@ where
         Some(Node {
             kind: NodeKind::Comment(comment),
             ..
-        }) => has_ignore_directive(&comment, ctx),
+        }) => has_ignore_directive(comment, ctx),
         Some(Node {
             kind: NodeKind::Text(text_node),
             ..
@@ -1730,7 +1728,7 @@ where
                 ..
             }) = index.checked_sub(2).and_then(|i| nodes.get(i))
             {
-                has_ignore_directive(&comment, ctx)
+                has_ignore_directive(comment, ctx)
             } else {
                 false
             }
