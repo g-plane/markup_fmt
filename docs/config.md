@@ -20,7 +20,7 @@ Default option is `80`.
 <script
   src="very-very-very-very-long-name.js"
   async
-  defer
+        defer
 ></script>
 ```
 
@@ -43,7 +43,7 @@ Default option is `2`. This can't be zero.
 <script
   src="very-very-very-very-long-name.js"
   async
-  defer
+        defer
 ></script>
 ```
 
@@ -53,7 +53,7 @@ Default option is `2`. This can't be zero.
 <script
     src="very-very-very-very-long-name.js"
     async
-    defer
+        defer
 ></script>
 ```
 
@@ -180,8 +180,8 @@ Default option is `false`.
 
 ```html
 <span
-  class=""
-  style=""
+        class=""
+        style=""
 ></span>
 ```
 
@@ -189,8 +189,8 @@ Default option is `false`.
 
 ```html
 <span
-  class=""
-  style=""></span>
+        class=""
+        style=""></span>
 ```
 
 ## `closingTagLineBreakForEmpty`
@@ -251,7 +251,7 @@ Default option is `null`. This option can't be `0`.
 <div
   data-a
   data-b
-  data-c
+        data-c
 ></div>
 ```
 
@@ -291,6 +291,31 @@ though attributes span multiple lines in source code.
 
 ```html
 <div data-a data-b></div>
+```
+
+## `preferSingleLineOpeningTag`
+
+Control whether opening tags that don't fit within the `printWidth` limit
+should be kept on a single line. This option only applies to tags with 0 or 1 attributes.
+
+Default option is `false`.
+
+### Example for `false`
+
+```html
+<div
+  class="very-very-very-very-very-very-very-very-very-long-class-name"
+>
+  text
+</div>
+```
+
+### Example for `true`
+
+```html
+<div class="very-very-very-very-very-very-very-very-very-long-class-name">
+  text
+</div>
 ```
 
 ## `*.selfClosing`

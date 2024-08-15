@@ -422,7 +422,8 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         match self.attrs.as_slice() {
             [single_attr]
-                if !is_whitespace_sensitive
+                if ctx.options.prefer_single_line_opening_tag
+                    && !is_whitespace_sensitive
                     && !matches!(
                         single_attr,
                         Attribute::JinjaTagOrBlock(..) | Attribute::VentoTagOrBlock(..)
