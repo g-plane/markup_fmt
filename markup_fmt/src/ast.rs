@@ -59,7 +59,8 @@ pub enum AstroExprChild<'s> {
 
 pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
-    JinjaTagOrBlock(NodeKind<'s>),
+    JinjaBlock(JinjaBlock<'s, Attribute<'s>>),
+    JinjaTag(JinjaTag<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
     VentoTagOrBlock(NodeKind<'s>),
@@ -89,8 +90,8 @@ pub struct FrontMatter<'s> {
     pub start: usize,
 }
 
-pub struct JinjaBlock<'s> {
-    pub body: Vec<JinjaTagOrChildren<'s>>,
+pub struct JinjaBlock<'s, T> {
+    pub body: Vec<JinjaTagOrChildren<'s, T>>,
 }
 
 pub struct JinjaComment<'s> {
@@ -105,9 +106,9 @@ pub struct JinjaTag<'s> {
     pub content: &'s str,
 }
 
-pub enum JinjaTagOrChildren<'s> {
+pub enum JinjaTagOrChildren<'s, T> {
     Tag(JinjaTag<'s>),
-    Children(Vec<Node<'s>>),
+    Children(Vec<T>),
 }
 
 pub struct NativeAttribute<'s> {
@@ -132,7 +133,7 @@ pub enum NodeKind<'s> {
     Doctype(Doctype<'s>),
     Element(Element<'s>),
     FrontMatter(FrontMatter<'s>),
-    JinjaBlock(JinjaBlock<'s>),
+    JinjaBlock(JinjaBlock<'s, Node<'s>>),
     JinjaComment(JinjaComment<'s>),
     JinjaInterpolation(JinjaInterpolation<'s>),
     JinjaTag(JinjaTag<'s>),

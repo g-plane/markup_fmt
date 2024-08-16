@@ -2,26 +2,34 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div
-  {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %}
-  {% if colored_with_days %}colored-with-days{% endif %}
+  {% if colored_with_absolute_dates %}
+    colored-with-absolute-dates
+  {% endif %}
+  {% if colored_with_days %}
+    colored-with-days
+  {% endif %}
 >
 </div>
 
 <div
   class="flex"
-  {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %}
+  {% if colored_with_absolute_dates %}
+    colored-with-absolute-dates
+  {% endif %}
   id="3"
 >
 </div>
 
-<div {% if id %} id="{{ id }}" {% endif %} class="flex gap-10"></div>
+<div {% if id %}id="{{ id }}"{% endif %} class="flex gap-10"></div>
 
 <div {% if id != 1 %}class="active"{% endif %}></div>
 
 <input
   type="text"
   hidden
-  {% if widget.required is not False %}required{% endif %}
+  {% if widget.required is not False %}
+    required
+  {% endif %}
 />
 
 <details {% if category %}open{% endif %}>
@@ -59,15 +67,18 @@ source: markup_fmt/tests/fmt.rs
   class="calendar__data hidden"
   {% if widget_datepicker %}
     {% for key, value in widget_datepicker.working_hours.items %}
-      data-{{ key }}="{{ value }}"
+      data-{{key}}="{{value}}"
     {% endfor %}
   {% elif datepicker %}
     {% if datepicker.should_delay %}
       data-should_delay
     {% endif %}
   {% else %}
-    data-start='08:30:00' data-end='20:30:00' data-start_day='{% now "Y-m-d" %}'
-    data-saturday_start='08:30:00' data-saturday_end='20:30:00'
+    data-start="08:30:00"
+    data-end="20:30:00"
+    data-start_day='{% now "Y-m-d" %}'
+    data-saturday_start="08:30:00"
+    data-saturday_end="20:30:00"
   {% endif %}
 >
 </div>
@@ -79,7 +90,9 @@ source: markup_fmt/tests/fmt.rs
   name="{{ field.name }}"
   id="id_{{ field.name }}{{ forloop.count }}"
   value="{{ choice.0 }}"
-  {% if choice.0 == field.value %}checked="checked"{% endif %}
+  {% if choice.0 == field.value %}
+    checked="checked"
+  {% endif %}
 />
 
 <input
@@ -88,21 +101,26 @@ source: markup_fmt/tests/fmt.rs
   name="callback_method"
   value="callback"
   {% if not office_open %}
-    disabled class="hidden"
+    disabled
+    class="hidden"
   {% endif %}
 >
 
 <div
   class="flex foo"
   id="index_id"
-  {% if index_type == "foo" %}style="display: none"{% endif %}
+  {% if index_type == "foo" %}
+    style="display: none"
+  {% endif %}
 >
   My text that should sometimes be hidden
 </div>
 
 <div
   data-toggle-mobile="true"
-  {% if "adsl" not in connectivity_technology %}data-filter="fiber"{% endif %}
+  {% if "adsl" not in connectivity_technology %}
+    data-filter="fiber"
+  {% endif %}
   class="foo bar baz yayayayayayaya"
 >
   Data attributes
