@@ -1107,7 +1107,7 @@ impl<'s> Parser<'s> {
 
     fn parse_jinja_block_children<T, F>(&mut self, children_parser: &mut F) -> PResult<Vec<T>>
     where
-        T: FromTemplateControlStruct<'s>,
+        T: HasJinjaFlowControl<'s>,
         F: FnMut(&mut Self) -> PResult<T>,
     {
         let mut children = vec![];
@@ -1196,7 +1196,7 @@ impl<'s> Parser<'s> {
         children_parser: &mut F,
     ) -> PResult<T::Intermediate>
     where
-        T: FromTemplateControlStruct<'s>,
+        T: HasJinjaFlowControl<'s>,
         F: FnMut(&mut Self) -> PResult<T>,
     {
         let first_tag = if let Some(first_tag) = first_tag {
@@ -2395,7 +2395,7 @@ fn is_vento_interpolation(tag_name: &str) -> bool {
 pub type PResult<T> = Result<T, SyntaxError>;
 type AngularIfCond<'s> = ((&'s str, usize), Option<(&'s str, usize)>);
 
-trait FromTemplateControlStruct<'s>: Sized {
+trait HasJinjaFlowControl<'s>: Sized {
     type Intermediate;
 
     fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self;
@@ -2403,7 +2403,7 @@ trait FromTemplateControlStruct<'s>: Sized {
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate;
 }
 
-impl<'s> FromTemplateControlStruct<'s> for Node<'s> {
+impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
     type Intermediate = NodeKind<'s>;
 
     fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self {
@@ -2422,7 +2422,7 @@ impl<'s> FromTemplateControlStruct<'s> for Node<'s> {
     }
 }
 
-impl<'s> FromTemplateControlStruct<'s> for Attribute<'s> {
+impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
     type Intermediate = Attribute<'s>;
 
     fn build(intermediate: Self::Intermediate, _: &'s str) -> Self {
