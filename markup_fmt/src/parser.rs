@@ -642,10 +642,18 @@ impl<'s> Parser<'s> {
                 .try_parse(Parser::parse_astro_attr)
                 .map(Attribute::Astro)
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
-            Language::Jinja => self
-                .try_parse(|parser| parser.parse_jinja_tag_or_block(None))
-                .map(Attribute::JinjaTagOrBlock)
-                .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
+            Language::Jinja => {
+                self.skip_ws();
+                let result = if matches!(self.chars.peek(), Some((_, '{'))) {
+                    self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr)
+                } else {
+                    self.parse_native_attr().map(Attribute::Native)
+                };
+                if result.is_ok() {
+                    self.skip_ws();
+                }
+                result
+            }
             Language::Vento => self
                 .try_parse(|parser| parser.parse_vento_tag_or_block(None))
                 .map(Attribute::VentoTagOrBlock)
@@ -654,16 +662,47 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_attr_name(&mut self) -> PResult<&'s str> {
-        let Some((start, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) else {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
-        };
-        let mut end = start;
+        if matches!(self.language, Language::Jinja | Language::Vento) {
+            let Some((start, _)) = self
+                .chars
+                .next_if(|(_, c)| is_attr_name_char(*c) && *c != '{')
+            else {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
+            };
+            let mut end = start;
 
-        while let Some((i, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) {
-            end = i;
+            while let Some((i, c)) = self.chars.peek() {
+                if is_attr_name_char(*c) && *c != '{' {
+                    end = *i;
+                    self.chars.next();
+                } else if *c == '{' {
+                    let i = *i;
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if chars.next_if(|(_, c)| *c != '%').is_some() {
+                        end = i;
+                        self.chars.next();
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            unsafe { Ok(self.source.get_unchecked(start..=end)) }
+        } else {
+            let Some((start, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) else {
+                return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
+            };
+            let mut end = start;
+
+            while let Some((i, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) {
+                end = i;
+            }
+
+            unsafe { Ok(self.source.get_unchecked(start..=end)) }
         }
-
-        unsafe { Ok(self.source.get_unchecked(start..=end)) }
     }
 
     fn parse_attr_value(&mut self) -> PResult<(&'s str, usize)> {
@@ -1066,7 +1105,11 @@ impl<'s> Parser<'s> {
         Ok(unsafe { self.source.get_unchecked(start..end) })
     }
 
-    fn parse_jinja_block_children(&mut self) -> PResult<Vec<Node<'s>>> {
+    fn parse_jinja_block_children<T, F>(&mut self, children_parser: &mut F) -> PResult<Vec<T>>
+    where
+        T: HasJinjaFlowControl<'s>,
+        F: FnMut(&mut Self) -> PResult<T>,
+    {
         let mut children = vec![];
         loop {
             match self.chars.peek() {
@@ -1076,10 +1119,10 @@ impl<'s> Parser<'s> {
                     if chars.next_if(|(_, c)| *c == '%').is_some() {
                         break;
                     }
-                    children.push(self.parse_node()?);
+                    children.push(children_parser(self)?);
                 }
                 Some(..) => {
-                    children.push(self.parse_node()?);
+                    children.push(children_parser(self)?);
                 }
                 None => return Err(self.emit_error(SyntaxErrorKind::ExpectJinjaBlockEnd)),
             }
@@ -1147,10 +1190,15 @@ impl<'s> Parser<'s> {
         })
     }
 
-    fn parse_jinja_tag_or_block(
+    fn parse_jinja_tag_or_block<T, F>(
         &mut self,
         first_tag: Option<JinjaTag<'s>>,
-    ) -> PResult<NodeKind<'s>> {
+        children_parser: &mut F,
+    ) -> PResult<T::Intermediate>
+    where
+        T: HasJinjaFlowControl<'s>,
+        F: FnMut(&mut Self) -> PResult<T>,
+    {
         let first_tag = if let Some(first_tag) = first_tag {
             first_tag
         } else {
@@ -1177,7 +1225,7 @@ impl<'s> Parser<'s> {
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
             loop {
-                let mut children = self.parse_jinja_block_children()?;
+                let mut children = self.parse_jinja_block_children(children_parser)?;
                 if !children.is_empty() {
                     if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
                         nodes.append(&mut children);
@@ -1202,22 +1250,24 @@ impl<'s> Parser<'s> {
                     } else if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
                         nodes.push(
                             self.with_taken(|parser| {
-                                parser.parse_jinja_tag_or_block(Some(next_tag))
+                                parser.parse_jinja_tag_or_block(Some(next_tag), children_parser)
                             })
-                            .map(|(kind, raw)| Node { kind, raw })?,
+                            .map(|(kind, raw)| T::build(kind, raw))?,
                         );
                     } else {
                         body.push(JinjaTagOrChildren::Children(vec![self
-                            .with_taken(|parser| parser.parse_jinja_tag_or_block(Some(next_tag)))
-                            .map(|(kind, raw)| Node { kind, raw })?]));
+                            .with_taken(|parser| {
+                                parser.parse_jinja_tag_or_block(Some(next_tag), children_parser)
+                            })
+                            .map(|(kind, raw)| T::build(kind, raw))?]));
                     }
                 } else {
                     break;
                 }
             }
-            Ok(NodeKind::JinjaBlock(JinjaBlock { body }))
+            Ok(T::from_block(JinjaBlock { body }))
         } else {
-            Ok(NodeKind::JinjaTag(first_tag))
+            Ok(T::from_tag(first_tag))
         }
     }
 
@@ -1359,7 +1409,7 @@ impl<'s> Parser<'s> {
                     }
                     Some((_, '@')) => self.parse_svelte_at_tag().map(NodeKind::SvelteAtTag),
                     Some((_, '%')) if matches!(self.language, Language::Jinja) => {
-                        self.parse_jinja_tag_or_block(None)
+                        self.parse_jinja_tag_or_block(None, &mut Parser::parse_node)
                     }
                     _ => match self.language {
                         Language::Svelte => self
@@ -2344,3 +2394,46 @@ fn is_vento_interpolation(tag_name: &str) -> bool {
 
 pub type PResult<T> = Result<T, SyntaxError>;
 type AngularIfCond<'s> = ((&'s str, usize), Option<(&'s str, usize)>);
+
+trait HasJinjaFlowControl<'s>: Sized {
+    type Intermediate;
+
+    fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self;
+    fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate;
+    fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate;
+}
+
+impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
+    type Intermediate = NodeKind<'s>;
+
+    fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self {
+        Node {
+            kind: intermediate,
+            raw,
+        }
+    }
+
+    fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate {
+        NodeKind::JinjaTag(tag)
+    }
+
+    fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate {
+        NodeKind::JinjaBlock(block)
+    }
+}
+
+impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
+    type Intermediate = Attribute<'s>;
+
+    fn build(intermediate: Self::Intermediate, _: &'s str) -> Self {
+        intermediate
+    }
+
+    fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate {
+        Attribute::JinjaTag(tag)
+    }
+
+    fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate {
+        Attribute::JinjaBlock(block)
+    }
+}

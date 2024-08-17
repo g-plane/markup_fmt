@@ -298,7 +298,8 @@ impl<'s> DocGen<'s> for Attribute<'s> {
             Attribute::Svelte(svelte_attribute) => svelte_attribute.doc(ctx, state),
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
             Attribute::Astro(astro_attribute) => astro_attribute.doc(ctx, state),
-            Attribute::JinjaTagOrBlock(jinja_tag_or_block) => jinja_tag_or_block.doc(ctx, state),
+            Attribute::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
+            Attribute::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
             Attribute::VentoTagOrBlock(vento_tag_or_block) => vento_tag_or_block.doc(ctx, state),
         }
     }
@@ -729,7 +730,30 @@ impl<'s> DocGen<'s> for FrontMatter<'s> {
     }
 }
 
-impl<'s> DocGen<'s> for JinjaBlock<'s> {
+impl<'s> DocGen<'s> for JinjaBlock<'s, Attribute<'s>> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::list(
+            self.body
+                .iter()
+                .map(|child| match child {
+                    JinjaTagOrChildren::Tag(tag) => tag.doc(ctx, state),
+                    JinjaTagOrChildren::Children(children) => Doc::line_or_nil()
+                        .concat(itertools::intersperse(
+                            children.iter().map(|attr| attr.doc(ctx, state)),
+                            Doc::line_or_space(),
+                        ))
+                        .nest_with_ctx(ctx)
+                        .append(Doc::line_or_nil()),
+                })
+                .collect(),
+        )
+    }
+}
+
+impl<'s> DocGen<'s> for JinjaBlock<'s, Node<'s>> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
