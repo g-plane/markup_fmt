@@ -5,9 +5,8 @@ source: dprint_plugin/tests/integration.rs
   <div v-if="label = 'a'"></div>
   <div v-if="label = 'a'"></div>
 
-  <button
-    @click="content += '{&quot;hello&quot;: &quot;I\'m a button!&quot;}'"
-  ></button>
+  <button @click="content += '{&quot;hello&quot;: &quot;I\'m a button!&quot;}'">
+  </button>
 
   <input :value="''">
   <input :value="''">

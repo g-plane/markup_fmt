@@ -2,7 +2,6 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <template>
-  <button
-    @click="content += '{&quot;hello&quot;: &quot;I\'m a button!&quot;}'"
-  ></button>
+  <button @click="content += '{&quot;hello&quot;: &quot;I\'m a button!&quot;}'">
+  </button>
 </template>

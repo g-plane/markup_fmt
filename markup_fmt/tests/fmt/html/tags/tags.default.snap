@@ -133,14 +133,16 @@ source: markup_fmt/tests/fmt.rs
 <button xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>12345678901234567890</button>
 <br /><br />
 
-<button bind-disabled="isUnchanged" on-click="onSave($event)"
->Disabled Cancel</button>
+<button bind-disabled="isUnchanged" on-click="onSave($event)">
+  Disabled Cancel
+</button>
 <br /><br />
 <button xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>12345678901234567890</button>
 <br /><br />
 
-<button bind-disabled="isUnchanged" on-click="onSave($event)"
->Disabled Cancel</button>
+<button bind-disabled="isUnchanged" on-click="onSave($event)">
+  Disabled Cancel
+</button>
 <br /><br />
 <p>
   "<span [innerHTML]="title"></span>" is the <i>property bound</i> title.

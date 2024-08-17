@@ -7,7 +7,8 @@ source: dprint_plugin/tests/integration.rs
 
   <button
     @click="(content += '{&quot;hello&quot;: &quot;I\'m a button!&quot;}')"
-  ></button>
+  >
+  </button>
 
   <input :value='""'>
   <input :value='""'>

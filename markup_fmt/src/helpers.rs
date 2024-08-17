@@ -4,10 +4,13 @@ pub(crate) fn is_component(name: &str) -> bool {
     name.contains('-') || name.contains(|c: char| c.is_ascii_uppercase())
 }
 
-static NON_WS_SENSITIVE_TAGS: [&str; 69] = [
+static NON_WS_SENSITIVE_TAGS: [&str; 74] = [
     "address",
     "blockquote",
+    "button",
+    "caption",
     "center",
+    "colgroup",
     "dialog",
     "div",
     "figure",
@@ -25,6 +28,7 @@ static NON_WS_SENSITIVE_TAGS: [&str; 69] = [
     "p",
     "plaintext",
     "pre",
+    "progress",
     "search",
     "object",
     "details",
@@ -37,6 +41,7 @@ static NON_WS_SENSITIVE_TAGS: [&str; 69] = [
     "head",
     "link",
     "meta",
+    "meter",
     "noembed",
     "noframes",
     "param",

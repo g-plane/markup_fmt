@@ -374,7 +374,9 @@ source: markup_fmt/tests/fmt.rs
 />
 <button
   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
->12345678901234567890</button
+>
+  12345678901234567890
+</button
 >
 <br
 /><br
@@ -383,15 +385,19 @@ source: markup_fmt/tests/fmt.rs
 <button
   bind-disabled="isUnchanged"
   on-click="onSave($event)"
->Disabled
-  Cancel</button
+>
+  Disabled
+  Cancel
+</button
 >
 <br
 /><br
 />
 <button
   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
->12345678901234567890</button
+>
+  12345678901234567890
+</button
 >
 <br
 /><br
@@ -400,8 +406,10 @@ source: markup_fmt/tests/fmt.rs
 <button
   bind-disabled="isUnchanged"
   on-click="onSave($event)"
->Disabled
-  Cancel</button
+>
+  Disabled
+  Cancel
+</button
 >
 <br
 /><br
