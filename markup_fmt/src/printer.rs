@@ -426,7 +426,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     && !is_whitespace_sensitive
                     && !matches!(
                         single_attr,
-                        Attribute::JinjaTagOrBlock(..) | Attribute::VentoTagOrBlock(..)
+                        Attribute::JinjaBlock(..) | Attribute::VentoTagOrBlock(..)
                     ) =>
             {
                 // Avoid breaking on multiple lines for a single attribute in non whitespace sensitive context.
