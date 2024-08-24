@@ -1,78 +1,95 @@
 use anyhow::Error;
 use insta::{assert_snapshot, glob, Settings};
-use markup_fmt::{detect_language, format_text};
+use markup_fmt::{detect_language, format_text, FormatError};
 use std::{borrow::Cow, fs, path::Path};
 
 #[test]
 fn integration_with_dprint_ts_snapshot() {
+    fn format_with_dprint_ts(input: &str, path: &Path) -> Result<String, FormatError<Error>> {
+        let options = Default::default();
+        format_text(
+            input,
+            detect_language(path).unwrap(),
+            &options,
+            |code, hints| -> anyhow::Result<Cow<str>> {
+                let ext = hints.ext;
+                let additional_config =
+                    dprint_plugin_markup::build_additional_config(hints, &options);
+                if let Some(syntax) = malva::detect_syntax(&Path::new("file").with_extension(ext)) {
+                    malva::format_text(
+                        code,
+                        syntax,
+                        &serde_json::to_value(additional_config)
+                            .and_then(serde_json::from_value)?,
+                    )
+                    .map(Cow::from)
+                    .map_err(Error::from)
+                } else if ext == "json" {
+                    dprint_plugin_json::format_text(
+                        &Path::new("file").with_extension(ext),
+                        code,
+                        &dprint_plugin_json::configuration::resolve_config(
+                            additional_config,
+                            &Default::default(),
+                        )
+                        .config,
+                    )
+                    .map(|formatted| {
+                        if let Some(formatted) = formatted {
+                            Cow::from(formatted)
+                        } else {
+                            Cow::from(code)
+                        }
+                    })
+                } else {
+                    dprint_plugin_typescript::format_text(
+                        &Path::new("file").with_extension(ext),
+                        code.to_owned(),
+                        &dprint_plugin_typescript::configuration::resolve_config(
+                            additional_config,
+                            &Default::default(),
+                        )
+                        .config,
+                    )
+                    .map(|formatted| {
+                        if let Some(formatted) = formatted {
+                            Cow::from(formatted)
+                        } else {
+                            Cow::from(code)
+                        }
+                    })
+                }
+            },
+        )
+    }
+
     glob!(
         "integration/**/*.{html,vue,svelte,astro,jinja,njk,vto}",
         |path| {
             let input = fs::read_to_string(path).unwrap();
-            let options = Default::default();
-
-            let output = format_text(
-                &input,
-                detect_language(path).unwrap(),
-                &options,
-                |code, hints| -> anyhow::Result<Cow<str>> {
-                    let ext = hints.ext;
-                    let additional_config =
-                        dprint_plugin_markup::build_additional_config(hints, &options);
-                    if let Some(syntax) =
-                        malva::detect_syntax(&Path::new("file").with_extension(ext))
-                    {
-                        malva::format_text(
-                            code,
-                            syntax,
-                            &serde_json::to_value(additional_config)
-                                .and_then(serde_json::from_value)?,
-                        )
-                        .map(Cow::from)
-                        .map_err(Error::from)
-                    } else if ext == "json" {
-                        dprint_plugin_json::format_text(
-                            &Path::new("file").with_extension(ext),
-                            code,
-                            &dprint_plugin_json::configuration::resolve_config(
-                                additional_config,
-                                &Default::default(),
-                            )
-                            .config,
-                        )
-                        .map(|formatted| {
-                            if let Some(formatted) = formatted {
-                                Cow::from(formatted)
-                            } else {
-                                Cow::from(code)
-                            }
-                        })
-                    } else {
-                        dprint_plugin_typescript::format_text(
-                            &Path::new("file").with_extension(ext),
-                            code.to_owned(),
-                            &dprint_plugin_typescript::configuration::resolve_config(
-                                additional_config,
-                                &Default::default(),
-                            )
-                            .config,
-                        )
-                        .map(|formatted| {
-                            if let Some(formatted) = formatted {
-                                Cow::from(formatted)
-                            } else {
-                                Cow::from(code)
-                            }
-                        })
-                    }
-                },
-            )
-            .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
-            .unwrap();
+            let output = format_with_dprint_ts(&input, path)
+                .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
+                .unwrap();
 
             assert!(
                 output.ends_with('\n'),
                 "formatted output should contain trailing newline: {}",
+                path.display()
+            );
+
+            let regression_format = format_with_dprint_ts(&output, path)
+                .map_err(|err| {
+                    format!(
+                        "syntax error in stability test '{}': {:?}",
+                        path.display(),
+                        err
+                    )
+                })
+                .unwrap();
+            similar_asserts::assert_eq!(
+                output,
+                regression_format,
+                "'{}' format is unstable",
                 path.display()
             );
 
@@ -86,6 +103,45 @@ fn integration_with_dprint_ts_snapshot() {
 
 #[test]
 fn integration_with_biome_snapshot() {
+    fn format_with_biome(input: &str, path: &Path) -> Result<String, FormatError<Error>> {
+        let options = Default::default();
+        format_text(
+            &input,
+            detect_language(path).unwrap(),
+            &options,
+            |code, hints| -> anyhow::Result<Cow<str>> {
+                let ext = hints.ext;
+                let additional_config =
+                    dprint_plugin_markup::build_additional_config(hints, &options);
+                if let Some(syntax) = malva::detect_syntax(&Path::new("file").with_extension(ext)) {
+                    malva::format_text(
+                        code,
+                        syntax,
+                        &serde_json::to_value(additional_config)
+                            .and_then(serde_json::from_value)?,
+                    )
+                    .map(Cow::from)
+                    .map_err(Error::from)
+                } else {
+                    dprint_plugin_biome::format_text(
+                        &Path::new("file").with_extension(ext),
+                        code,
+                        &serde_json::to_value(additional_config)
+                            .and_then(serde_json::from_value)
+                            .unwrap_or_default(),
+                    )
+                    .map(|formatted| {
+                        if let Some(formatted) = formatted {
+                            Cow::from(formatted)
+                        } else {
+                            Cow::from(code)
+                        }
+                    })
+                }
+            },
+        )
+    }
+
     glob!(
         "integration/**/*.{html,vue,svelte,astro,jinja,njk,vto}",
         |path| {
@@ -97,51 +153,29 @@ fn integration_with_biome_snapshot() {
             }
 
             let input = fs::read_to_string(path).unwrap();
-            let options = Default::default();
-
-            let output = format_text(
-                &input,
-                detect_language(path).unwrap(),
-                &options,
-                |code, hints| -> anyhow::Result<Cow<str>> {
-                    let ext = hints.ext;
-                    let additional_config =
-                        dprint_plugin_markup::build_additional_config(hints, &options);
-                    if let Some(syntax) =
-                        malva::detect_syntax(&Path::new("file").with_extension(ext))
-                    {
-                        malva::format_text(
-                            code,
-                            syntax,
-                            &serde_json::to_value(additional_config)
-                                .and_then(serde_json::from_value)?,
-                        )
-                        .map(Cow::from)
-                        .map_err(Error::from)
-                    } else {
-                        dprint_plugin_biome::format_text(
-                            &Path::new("file").with_extension(ext),
-                            code,
-                            &serde_json::to_value(additional_config)
-                                .and_then(serde_json::from_value)
-                                .unwrap_or_default(),
-                        )
-                        .map(|formatted| {
-                            if let Some(formatted) = formatted {
-                                Cow::from(formatted)
-                            } else {
-                                Cow::from(code)
-                            }
-                        })
-                    }
-                },
-            )
-            .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
-            .unwrap();
+            let output = format_with_biome(&input, path)
+                .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
+                .unwrap();
 
             assert!(
                 output.ends_with('\n'),
                 "formatted output should contain trailing newline: {}",
+                path.display()
+            );
+
+            let regression_format = format_with_biome(&output, path)
+                .map_err(|err| {
+                    format!(
+                        "syntax error in stability test '{}': {:?}",
+                        path.display(),
+                        err
+                    )
+                })
+                .unwrap();
+            similar_asserts::assert_eq!(
+                output,
+                regression_format,
+                "'{}' format is unstable",
                 path.display()
             );
 
