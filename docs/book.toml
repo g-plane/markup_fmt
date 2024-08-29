@@ -1,0 +1,8 @@
+[book]
+title = "Markup_fmt Documentation"
+authors = ["Pig Fang"]
+language = "en"
+
+[output.html]
+git-repository-url = "https://github.com/g-plane/markup_fmt"
+edit-url-template = "https://github.com/g-plane/markup_fmt/edit/main/docs/{path}"

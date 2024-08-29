@@ -17,7 +17,7 @@ assert_eq!("<div class=\"container\"></div>\n", &format_text(
 ```
 
 For detailed documentation of configuration,
-please refer to [Configuration](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md) on GitHub.
+please refer to [Configuration](https://markup-fmt.netlify.app/) on GitHub.
 
 If there're syntax errors in source code, it will return [`Err`]:
 

@@ -1,3 +1,4 @@
 /target
 node_modules/
 pnpm-lock.yaml
+docs/book

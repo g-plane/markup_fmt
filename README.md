@@ -71,7 +71,7 @@ Please read the [documentation](https://docs.rs/markup_fmt).
 
 ## Configuration
 
-Please refer to [Configuration](./docs/config.md).
+Please refer to [Configuration](https://markup-fmt.netlify.app/).
 
 ## Credit
 
