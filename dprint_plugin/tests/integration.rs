@@ -1,12 +1,16 @@
 use anyhow::Error;
 use insta::{assert_snapshot, glob, Settings};
 use markup_fmt::{detect_language, format_text, FormatError};
-use std::{borrow::Cow, fs, path::Path};
+use std::{borrow::Cow, fs, io, path::Path};
 
 #[test]
 fn integration_with_dprint_ts_snapshot() {
     fn format_with_dprint_ts(input: &str, path: &Path) -> Result<String, FormatError<Error>> {
-        let options = Default::default();
+        let options = match fs::read_to_string(path.with_extension("toml")) {
+            Ok(file) => toml::from_str(&file).unwrap(),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Default::default(),
+            Err(e) => panic!("{e}"),
+        };
         format_text(
             input,
             detect_language(path).unwrap(),
@@ -104,7 +108,11 @@ fn integration_with_dprint_ts_snapshot() {
 #[test]
 fn integration_with_biome_snapshot() {
     fn format_with_biome(input: &str, path: &Path) -> Result<String, FormatError<Error>> {
-        let options = Default::default();
+        let options = match fs::read_to_string(path.with_extension("toml")) {
+            Ok(file) => toml::from_str(&file).unwrap(),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Default::default(),
+            Err(e) => panic!("{e}"),
+        };
         format_text(
             &input,
             detect_language(path).unwrap(),

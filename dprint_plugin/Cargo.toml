@@ -26,3 +26,4 @@ dprint-plugin-typescript = { version = "0.91", features = ["wasm"] }
 insta = { version = "1.38", features = ["glob"] }
 malva = { version = "0.10", features = ["config_serde"] }
 similar-asserts = "1.5"
+toml = "0.8"

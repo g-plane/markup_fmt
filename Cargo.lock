@@ -626,6 +626,7 @@ dependencies = [
  "markup_fmt",
  "serde_json",
  "similar-asserts",
+ "toml",
 ]
 
 [[package]]
