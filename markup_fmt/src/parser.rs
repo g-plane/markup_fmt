@@ -676,26 +676,26 @@ impl<'s> Parser<'s> {
                     chars.next();
                     if let Some((_, '{')) = chars.next() {
                         let end =
-                            start + self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
+                            start + self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
                         Some((start, end))
                     } else {
                         None
                     }
                 }
-                Some((_, c)) if is_attr_name_char(*c) => {
-                    self.chars.next().map(|(start, _)| (start, start))
-                }
+                Some((_, c)) if is_attr_name_char(*c) => self
+                    .chars
+                    .next()
+                    .map(|(start, c)| (start, start + c.len_utf8())),
                 _ => None,
             }) else {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
             };
 
-            while let Some((i, c)) = self.chars.peek() {
+            while let Some((_, c)) = self.chars.peek() {
                 if is_attr_name_char(*c) && *c != '{' {
-                    end = *i;
+                    end += c.len_utf8();
                     self.chars.next();
                 } else if *c == '{' {
-                    let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
                     match chars.next() {
@@ -705,28 +705,30 @@ impl<'s> Parser<'s> {
                         Some((_, '{')) => {
                             end += self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
                         }
-                        _ => {
-                            end = i;
+                        Some((_, c)) => {
+                            end += c.len_utf8();
                             self.chars.next();
                         }
+                        None => break,
                     }
                 } else {
                     break;
                 }
             }
 
-            unsafe { Ok(self.source.get_unchecked(start..=end)) }
+            unsafe { Ok(self.source.get_unchecked(start..end)) }
         } else {
-            let Some((start, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) else {
+            let Some((start, start_char)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c))
+            else {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
             };
-            let mut end = start;
+            let mut end = start + start_char.len_utf8();
 
-            while let Some((i, _)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) {
-                end = i;
+            while let Some((_, c)) = self.chars.next_if(|(_, c)| is_attr_name_char(*c)) {
+                end += c.len_utf8();
             }
 
-            unsafe { Ok(self.source.get_unchecked(start..=end)) }
+            unsafe { Ok(self.source.get_unchecked(start..end)) }
         }
     }
 
