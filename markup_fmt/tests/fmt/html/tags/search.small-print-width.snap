@@ -58,7 +58,9 @@ source: markup_fmt/tests/fmt.rs
           >
           <button
             type="submit"
-          >Go!</button
+          >
+            Go!
+          </button
           >
         </form
         >
