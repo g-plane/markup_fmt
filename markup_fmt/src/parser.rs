@@ -645,7 +645,13 @@ impl<'s> Parser<'s> {
             Language::Jinja => {
                 self.skip_ws();
                 let result = if matches!(self.chars.peek(), Some((_, '{'))) {
-                    self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr)
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if let Some((_, '{')) = chars.next() {
+                        self.parse_native_attr().map(Attribute::Native)
+                    } else {
+                        self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr)
+                    }
                 } else {
                     self.parse_native_attr().map(Attribute::Native)
                 };
@@ -663,13 +669,26 @@ impl<'s> Parser<'s> {
 
     fn parse_attr_name(&mut self) -> PResult<&'s str> {
         if matches!(self.language, Language::Jinja | Language::Vento) {
-            let Some((start, _)) = self
-                .chars
-                .next_if(|(_, c)| is_attr_name_char(*c) && *c != '{')
-            else {
+            let Some((start, mut end)) = (match self.chars.peek() {
+                Some((i, '{')) => {
+                    let start = *i;
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if let Some((_, '{')) = chars.next() {
+                        let end =
+                            start + self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
+                        Some((start, end))
+                    } else {
+                        None
+                    }
+                }
+                Some((_, c)) if is_attr_name_char(*c) => {
+                    self.chars.next().map(|(start, _)| (start, start))
+                }
+                _ => None,
+            }) else {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectAttrName));
             };
-            let mut end = start;
 
             while let Some((i, c)) = self.chars.peek() {
                 if is_attr_name_char(*c) && *c != '{' {
@@ -679,11 +698,17 @@ impl<'s> Parser<'s> {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
-                    if chars.next_if(|(_, c)| *c != '%').is_some() {
-                        end = i;
-                        self.chars.next();
-                    } else {
-                        break;
+                    match chars.next() {
+                        Some((_, '%')) => {
+                            break;
+                        }
+                        Some((_, '{')) => {
+                            end += self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
+                        }
+                        _ => {
+                            end = i;
+                            self.chars.next();
+                        }
                     }
                 } else {
                     break;

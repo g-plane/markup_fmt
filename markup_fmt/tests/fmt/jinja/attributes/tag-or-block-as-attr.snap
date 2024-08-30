@@ -140,3 +140,15 @@ source: markup_fmt/tests/fmt.rs
     <li class="nav-internal-link--dropdown--separator">{{ subentry.name }}</li>
   {% endif %}
 {% endfor %}
+
+<picture
+  {% for key, val in attributes.items %}
+    {{ key }}{{ key }}="{{ val }}"
+    data-{{ key }}{{ key }}="{{ val }}"
+    {{ key }}-{{ key }}="{{ val }}"
+    data-{{ key }}-{{ key }}="{{ val }}"
+    {{ key }}="{{ val }}"
+    data-{{ key }}="{{ val }}"
+  {% endfor %}
+>
+</picture>
