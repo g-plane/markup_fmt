@@ -630,7 +630,7 @@ impl<'s> Parser<'s> {
                         pair_stack.push('$');
                     }
                 }
-                '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`' | '/' | '*')) => {
                     self.chars.next();
                     if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
                         pair_stack.push(c);
