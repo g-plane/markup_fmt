@@ -543,7 +543,7 @@ impl<'s> Parser<'s> {
         };
 
         let mut children = Vec::with_capacity(1);
-        let mut braces_stack = 0u8;
+        let mut pair_stack = vec![];
         let mut pos = self
             .chars
             .peek()
@@ -552,13 +552,13 @@ impl<'s> Parser<'s> {
         while let Some((i, c)) = self.chars.peek() {
             match c {
                 '{' => {
-                    braces_stack += 1;
+                    pair_stack.push('{');
                     self.chars.next();
                 }
                 '}' => {
                     let i = *i;
                     self.chars.next();
-                    if braces_stack == 0 {
+                    if pair_stack.is_empty() {
                         debug_assert!(matches!(
                             children.last(),
                             Some(AstroExprChild::Template(..)) | None
@@ -568,9 +568,9 @@ impl<'s> Parser<'s> {
                         }));
                         break;
                     }
-                    braces_stack -= 1;
+                    pair_stack.pop();
                 }
-                '<' => {
+                '<' if !matches!(pair_stack.last(), Some('/' | '*' | '\'' | '"' | '`')) => {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
@@ -614,6 +614,46 @@ impl<'s> Parser<'s> {
                     } else {
                         self.chars.next();
                     }
+                }
+                '\'' | '"' | '`' => {
+                    let last = pair_stack.last();
+                    if last.is_some_and(|last| last == c) {
+                        pair_stack.pop();
+                    } else if matches!(last, Some('$' | '{') | None) {
+                        pair_stack.push(*c);
+                    }
+                    self.chars.next();
+                }
+                '$' if matches!(pair_stack.last(), Some('`')) => {
+                    self.chars.next();
+                    if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+                        pair_stack.push('$');
+                    }
+                }
+                '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                    self.chars.next();
+                    if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
+                        pair_stack.push(c);
+                    }
+                }
+                '\n' => {
+                    self.chars.next();
+                    if let Some('/') = pair_stack.last() {
+                        pair_stack.pop();
+                    }
+                }
+                '*' => {
+                    self.chars.next();
+                    if self
+                        .chars
+                        .next_if(|(_, c)| *c == '/' && matches!(pair_stack.last(), Some('*')))
+                        .is_some()
+                    {
+                        pair_stack.pop();
+                    }
+                }
+                '\\' if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                    self.chars.next();
                 }
                 _ => {
                     self.chars.next();
