@@ -1037,9 +1037,10 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
-                    if pair_stack.last().map(|last| *last == c).unwrap_or_default() {
+                    let last = pair_stack.last();
+                    if last.is_some_and(|last| *last == c) {
                         pair_stack.pop();
-                    } else if matches!(pair_stack.last(), Some('$' | '{') | None) {
+                    } else if matches!(last, Some('$' | '{') | None) {
                         pair_stack.push(c);
                     }
                 }
