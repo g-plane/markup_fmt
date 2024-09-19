@@ -49,6 +49,7 @@ pub struct AstroAttribute<'s> {
 
 pub struct AstroExpr<'s> {
     pub children: Vec<AstroExprChild<'s>>,
+    pub has_line_comment: bool,
     pub start: usize,
 }
 

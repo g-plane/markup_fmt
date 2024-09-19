@@ -280,7 +280,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
             .nest_with_ctx(ctx)
             .append(Doc::line_or_nil())
             .append(Doc::text("}"));
-        if script.contains("//") {
+        if self.has_line_comment {
             doc
         } else {
             doc.group()

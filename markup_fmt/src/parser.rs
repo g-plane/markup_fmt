@@ -543,6 +543,7 @@ impl<'s> Parser<'s> {
         };
 
         let mut children = Vec::with_capacity(1);
+        let mut has_line_comment = false;
         let mut pair_stack = vec![];
         let mut pos = self
             .chars
@@ -632,8 +633,17 @@ impl<'s> Parser<'s> {
                 }
                 '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`' | '/' | '*')) => {
                     self.chars.next();
-                    if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
-                        pair_stack.push(c);
+                    match self.chars.peek() {
+                        Some((_, '/')) => {
+                            pair_stack.push('/');
+                            has_line_comment = true;
+                            self.chars.next();
+                        }
+                        Some((_, '*')) => {
+                            pair_stack.push('*');
+                            self.chars.next();
+                        }
+                        _ => {}
                     }
                 }
                 '\n' => {
@@ -663,6 +673,7 @@ impl<'s> Parser<'s> {
 
         Ok(AstroExpr {
             children,
+            has_line_comment,
             start: start + 1,
         })
     }
