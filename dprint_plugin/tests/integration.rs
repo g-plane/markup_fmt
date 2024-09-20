@@ -119,8 +119,9 @@ fn integration_with_biome_snapshot() {
             &options,
             |code, hints| -> anyhow::Result<Cow<str>> {
                 let ext = hints.ext;
-                let additional_config =
+                let mut additional_config =
                     dprint_plugin_markup::build_additional_config(hints, &options);
+                additional_config.insert("useTabs".into(), false.into());
                 if let Some(syntax) = malva::detect_syntax(&Path::new("file").with_extension(ext)) {
                     malva::format_text(
                         code,
