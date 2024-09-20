@@ -121,7 +121,7 @@ fn integration_with_biome_snapshot() {
                 let ext = hints.ext;
                 let mut additional_config =
                     dprint_plugin_markup::build_additional_config(hints, &options);
-                additional_config.insert("useTabs".into(), false.into());
+                additional_config.insert("javascriptIndentStyle".into(), "space".into());
                 if let Some(syntax) = malva::detect_syntax(&Path::new("file").with_extension(ext)) {
                     malva::format_text(
                         code,

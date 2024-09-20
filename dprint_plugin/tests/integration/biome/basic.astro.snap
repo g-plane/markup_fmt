@@ -25,18 +25,18 @@ const colors = ["red", "yellow", "blue"];
 
 <span class="class">{
   [
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"long",
-  	"expression",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "expression",
   ].join("")
 }</span>
 
@@ -49,7 +49,7 @@ const colors = ["red", "yellow", "blue"];
 
 <script>
 function handleClick(): void {
-	console.log("button clicked!");
+  console.log("button clicked!");
 }
 document.getElementById("button").addEventListener("click", handleClick);
 </script>

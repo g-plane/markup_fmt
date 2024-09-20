@@ -5,7 +5,7 @@ source: dprint_plugin/tests/integration.rs
 export let msg: string = "";
 
 function generateHtml(data: unknown) {
-	return "";
+  return "";
 }
 </script>
 
