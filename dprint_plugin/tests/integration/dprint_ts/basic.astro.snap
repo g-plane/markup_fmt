@@ -43,8 +43,8 @@ const colors = ["red", "yellow", "blue"];
 {/*   Hello */}
 {
   /*
-  Hello
-     */
+	Hello
+    */
 }
 
 <script>
@@ -68,9 +68,9 @@ document.getElementById("button").addEventListener("click", handleClick);
 
 {
   [].map((value) => {
-  console.log(value);
+    console.log(value);
 
-  return <div></div><h1></h1>;
+    return <div></div><h1></h1>;
   })
 }
 

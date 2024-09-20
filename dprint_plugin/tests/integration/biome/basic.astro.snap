@@ -41,11 +41,9 @@ const colors = ["red", "yellow", "blue"];
 }</span>
 
 {/*   Hello */}
-{
-  /*
-  	Hello
-  */
-}
+{/*
+	Hello
+*/}
 
 <script>
 function handleClick(): void {
@@ -68,9 +66,9 @@ document.getElementById("button").addEventListener("click", handleClick);
 
 {
   [].map((value) => {
-  console.log(value);
+    console.log(value);
 
-  return <div></div><h1></h1>;
+    return <div></div><h1></h1>;
   })
 }
 
