@@ -228,8 +228,6 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
-        let indent_width = ctx.indent_width;
-
         const PLACEHOLDER: &str = "$AstroTpl$";
         let script = self
             .children
@@ -258,8 +256,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                         .nest_with_ctx(ctx)
                         .append(Doc::line_or_nil())
                         .append(Doc::flat_or_break(Doc::nil(), Doc::text(")")))
-                        .group()
-                        .nest_with_ctx(ctx),
+                        .group(),
                 )
             } else {
                 None
@@ -267,6 +264,20 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
         });
 
         Doc::text("{")
+            .append(Doc::line_or_nil())
+            .concat(
+                formatted_script
+                    .split(PLACEHOLDER)
+                    .map(|script| {
+                        if script.contains('\n') {
+                            Doc::list(reflow_owned(script).collect())
+                        } else {
+                            Doc::text(script.to_string())
+                        }
+                    })
+                    .interleave(templates),
+            )
+            .nest_with_ctx(ctx)
             .append(
                 if self.has_line_comment
                     || formatted_script
@@ -280,20 +291,6 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                     Doc::line_or_nil()
                 },
             )
-            .nest(indent_width)
-            .concat(
-                formatted_script
-                    .split(PLACEHOLDER)
-                    .map(|script| {
-                        if script.contains('\n') {
-                            Doc::list(reflow_owned(script).collect())
-                        } else {
-                            Doc::text(script.to_string())
-                        }
-                    })
-                    .interleave(templates),
-            )
-            .append(Doc::line_or_nil())
             .append(Doc::text("}"))
             .group()
     }
