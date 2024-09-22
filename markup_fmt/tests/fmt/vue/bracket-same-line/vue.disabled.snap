@@ -3,10 +3,14 @@ source: markup_fmt/tests/fmt.rs
 ---
 <template>
   <div>
-    <div :long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value">
+    <div
+      :long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
+    >
       text
     </div>
-    <div v-on:long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value">
+    <div
+      v-on:long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
+    >
     </div>
     <span
       long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
@@ -29,9 +33,13 @@ source: markup_fmt/tests/fmt.rs
   </div>
 </template>
 
-<script long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value">
+<script
+  long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
+>
 export default {}
 </script>
-<style long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value">
+<style
+  long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
+>
 .a {color: #f00}
 </style>

@@ -37,7 +37,9 @@ source: markup_fmt/tests/fmt.rs
 
 <div
 >
-  before<dialog open>
+  before<dialog
+    open
+  >
     dialog
     long
     long
@@ -54,7 +56,9 @@ source: markup_fmt/tests/fmt.rs
 
 <div
 >
-  before<object data="horse.wav">
+  before<object
+    data="horse.wav"
+  >
     <param
       name="autoplay"
       value="true"

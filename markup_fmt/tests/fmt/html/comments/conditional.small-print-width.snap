@@ -18,7 +18,9 @@ source: markup_fmt/tests/fmt.rs
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html lang="zh-CN"><![endif]-->
-<html lang="zh-CN">
+<html
+  lang="zh-CN"
+>
   <head
   >
   </head
@@ -32,7 +34,9 @@ source: markup_fmt/tests/fmt.rs
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html lang="zh-CN"><div><![endif]-->
-<html lang="zh-CN">
+<html
+  lang="zh-CN"
+>
   <head
   >
   </head
@@ -46,7 +50,9 @@ source: markup_fmt/tests/fmt.rs
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html lang="zh-CN"><div></div><![endif]-->
-<html lang="zh-CN">
+<html
+  lang="zh-CN"
+>
   <head
   >
   </head
@@ -95,7 +101,9 @@ source: markup_fmt/tests/fmt.rs
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><![endif]-->
 <!--[if gte IE 9]><!-->
-<html hello>
+<html
+  hello
+>
   <!--<![endif]-->
   <head
   >

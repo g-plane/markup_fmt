@@ -239,6 +239,7 @@ impl Default for LanguageOptions {
             closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty::default(),
             max_attrs_per_line: None,
             prefer_attrs_single_line: false,
+            prefer_single_line_opening_tag: false,
             html_normal_self_closing: None,
             html_void_self_closing: None,
             component_self_closing: None,
