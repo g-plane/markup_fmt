@@ -100,7 +100,7 @@ impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "syntax error '{:?}' at line {}, column {}",
+            "syntax error '{}' at line {}, column {}",
             self.kind, self.line, self.column
         )
     }
