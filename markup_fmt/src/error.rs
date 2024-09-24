@@ -92,10 +92,7 @@ impl fmt::Display for SyntaxErrorKind {
             SyntaxErrorKind::ExpectVueDirective => "expect Vue directive".into(),
         };
 
-        write!(
-            f,
-            "{reason}"
-        )
+        write!(f, "{reason}")
     }
 }
 
