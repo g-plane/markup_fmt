@@ -48,9 +48,9 @@ pub enum SyntaxErrorKind {
     ExpectVueDirective,
 }
 
-impl fmt::Display for SyntaxError {
+impl fmt::Display for SyntaxErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let reason: Cow<_> = match self.kind {
+        let reason: Cow<_> = match self {
             SyntaxErrorKind::ExpectAngularFor => "expected Angular `@for`".into(),
             SyntaxErrorKind::ExpectAngularIf => "expected Angular `@if`".into(),
             SyntaxErrorKind::ExpectAngularLet => "expected Angular `@let`".into(),
@@ -92,10 +92,16 @@ impl fmt::Display for SyntaxError {
             SyntaxErrorKind::ExpectVueDirective => "expected Vue directive".into(),
         };
 
+        write!(f, "{reason}")
+    }
+}
+
+impl fmt::Display for SyntaxError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "syntax error '{reason}' at line {}, column {}",
-            self.line, self.column
+            "syntax error '{}' at line {}, column {}",
+            self.kind, self.line, self.column
         )
     }
 }
