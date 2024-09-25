@@ -133,6 +133,11 @@
       "type": "boolean",
       "default": false
     },
+    "preferSingleLineOpeningTag": {
+      "description": "Control whether opening tags that don't fit within the `printWidth` limit should be kept on a single line. This option only applies to tags with 0 or 1 attributes.",
+      "type": "boolean",
+      "default": false
+    },
     "html.normal.selfClosing": {
       "description": "Control whether HTML normal element should be self-closed or not if it doesn't have children.",
       "type": ["boolean", "null"],

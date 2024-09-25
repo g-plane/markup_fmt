@@ -136,6 +136,10 @@ pub struct LanguageOptions {
     #[cfg_attr(feature = "config_serde", serde(alias = "preferAttrsSingleLine"))]
     pub prefer_attrs_single_line: bool,
 
+    #[cfg_attr(feature = "config_serde", serde(alias = "preferSingleLineOpeningTag"))]
+    /// See [`preferSingleLineOpeningTag`](https://github.com/g-plane/markup_fmt/blob/main/docs/config.md#prefersinglelineopeningtag) on GitHub
+    pub prefer_single_line_opening_tag: bool,
+
     #[cfg_attr(
         feature = "config_serde",
         serde(rename = "html.normal.self_closing", alias = "html.normal.selfClosing")
@@ -235,6 +239,7 @@ impl Default for LanguageOptions {
             closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty::default(),
             max_attrs_per_line: None,
             prefer_attrs_single_line: false,
+            prefer_single_line_opening_tag: false,
             html_normal_self_closing: None,
             html_void_self_closing: None,
             component_self_closing: None,
