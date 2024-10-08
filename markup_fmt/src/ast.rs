@@ -242,6 +242,7 @@ pub struct VentoInterpolation<'s> {
 
 pub struct VentoTag<'s> {
     pub tag: &'s str,
+    pub trim_prev: bool,
 }
 
 pub enum VentoTagOrChildren<'s> {

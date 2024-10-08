@@ -2301,12 +2301,17 @@ impl<'s> Parser<'s> {
 
     fn parse_vento_tag_or_block(
         &mut self,
-        first_tag: Option<(&'s str, usize)>,
+        first_tag: Option<(&'s str, bool, usize)>,
     ) -> PResult<NodeKind<'s>> {
-        let (first_tag, first_tag_start) = if let Some(first_tag) = first_tag {
+        let (first_tag, trim_prev, first_tag_start) = if let Some(first_tag) = first_tag {
             first_tag
         } else {
-            self.parse_mustache_interpolation()?
+            let (first_tag, start) = self.parse_mustache_interpolation()?;
+            if let Some(first_tag) = first_tag.strip_prefix('-') {
+                (first_tag, true, start + 1)
+            } else {
+                (first_tag, false, start)
+            }
         };
 
         if let Some(raw) = first_tag
@@ -2329,7 +2334,10 @@ impl<'s> Parser<'s> {
             || matches!(tag_name, "set" | "export") && !first_tag.contains('=')
             || is_function
         {
-            let mut body = vec![VentoTagOrChildren::Tag(VentoTag { tag: first_tag })];
+            let mut body = vec![VentoTagOrChildren::Tag(VentoTag {
+                tag: first_tag,
+                trim_prev,
+            })];
 
             loop {
                 let mut children = self.parse_vento_block_children()?;
@@ -2341,21 +2349,36 @@ impl<'s> Parser<'s> {
                     }
                 }
                 if let Ok((next_tag, next_tag_start)) = self.parse_mustache_interpolation() {
+                    let (next_tag, trim_prev) = if let Some(next_tag) = next_tag.strip_prefix('-') {
+                        (next_tag, true)
+                    } else {
+                        (next_tag, false)
+                    };
                     let (next_tag_name, _) = helpers::parse_vento_tag(next_tag);
                     if next_tag_name
                         .trim()
                         .strip_prefix('/')
                         .is_some_and(|name| name == tag_name || is_function && name == "function")
                     {
-                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
+                        body.push(VentoTagOrChildren::Tag(VentoTag {
+                            tag: next_tag,
+                            trim_prev,
+                        }));
                         break;
                     }
                     if tag_name == "if" && next_tag_name == "else" {
-                        body.push(VentoTagOrChildren::Tag(VentoTag { tag: next_tag }));
+                        body.push(VentoTagOrChildren::Tag(VentoTag {
+                            tag: next_tag,
+                            trim_prev,
+                        }));
                     } else {
                         let node = self
                             .with_taken(|parser| {
-                                parser.parse_vento_tag_or_block(Some((next_tag, next_tag_start)))
+                                parser.parse_vento_tag_or_block(Some((
+                                    next_tag,
+                                    trim_prev,
+                                    next_tag_start,
+                                )))
                             })
                             .map(|(kind, raw)| Node { kind, raw })?;
                         if let Some(VentoTagOrChildren::Children(nodes)) = body.last_mut() {
@@ -2375,7 +2398,10 @@ impl<'s> Parser<'s> {
                 start: first_tag_start,
             }))
         } else {
-            Ok(NodeKind::VentoTag(VentoTag { tag: first_tag }))
+            Ok(NodeKind::VentoTag(VentoTag {
+                tag: first_tag,
+                trim_prev,
+            }))
         }
     }
 

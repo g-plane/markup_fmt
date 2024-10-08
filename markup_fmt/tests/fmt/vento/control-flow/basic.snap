@@ -37,3 +37,7 @@ source: markup_fmt/tests/fmt.rs
 {{ for await item of getItems() }}
   {{ item }}
 {{ /for }}
+
+{{ if foo }}
+  bar
+{{- /if }}
