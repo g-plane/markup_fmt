@@ -1803,6 +1803,7 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
+            .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
@@ -1853,6 +1854,7 @@ impl<'s> Parser<'s> {
                 Some((_, '{')) => {
                     let mut chars = self.chars.clone();
                     chars.next();
+                    while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
                     if chars.next_if(|(_, c)| *c == '/' || *c == ':').is_some() {
                         break;
                     }
@@ -1967,6 +1969,7 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
+            .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
@@ -2011,6 +2014,7 @@ impl<'s> Parser<'s> {
             if self.chars.next_if(|(_, c)| *c == '{').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd));
             }
+            self.skip_ws();
             match self.chars.next() {
                 Some((_, ':')) => {
                     if self
@@ -2094,6 +2098,7 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
+            .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
