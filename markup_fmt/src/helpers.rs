@@ -1,4 +1,6 @@
 use crate::Language;
+use aho_corasick::AhoCorasick;
+use std::sync::LazyLock;
 
 pub(crate) fn is_component(name: &str) -> bool {
     name.contains('-') || name.contains(|c: char| c.is_ascii_uppercase())
@@ -159,3 +161,6 @@ pub(crate) fn parse_vento_tag(tag: &str) -> (&str, &str) {
         .split_once(|c: char| c.is_ascii_whitespace())
         .unwrap_or((trimmed, ""))
 }
+
+pub(crate) static UNESCAPING_AC: LazyLock<AhoCorasick> =
+    LazyLock::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());

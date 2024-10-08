@@ -2,15 +2,12 @@ use crate::{
     config::{LanguageOptions, Quotes, WhitespaceSensitivity},
     helpers, Language,
 };
-use aho_corasick::AhoCorasick;
 use memchr::memchr;
-use std::{borrow::Cow, sync::LazyLock};
+use std::borrow::Cow;
 use tiny_pretty::Doc;
 
 const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
 
-static UNESCAPING_AC: LazyLock<AhoCorasick> =
-    LazyLock::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());
 const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
@@ -96,26 +93,26 @@ where
         }
     }
 
-    pub(crate) fn format_general_expr(&mut self, code: &str, start: usize) -> String {
-        self.format_expr(code, false, start)
-    }
-
-    pub(crate) fn format_attr_expr(&mut self, code: &str, start: usize) -> String {
-        let code = UNESCAPING_AC.replace_all(code, &QUOTES);
-        let formatted = self.format_expr(&code, true, start);
-        if memchr(b'\'', formatted.as_bytes()).is_some()
-            && memchr(b'"', formatted.as_bytes()).is_some()
+    pub(crate) fn with_escaping_quotes(
+        &mut self,
+        s: &str,
+        mut processer: impl FnMut(String, &mut Self) -> String,
+    ) -> String {
+        let escaped = helpers::UNESCAPING_AC.replace_all(s, &QUOTES);
+        let proceeded = processer(escaped, self);
+        if memchr(b'\'', proceeded.as_bytes()).is_some()
+            && memchr(b'"', proceeded.as_bytes()).is_some()
         {
             match self.options.quotes {
-                Quotes::Double => formatted.replace('"', "&quot;"),
-                Quotes::Single => formatted.replace('\'', "&#x27;"),
+                Quotes::Double => proceeded.replace('"', "&quot;"),
+                Quotes::Single => proceeded.replace('\'', "&#x27;"),
             }
         } else {
-            formatted
+            proceeded
         }
     }
 
-    fn format_expr(&mut self, code: &str, attr: bool, start: usize) -> String {
+    pub(crate) fn format_expr(&mut self, code: &str, attr: bool, start: usize) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
