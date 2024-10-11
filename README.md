@@ -33,7 +33,7 @@ dprint config add g-plane/malva
 dprint config add typescript
 ```
 
-If you also want to format JSON in `<script>` tag whose `"type"` is `"importmap"` or `"application/json"`,
+If you also want to format JSON in `<script>` tag whose `"type"` is `"importmap"`, `"application/json"`, or `"application/ld+json"`,
 you can add dprint-plugin-json:
 
 ```bash
