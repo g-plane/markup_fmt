@@ -558,7 +558,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 && native_attr
                                     .value
                                     .map(|(value, _)| {
-                                        value == "importmap" || value == "application/json"
+                                        value == "importmap" || value == "application/json" || value == "application/ld+json"
                                     })
                                     .unwrap_or_default()
                         } else {
