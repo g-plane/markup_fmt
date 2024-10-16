@@ -282,8 +282,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                 if self.has_line_comment
                     || formatted_script
                         .lines()
-                        .rev()
-                        .next()
+                        .next_back()
                         .is_some_and(|line| line.starts_with([' ', '\t']))
                 {
                     Doc::hard_line()
@@ -558,7 +557,9 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 && native_attr
                                     .value
                                     .map(|(value, _)| {
-                                        value == "importmap" || value == "application/json" || value == "application/ld+json"
+                                        value == "importmap"
+                                            || value == "application/json"
+                                            || value == "application/ld+json"
                                     })
                                     .unwrap_or_default()
                         } else {
