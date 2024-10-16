@@ -346,6 +346,11 @@
       "description": "Text directive for ignoring formatting specific element or node.",
       "type": "string",
       "default": "markup-fmt-ignore"
+    },
+    "ignoreFileCommentDirective": {
+      "description": "Text directive for ignoring formatting a whole file.",
+      "type": "string",
+      "default": "dprint-ignore-file"
     }
   }
 }

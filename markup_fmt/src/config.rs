@@ -214,6 +214,9 @@ pub struct LanguageOptions {
 
     #[cfg_attr(feature = "config_serde", serde(alias = "ignoreCommentDirective"))]
     pub ignore_comment_directive: String,
+
+    #[cfg_attr(feature = "config_serde", serde(alias = "ignoreFileCommentDirective"))]
+    pub ignore_file_comment_directive: String,
 }
 
 impl Default for LanguageOptions {
@@ -256,6 +259,7 @@ impl Default for LanguageOptions {
             svelte_directive_shorthand: None,
             astro_attr_shorthand: None,
             ignore_comment_directive: "markup-fmt-ignore".into(),
+            ignore_file_comment_directive: "markup-fmt-ignore-file".into(),
         }
     }
 }

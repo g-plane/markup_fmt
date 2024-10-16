@@ -1,0 +1,5 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<!-- markup-fmt-ignore-file -->
+<div class = container ></div>

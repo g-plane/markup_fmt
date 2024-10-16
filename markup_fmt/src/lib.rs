@@ -55,6 +55,18 @@ pub fn format_text<E, F>(
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
+    if code
+        .trim_start()
+        .strip_prefix("<!--")
+        .and_then(|s| {
+            s.trim_start()
+                .strip_prefix(&options.language.ignore_file_comment_directive)
+        })
+        .is_some_and(|rest| rest.trim_start().starts_with("-->"))
+    {
+        return Ok(code.into());
+    }
+
     let mut parser = Parser::new(code, language.clone());
     let ast = parser.parse_root().map_err(FormatError::Syntax)?;
     let mut ctx = Ctx {
