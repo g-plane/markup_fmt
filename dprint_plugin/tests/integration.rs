@@ -48,6 +48,7 @@ fn integration_with_dprint_ts_snapshot() {
                 } else {
                     dprint_plugin_typescript::format_text(
                         &Path::new("file").with_extension(ext),
+                        Some(ext),
                         code.to_owned(),
                         &dprint_plugin_typescript::configuration::resolve_config(
                             additional_config,
