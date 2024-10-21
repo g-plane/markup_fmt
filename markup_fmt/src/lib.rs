@@ -55,20 +55,27 @@ pub fn format_text<E, F>(
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
-    if code
-        .trim_start()
-        .strip_prefix("<!--")
-        .and_then(|s| {
-            s.trim_start()
+    let mut parser = Parser::new(code, language.clone());
+    let ast = parser.parse_root().map_err(FormatError::Syntax)?;
+
+    if ast.children.first().is_some_and(|child| {
+        if let ast::Node {
+            kind: ast::NodeKind::Comment(ast::Comment { raw, .. }),
+            ..
+        } = child
+        {
+            raw.trim_start()
                 .strip_prefix(&options.language.ignore_file_comment_directive)
-        })
-        .is_some_and(|rest| rest.trim_start().starts_with("-->"))
-    {
+                .is_some_and(|rest| {
+                    rest.starts_with(|c: char| c.is_ascii_whitespace()) || rest.is_empty()
+                })
+        } else {
+            false
+        }
+    }) {
         return Ok(code.into());
     }
 
-    let mut parser = Parser::new(code, language.clone());
-    let ast = parser.parse_root().map_err(FormatError::Syntax)?;
     let mut ctx = Ctx {
         source: code,
         language,
