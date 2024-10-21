@@ -1514,6 +1514,11 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
             ))
             .nest_with_ctx(ctx)
             .append(Doc::line_or_space())
+            .append(if self.trim_next {
+                Doc::text("-")
+            } else {
+                Doc::nil()
+            })
             .append(Doc::text("}}"))
             .group()
     }

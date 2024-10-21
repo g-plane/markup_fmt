@@ -2306,17 +2306,25 @@ impl<'s> Parser<'s> {
 
     fn parse_vento_tag_or_block(
         &mut self,
-        first_tag: Option<(&'s str, bool, usize)>,
+        first_tag: Option<(&'s str, bool, bool, usize)>,
     ) -> PResult<NodeKind<'s>> {
-        let (first_tag, trim_prev, first_tag_start) = if let Some(first_tag) = first_tag {
+        let (first_tag, trim_prev, trim_next, first_tag_start) = if let Some(first_tag) = first_tag
+        {
             first_tag
         } else {
-            let (first_tag, start) = self.parse_mustache_interpolation()?;
-            if let Some(first_tag) = first_tag.strip_prefix('-') {
-                (first_tag, true, start + 1)
-            } else {
-                (first_tag, false, start)
+            let (mut first_tag, mut start) = self.parse_mustache_interpolation()?;
+            let mut trim_prev = false;
+            let mut trim_next = false;
+            if let Some(tag) = first_tag.strip_prefix('-') {
+                first_tag = tag;
+                trim_prev = true;
+                start += 1;
             }
+            if let Some(tag) = first_tag.strip_suffix('-') {
+                first_tag = tag;
+                trim_next = true;
+            }
+            (first_tag, trim_prev, trim_next, start)
         };
 
         if let Some(raw) = first_tag
@@ -2342,6 +2350,7 @@ impl<'s> Parser<'s> {
             let mut body = vec![VentoTagOrChildren::Tag(VentoTag {
                 tag: first_tag,
                 trim_prev,
+                trim_next,
             })];
 
             loop {
@@ -2353,11 +2362,18 @@ impl<'s> Parser<'s> {
                         body.push(VentoTagOrChildren::Children(children));
                     }
                 }
-                if let Ok((next_tag, next_tag_start)) = self.parse_mustache_interpolation() {
-                    let (next_tag, trim_prev) = if let Some(next_tag) = next_tag.strip_prefix('-') {
-                        (next_tag, true)
-                    } else {
-                        (next_tag, false)
+                if let Ok((mut next_tag, mut next_tag_start)) = self.parse_mustache_interpolation()
+                {
+                    let mut trim_prev = false;
+                    let mut trim_next = false;
+                    if let Some(tag) = next_tag.strip_prefix('-') {
+                        next_tag = tag;
+                        trim_prev = true;
+                        next_tag_start += 1;
+                    };
+                    if let Some(tag) = next_tag.strip_suffix('-') {
+                        next_tag = tag;
+                        trim_next = true;
                     };
                     let (next_tag_name, _) = helpers::parse_vento_tag(next_tag);
                     if next_tag_name
@@ -2368,6 +2384,7 @@ impl<'s> Parser<'s> {
                         body.push(VentoTagOrChildren::Tag(VentoTag {
                             tag: next_tag,
                             trim_prev,
+                            trim_next,
                         }));
                         break;
                     }
@@ -2375,6 +2392,7 @@ impl<'s> Parser<'s> {
                         body.push(VentoTagOrChildren::Tag(VentoTag {
                             tag: next_tag,
                             trim_prev,
+                            trim_next,
                         }));
                     } else {
                         let node = self
@@ -2382,6 +2400,7 @@ impl<'s> Parser<'s> {
                                 parser.parse_vento_tag_or_block(Some((
                                     next_tag,
                                     trim_prev,
+                                    trim_next,
                                     next_tag_start,
                                 )))
                             })
@@ -2406,6 +2425,7 @@ impl<'s> Parser<'s> {
             Ok(NodeKind::VentoTag(VentoTag {
                 tag: first_tag,
                 trim_prev,
+                trim_next,
             }))
         }
     }

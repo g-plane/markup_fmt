@@ -41,3 +41,9 @@ source: markup_fmt/tests/fmt.rs
 {{ if foo }}
   bar
 {{- /if }}
+
+<ul>
+  {{ for n of 12 -}}
+    <li>{{ n }}</li>
+  {{ /for }}
+</ul>
