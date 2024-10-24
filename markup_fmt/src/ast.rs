@@ -144,6 +144,7 @@ pub enum NodeKind<'s> {
     SvelteIfBlock(SvelteIfBlock<'s>),
     SvelteInterpolation(SvelteInterpolation<'s>),
     SvelteKeyBlock(SvelteKeyBlock<'s>),
+    SvelteSnippetBlock(SvelteSnippetBlock<'s>),
     Text(TextNode<'s>),
     VentoBlock(VentoBlock<'s>),
     VentoComment(VentoComment<'s>),
@@ -213,6 +214,11 @@ pub struct SvelteKeyBlock<'s> {
 
 pub struct SvelteThenBlock<'s> {
     pub binding: (&'s str, usize),
+    pub children: Vec<Node<'s>>,
+}
+
+pub struct SvelteSnippetBlock<'s> {
+    pub expr: (&'s str, usize),
     pub children: Vec<Node<'s>>,
 }
 

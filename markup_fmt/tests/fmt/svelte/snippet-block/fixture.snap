@@ -1,0 +1,8 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{#snippet product(p: Product)}
+  <div>
+    {p.name}
+  </div>
+{/snippet}
