@@ -1768,6 +1768,9 @@ fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> +
                         pair_stack.push('$');
                     }
                 }
+                '{' => {
+                    pair_stack.push('{');
+                }
                 '}' if matches!(pair_stack.last(), Some('$' | '{')) => {
                     pair_stack.pop();
                 }
