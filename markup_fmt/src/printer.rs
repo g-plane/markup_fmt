@@ -981,7 +981,9 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
                 svelte_interpolation.doc(ctx, state)
             }
             NodeKind::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx, state),
-            NodeKind::SvelteSnippetBlock(svelte_snippet_block) => svelte_snippet_block.doc(ctx, state),
+            NodeKind::SvelteSnippetBlock(svelte_snippet_block) => {
+                svelte_snippet_block.doc(ctx, state)
+            }
             NodeKind::Text(text_node) => text_node.doc(ctx, state),
             NodeKind::VentoBlock(vento_block) => vento_block.doc(ctx, state),
             NodeKind::VentoComment(vento_comment) => vento_comment.doc(ctx, state),

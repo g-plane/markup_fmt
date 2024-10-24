@@ -1480,9 +1480,9 @@ impl<'s> Parser<'s> {
                             Some((_, 'k')) => {
                                 self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock)
                             }
-                            Some((_, 's')) => {
-                                self.parse_svelte_snippet_block().map(NodeKind::SvelteSnippetBlock)
-                            }
+                            Some((_, 's')) => self
+                                .parse_svelte_snippet_block()
+                                .map(NodeKind::SvelteSnippetBlock),
                             _ => self.parse_text_node().map(NodeKind::Text),
                         }
                     }
@@ -2137,10 +2137,7 @@ impl<'s> Parser<'s> {
         let expr = self.parse_svelte_or_astro_expr()?;
         let children = self.parse_svelte_block_children()?;
 
-        Ok(SvelteSnippetBlock {
-            expr,
-            children,
-        })
+        Ok(SvelteSnippetBlock { expr, children })
     }
 
     /// This will consume `}`.
