@@ -981,6 +981,7 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
                 svelte_interpolation.doc(ctx, state)
             }
             NodeKind::SvelteKeyBlock(svelte_key_block) => svelte_key_block.doc(ctx, state),
+            NodeKind::SvelteSnippetBlock(svelte_snippet_block) => svelte_snippet_block.doc(ctx, state),
             NodeKind::Text(text_node) => text_node.doc(ctx, state),
             NodeKind::VentoBlock(vento_block) => vento_block.doc(ctx, state),
             NodeKind::VentoComment(vento_comment) => vento_comment.doc(ctx, state),
@@ -1296,6 +1297,22 @@ impl<'s> DocGen<'s> for SvelteKeyBlock<'s> {
                 state,
             ))
             .append(Doc::text("{/key}"))
+    }
+}
+
+impl<'s> DocGen<'s> for SvelteSnippetBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("{#snippet ")
+            .append(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)))
+            .append(Doc::text("}"))
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
     }
 }
 

@@ -1480,6 +1480,9 @@ impl<'s> Parser<'s> {
                             Some((_, 'k')) => {
                                 self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock)
                             }
+                            Some((_, 's')) => {
+                                self.parse_svelte_snippet_block().map(NodeKind::SvelteSnippetBlock)
+                            }
                             _ => self.parse_text_node().map(NodeKind::Text),
                         }
                     }
@@ -2111,6 +2114,33 @@ impl<'s> Parser<'s> {
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
         }
+    }
+
+    fn parse_svelte_snippet_block(&mut self) -> PResult<SvelteSnippetBlock<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
+        };
+
+        let expr = self.parse_svelte_or_astro_expr()?;
+        let children = self.parse_svelte_block_children()?;
+
+        Ok(SvelteSnippetBlock {
+            expr,
+            children,
+        })
     }
 
     /// This will consume `}`.
