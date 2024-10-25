@@ -2116,30 +2116,6 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn parse_svelte_snippet_block(&mut self) -> PResult<SvelteSnippetBlock<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
-            .is_none()
-        {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
-        };
-
-        let expr = self.parse_svelte_or_astro_expr()?;
-        let children = self.parse_svelte_block_children()?;
-
-        Ok(SvelteSnippetBlock { expr, children })
-    }
-
     /// This will consume `}`.
     fn parse_svelte_or_astro_expr(&mut self) -> PResult<(&'s str, usize)> {
         self.skip_ws();
@@ -2168,6 +2144,30 @@ impl<'s> Parser<'s> {
             }
         }
         Ok((unsafe { self.source.get_unchecked(start..end) }, start))
+    }
+
+    fn parse_svelte_snippet_block(&mut self) -> PResult<SvelteSnippetBlock<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
+        };
+
+        let expr = self.parse_svelte_or_astro_expr()?;
+        let children = self.parse_svelte_block_children()?;
+
+        Ok(SvelteSnippetBlock { expr, children })
     }
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
