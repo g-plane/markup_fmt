@@ -14,7 +14,7 @@ pub(crate) fn resolve_config(
             print_width: get_value(
                 &mut config,
                 "printWidth",
-                global_config.line_width.unwrap_or(80),
+                global_config.line_width.unwrap_or(u32::MAX),
                 &mut diagnostics,
             ) as usize,
             use_tabs: get_value(
