@@ -865,7 +865,11 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                     }
                 }
                 Language::Svelte if !ctx.options.strict_svelte_attr => {
-                    if let Some(expr) = value.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+                    if let Some(expr) = value
+                        .strip_prefix('{')
+                        .and_then(|s| s.strip_suffix('}'))
+                        .filter(|s| !s.contains('{'))
+                    {
                         let formatted_expr = ctx.format_expr(expr, false, value_start);
                         return match self.name.split_once(':') {
                             Some((_, name))
