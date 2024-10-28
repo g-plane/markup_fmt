@@ -1028,23 +1028,22 @@ impl<'s> Parser<'s> {
                     children.push(self.parse_node()?);
                 }
                 Some(..) => {
-                    children.push(
-                        if tag_name.eq_ignore_ascii_case("script")
-                            || tag_name.eq_ignore_ascii_case("style")
-                            || tag_name.eq_ignore_ascii_case("pre")
-                            || tag_name.eq_ignore_ascii_case("textarea")
-                        {
-                            self.parse_raw_text_node(tag_name).map(|text_node| {
-                                let raw = text_node.raw;
-                                Node {
-                                    kind: NodeKind::Text(text_node),
-                                    raw,
-                                }
-                            })?
-                        } else {
-                            self.parse_node()?
-                        },
-                    );
+                    if tag_name.eq_ignore_ascii_case("script")
+                        || tag_name.eq_ignore_ascii_case("style")
+                        || tag_name.eq_ignore_ascii_case("pre")
+                        || tag_name.eq_ignore_ascii_case("textarea")
+                    {
+                        let text_node = self.parse_raw_text_node(tag_name)?;
+                        let raw = text_node.raw;
+                        if !raw.is_empty() {
+                            children.push(Node {
+                                kind: NodeKind::Text(text_node),
+                                raw,
+                            });
+                        }
+                    } else {
+                        children.push(self.parse_node()?);
+                    }
                 }
                 None => return Err(self.emit_error(SyntaxErrorKind::ExpectCloseTag)),
             }
@@ -1539,6 +1538,8 @@ impl<'s> Parser<'s> {
             .map(|(i, _)| *i)
             .unwrap_or(self.source.len());
 
+        let allow_nested = tag_name.eq_ignore_ascii_case("pre");
+        let mut nested = 0u16;
         let mut line_breaks = 0;
         let end;
         loop {
@@ -1547,17 +1548,29 @@ impl<'s> Parser<'s> {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
-                    if chars
-                        .next_if(|(_, c)| *c == '/')
-                        .map(|_| {
-                            chars
-                                .zip(tag_name.chars())
-                                .all(|((_, a), b)| a.eq_ignore_ascii_case(&b))
-                        })
-                        .unwrap_or_default()
+                    if chars.next_if(|(_, c)| *c == '/').is_some()
+                        && chars
+                            .by_ref()
+                            .zip(tag_name.chars())
+                            .all(|((_, a), b)| a.eq_ignore_ascii_case(&b))
                     {
-                        end = i;
-                        break;
+                        if nested == 0 {
+                            end = i;
+                            break;
+                        } else {
+                            nested -= 1;
+                            self.chars = chars;
+                            continue;
+                        }
+                    } else if allow_nested
+                        && chars
+                            .by_ref()
+                            .zip(tag_name.chars())
+                            .all(|((_, a), b)| a.eq_ignore_ascii_case(&b))
+                    {
+                        nested += 1;
+                        self.chars = chars;
+                        continue;
                     }
                     self.chars.next();
                 }
