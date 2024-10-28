@@ -308,14 +308,7 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             Hints {
-                print_width: self
-                    .print_width
-                    .saturating_sub(self.indent_level)
-                    .saturating_sub(if self.style_indent() {
-                        self.indent_width
-                    } else {
-                        0
-                    }),
+                print_width: u16::MAX as usize,
                 attr: true,
                 ext: "css",
             },
