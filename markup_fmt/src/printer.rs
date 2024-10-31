@@ -1587,11 +1587,15 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 is_v_bind = true;
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {
                     docs.push(if let Some(VBindStyle::Short) = ctx.options.v_bind_style {
-                        Doc::text(":")
+                        if arg_and_modifiers.starts_with(':') {
+                            Doc::text("")
+                        } else {
+                            Doc::text("v-bind")
+                        }
                     } else {
-                        Doc::text("v-bind:")
+                        Doc::text("v-bind")
                     });
-                    docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
+                    docs.push(Doc::text(arg_and_modifiers));
                 } else {
                     docs.push(Doc::text("v-bind"));
                 }

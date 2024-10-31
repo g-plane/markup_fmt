@@ -7,4 +7,5 @@ source: markup_fmt/tests/fmt.rs
   <button :type=""></button>
   <button :type.sync=""></button>
   <button v-bind></button>
+  <button v-bind.sync></button>
 </template>
