@@ -1,0 +1,13 @@
+---
+
+source: dprint_plugin/tests/integration.rs
+
+---
+
+<div
+  class="aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass 
+    aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass aclass 
+    aclass aclass aclass aclass aclass aclass aclass aclass"
+>
+  div with lost of tailwindcss classes
+</div>

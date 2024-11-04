@@ -308,7 +308,7 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             Hints {
-                print_width: u16::MAX as usize,
+                print_width: 120 as usize,
                 attr: true,
                 ext: "css",
             },
