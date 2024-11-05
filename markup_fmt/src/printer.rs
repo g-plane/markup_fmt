@@ -925,7 +925,26 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             docs.push(Doc::text("="));
             docs.push(quote.clone());
             if self.name.eq_ignore_ascii_case("class") {
-                docs.push(Doc::text(value.split_ascii_whitespace().join(" ")));
+                let value = value.trim();
+                let maybe_line_break = if value.contains('\n') {
+                    Doc::hard_line()
+                } else {
+                    Doc::nil()
+                };
+                docs.push(
+                    maybe_line_break
+                        .clone()
+                        .concat(itertools::intersperse(
+                            value
+                                .trim()
+                                .lines()
+                                .filter(|line| !line.is_empty())
+                                .map(|line| Doc::text(line.split_ascii_whitespace().join(" "))),
+                            Doc::hard_line(),
+                        ))
+                        .nest_with_ctx(ctx),
+                );
+                docs.push(maybe_line_break);
             } else if self.name.eq_ignore_ascii_case("style") {
                 docs.push(Doc::text(ctx.format_style_attr(&value, value_start)));
             } else {
