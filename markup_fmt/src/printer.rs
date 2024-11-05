@@ -1319,6 +1319,7 @@ impl<'s> DocGen<'s> for SvelteSnippetBlock<'s> {
                 ctx,
                 state,
             ))
+            .append(Doc::text("{/snippet}"))
     }
 }
 
