@@ -205,30 +205,21 @@ impl<'s> Parser<'s> {
         self.skip_ws();
         let children = self.parse_angular_control_flow_children()?;
 
+        self.skip_ws();
         let mut empty = None;
         let mut chars = self.chars.clone();
-        'peek: loop {
-            match chars.next() {
-                Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
-                Some((_, '@')) => {
-                    if chars
-                        .next_if(|(_, c)| *c == 'e')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == 'm'))
-                        .and_then(|_| chars.next_if(|(_, c)| *c == 'p'))
-                        .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-                        .and_then(|_| chars.next_if(|(_, c)| *c == 'y'))
-                        .is_some()
-                    {
-                        self.chars = chars;
-                        self.skip_ws();
-                        empty = Some(self.parse_angular_control_flow_children()?);
-                        break 'peek;
-                    } else {
-                        break 'peek;
-                    }
-                }
-                _ => break 'peek,
-            }
+        if chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| chars.next_if(|(_, c)| *c == 'm'))
+            .and_then(|_| chars.next_if(|(_, c)| *c == 'p'))
+            .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| chars.next_if(|(_, c)| *c == 'y'))
+            .is_some()
+        {
+            self.chars = chars;
+            self.skip_ws();
+            empty = Some(self.parse_angular_control_flow_children()?);
         }
 
         Ok(AngularFor {
