@@ -20,3 +20,12 @@ source: markup_fmt/tests/fmt.rs
 <div>
   @for (item of items; track item) { }
 </div>
+
+<div>
+  @for (item of items; track item) {
+    <li><strong>{{ item.name }}</strong></li>
+  }
+  @for (item of items; track item) {
+    <li><strong>{{ item.name }}</strong></li>
+  }
+</div>
