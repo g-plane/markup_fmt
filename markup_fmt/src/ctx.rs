@@ -132,8 +132,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level)
+                        .saturating_sub(self.indent_level * self.indent_width)
                         .saturating_sub(2), // this is technically wrong, just workaround
+                    indent_level: self.indent_level,
                     attr,
                     ext: "tsx",
                 },
@@ -171,8 +172,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level)
+                        .saturating_sub(self.indent_level * self.indent_width)
                         .saturating_sub(2), // this is technically wrong, just workaround
+                    indent_level: self.indent_level,
                     attr: false,
                     ext: "ts",
                 },
@@ -203,8 +205,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level)
+                        .saturating_sub(self.indent_level * self.indent_width)
                         .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
+                    indent_level: self.indent_level,
                     attr: true,
                     ext: "ts",
                 },
@@ -228,8 +231,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level)
+                        .saturating_sub(self.indent_level * self.indent_width)
                         .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+                    indent_level: self.indent_level,
                     attr: false,
                     ext: "js",
                 },
@@ -261,12 +265,13 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub(self.indent_level)
+                    .saturating_sub(self.indent_level * self.indent_width)
                     .saturating_sub(if self.script_indent() {
                         self.indent_width
                     } else {
                         0
                     }),
+                indent_level: self.indent_level,
                 attr: false,
                 ext: lang,
             },
@@ -288,12 +293,13 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub(self.indent_level)
+                    .saturating_sub(self.indent_level * self.indent_width)
                     .saturating_sub(if self.style_indent() {
                         self.indent_width
                     } else {
                         0
                     }),
+                indent_level: self.indent_level,
                 attr: false,
                 ext: lang,
             },
@@ -309,6 +315,7 @@ where
                 + code,
             Hints {
                 print_width: u16::MAX as usize,
+                indent_level: self.indent_level,
                 attr: true,
                 ext: "css",
             },
@@ -327,12 +334,13 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub(self.indent_level)
+                    .saturating_sub(self.indent_level * self.indent_width)
                     .saturating_sub(if self.script_indent() {
                         self.indent_width
                     } else {
                         0
                     }),
+                indent_level: self.indent_level,
                 attr: false,
                 ext: "json",
             },
@@ -358,6 +366,8 @@ where
 /// Hints provide some useful additional information to the external formatter.
 pub struct Hints<'s> {
     pub print_width: usize,
+    /// current indent width = indent width in config * indent level
+    pub indent_level: usize,
     /// Whether the code is inside attribute.
     pub attr: bool,
     /// Fake file extension.
@@ -375,9 +385,9 @@ impl NestWithCtx for Doc<'_> {
     where
         F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
     {
-        ctx.indent_level += ctx.indent_width;
+        ctx.indent_level += 1;
         let doc = self.nest(ctx.indent_width);
-        ctx.indent_level -= ctx.indent_width;
+        ctx.indent_level -= 1;
         doc
     }
 }

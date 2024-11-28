@@ -126,6 +126,7 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
     let mut additional_config = ConfigKeyMap::new();
     additional_config.insert("lineWidth".into(), (hints.print_width as i32).into());
     additional_config.insert("printWidth".into(), (hints.print_width as i32).into());
+    additional_config.insert("fileIndentLevel".into(), (hints.indent_level as i32).into());
 
     if hints.attr {
         // Only for dprint-plugin-typescript currently,
