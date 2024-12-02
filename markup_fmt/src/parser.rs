@@ -2168,7 +2168,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteSnippetBlock));
         };
 
-        let expr = self.parse_svelte_or_astro_expr()?;
+        let signature = self.parse_svelte_or_astro_expr()?;
         let children = self.parse_svelte_block_children()?;
 
         if self
@@ -2187,7 +2187,10 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
-            Ok(SvelteSnippetBlock { expr, children })
+            Ok(SvelteSnippetBlock {
+                signature,
+                children,
+            })
         } else {
             Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd))
         }

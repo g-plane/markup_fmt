@@ -24,3 +24,6 @@ function generateHtml(data:unknown) {
 {#key 1+2}s{/key}
 
 <button class="{}" on:click={}>{}{/**/}</button>
+
+{#snippet foo(param: string)}
+{/snippet}

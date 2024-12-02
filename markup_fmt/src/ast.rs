@@ -218,7 +218,7 @@ pub struct SvelteThenBlock<'s> {
 }
 
 pub struct SvelteSnippetBlock<'s> {
-    pub expr: (&'s str, usize),
+    pub signature: (&'s str, usize),
     pub children: Vec<Node<'s>>,
 }
 

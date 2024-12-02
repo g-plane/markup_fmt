@@ -1415,13 +1415,19 @@ impl<'s> DocGen<'s> for SvelteSnippetBlock<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
+        let wrapped = format!("function {}{{}}", self.signature.0);
+        let formatted = ctx.format_script(&wrapped, "ts", self.signature.1, state);
         Doc::text("{#snippet ")
-            .append(Doc::text(ctx.format_expr(
-                self.expr.0,
-                false,
-                self.expr.1,
-                state,
-            )))
+            .append(Doc::text(
+                formatted
+                    .trim()
+                    .strip_prefix("function ")
+                    .and_then(|s| s.trim_end().strip_suffix('}'))
+                    .and_then(|s| s.trim_end().strip_suffix('{'))
+                    .map(|s| s.trim())
+                    .unwrap_or(&formatted)
+                    .to_owned(),
+            ))
             .append(Doc::text("}"))
             .append(format_control_structure_block_children(
                 &self.children,
