@@ -2114,7 +2114,7 @@ where
                 |(mut docs, is_prev_text_like), (i, child)| {
                     let is_current_text_like = is_text_like(child);
                     if should_ignore_node(i, children, ctx) {
-                        let raw = child.raw.trim_end_matches(|c| c == ' ' || c == '\t');
+                        let raw = child.raw.trim_end_matches([' ', '\t']);
                         let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
                         docs.extend(reflow_raw(last_line_break_removed.unwrap_or(raw)));
                         if i < children.len() - 1 && last_line_break_removed.is_some() {
@@ -2199,7 +2199,7 @@ where
             .enumerate()
             .map(|(i, child)| {
                 if should_ignore_node(i, children, ctx) {
-                    let raw = child.raw.trim_end_matches(|c| c == ' ' || c == '\t');
+                    let raw = child.raw.trim_end_matches([' ', '\t']);
                     let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
                     let doc =
                         Doc::list(reflow_raw(last_line_break_removed.unwrap_or(raw)).collect());
