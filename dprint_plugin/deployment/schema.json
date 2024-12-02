@@ -342,6 +342,11 @@
       "type": ["boolean", "null"],
       "default": null
     },
+    "scriptFormatter": {
+      "description": "Tell markup_fmt what script formatter you are using.",
+      "type": ["string", "null"],
+      "default": "dprint"
+    },
     "ignoreCommentDirective": {
       "description": "Text directive for ignoring formatting specific element or node.",
       "type": "string",
