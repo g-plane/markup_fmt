@@ -347,6 +347,24 @@ pub(crate) fn resolve_config(
                 "astroAttrShorthand",
                 &mut diagnostics,
             ),
+            script_formatter: get_nullable_value::<String>(
+                &mut config,
+                "scriptFormatter",
+                &mut diagnostics,
+            )
+            .as_deref()
+            .map(|option_value| match option_value {
+                "dprint" => ScriptFormatter::Dprint,
+                "biome" => ScriptFormatter::Biome,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "scriptFormatter".into(),
+                        message: "invalid value for config `scriptFormatter`".into(),
+                    });
+                    ScriptFormatter::Dprint
+                }
+            })
+            .or(Some(ScriptFormatter::Dprint)),
             ignore_comment_directive: get_value(
                 &mut config,
                 "ignoreCommentDirective",

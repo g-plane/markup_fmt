@@ -1,10 +1,11 @@
 use crate::{
     config::{LanguageOptions, Quotes, WhitespaceSensitivity},
-    helpers, Language,
+    helpers,
+    state::State,
+    Language,
 };
 use memchr::memchr;
 use std::borrow::Cow;
-use tiny_pretty::Doc;
 
 const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
 
@@ -19,7 +20,6 @@ where
     pub(crate) indent_width: usize,
     pub(crate) print_width: usize,
     pub(crate) options: &'b LanguageOptions,
-    pub(crate) indent_level: usize,
     pub(crate) external_formatter: F,
     pub(crate) external_formatter_errors: Vec<E>,
 }
@@ -112,7 +112,13 @@ where
         }
     }
 
-    pub(crate) fn format_expr(&mut self, code: &str, attr: bool, start: usize) -> String {
+    pub(crate) fn format_expr(
+        &mut self,
+        code: &str,
+        attr: bool,
+        start: usize,
+        state: &State,
+    ) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -132,9 +138,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level * self.indent_width)
+                        .saturating_sub((state.indent_level as usize) * self.indent_width)
                         .saturating_sub(2), // this is technically wrong, just workaround
-                    indent_level: self.indent_level,
+                    indent_level: state.indent_level,
                     attr,
                     ext: "tsx",
                 },
@@ -155,7 +161,7 @@ where
         }
     }
 
-    pub(crate) fn format_binding(&mut self, code: &str, start: usize) -> String {
+    pub(crate) fn format_binding(&mut self, code: &str, start: usize, state: &State) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -172,9 +178,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level * self.indent_width)
+                        .saturating_sub((state.indent_level as usize) * self.indent_width)
                         .saturating_sub(2), // this is technically wrong, just workaround
-                    indent_level: self.indent_level,
+                    indent_level: state.indent_level,
                     attr: false,
                     ext: "ts",
                 },
@@ -188,7 +194,7 @@ where
         }
     }
 
-    pub(crate) fn format_type_params(&mut self, code: &str, start: usize) -> String {
+    pub(crate) fn format_type_params(&mut self, code: &str, start: usize, state: &State) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -205,9 +211,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level * self.indent_width)
+                        .saturating_sub((state.indent_level as usize) * self.indent_width)
                         .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
-                    indent_level: self.indent_level,
+                    indent_level: state.indent_level,
                     attr: true,
                     ext: "ts",
                 },
@@ -221,7 +227,12 @@ where
         }
     }
 
-    pub(crate) fn format_stmt_header(&mut self, keyword: &str, code: &str) -> String {
+    pub(crate) fn format_stmt_header(
+        &mut self,
+        keyword: &str,
+        code: &str,
+        state: &State,
+    ) -> String {
         if code.trim().is_empty() {
             String::new()
         } else {
@@ -231,9 +242,9 @@ where
                 Hints {
                     print_width: self
                         .print_width
-                        .saturating_sub(self.indent_level * self.indent_width)
+                        .saturating_sub((state.indent_level as usize) * self.indent_width)
                         .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
-                    indent_level: self.indent_level,
+                    indent_level: state.indent_level,
                     attr: false,
                     ext: "js",
                 },
@@ -255,6 +266,7 @@ where
         code: &'a str,
         lang: &'b str,
         start: usize,
+        state: &State,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             self.source
@@ -265,13 +277,13 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub(self.indent_level * self.indent_width)
+                    .saturating_sub((state.indent_level as usize) * self.indent_width)
                     .saturating_sub(if self.script_indent() {
                         self.indent_width
                     } else {
                         0
                     }),
-                indent_level: self.indent_level,
+                indent_level: state.indent_level,
                 attr: false,
                 ext: lang,
             },
@@ -283,6 +295,7 @@ where
         code: &'a str,
         lang: &'b str,
         start: usize,
+        state: &State,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             self.source
@@ -293,20 +306,20 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub(self.indent_level * self.indent_width)
+                    .saturating_sub((state.indent_level as usize) * self.indent_width)
                     .saturating_sub(if self.style_indent() {
                         self.indent_width
                     } else {
                         0
                     }),
-                indent_level: self.indent_level,
+                indent_level: state.indent_level,
                 attr: false,
                 ext: lang,
             },
         )
     }
 
-    pub(crate) fn format_style_attr(&mut self, code: &str, start: usize) -> String {
+    pub(crate) fn format_style_attr(&mut self, code: &str, start: usize, state: &State) -> String {
         self.format_with_external_formatter(
             self.source
                 .get(0..start)
@@ -315,7 +328,7 @@ where
                 + code,
             Hints {
                 print_width: u16::MAX as usize,
-                indent_level: self.indent_level,
+                indent_level: state.indent_level,
                 attr: true,
                 ext: "css",
             },
@@ -324,7 +337,12 @@ where
         .to_owned()
     }
 
-    pub(crate) fn format_json<'a>(&mut self, code: &'a str, start: usize) -> Cow<'a, str> {
+    pub(crate) fn format_json<'a>(
+        &mut self,
+        code: &'a str,
+        start: usize,
+        state: &State,
+    ) -> Cow<'a, str> {
         self.format_with_external_formatter(
             self.source
                 .get(0..start)
@@ -334,13 +352,13 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub(self.indent_level * self.indent_width)
+                    .saturating_sub((state.indent_level as usize) * self.indent_width)
                     .saturating_sub(if self.script_indent() {
                         self.indent_width
                     } else {
                         0
                     }),
-                indent_level: self.indent_level,
+                indent_level: state.indent_level,
                 attr: false,
                 ext: "json",
             },
@@ -367,27 +385,9 @@ where
 pub struct Hints<'s> {
     pub print_width: usize,
     /// current indent width = indent width in config * indent level
-    pub indent_level: usize,
+    pub indent_level: u16,
     /// Whether the code is inside attribute.
     pub attr: bool,
     /// Fake file extension.
     pub ext: &'s str,
-}
-
-pub(crate) trait NestWithCtx {
-    fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
-    where
-        F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>;
-}
-
-impl NestWithCtx for Doc<'_> {
-    fn nest_with_ctx<'b, E, F>(self, ctx: &mut Ctx<'b, E, F>) -> Self
-    where
-        F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
-    {
-        ctx.indent_level += 1;
-        let doc = self.nest(ctx.indent_width);
-        ctx.indent_level -= 1;
-        doc
-    }
 }

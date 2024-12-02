@@ -212,6 +212,9 @@ pub struct LanguageOptions {
     #[cfg_attr(feature = "config_serde", serde(alias = "astroAttrShorthand"))]
     pub astro_attr_shorthand: Option<bool>,
 
+    #[cfg_attr(feature = "config_serde", serde(alias = "scriptFormatter"))]
+    pub script_formatter: Option<ScriptFormatter>,
+
     #[cfg_attr(feature = "config_serde", serde(alias = "ignoreCommentDirective"))]
     pub ignore_comment_directive: String,
 
@@ -258,6 +261,7 @@ impl Default for LanguageOptions {
             svelte_attr_shorthand: None,
             svelte_directive_shorthand: None,
             astro_attr_shorthand: None,
+            script_formatter: None,
             ignore_comment_directive: "markup-fmt-ignore".into(),
             ignore_file_comment_directive: "markup-fmt-ignore-file".into(),
         }
@@ -339,4 +343,12 @@ pub enum VSlotStyle {
     Long,
     #[cfg_attr(feature = "config_serde", serde(alias = "vSlot", alias = "vslot"))]
     VSlot,
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "kebab-case"))]
+pub enum ScriptFormatter {
+    Dprint,
+    Biome,
 }

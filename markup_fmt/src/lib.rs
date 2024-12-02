@@ -82,7 +82,6 @@ where
         indent_width: options.layout.indent_width,
         print_width: options.layout.print_width,
         options: &options.language,
-        indent_level: 0,
         external_formatter,
         external_formatter_errors: Default::default(),
     };
@@ -93,6 +92,7 @@ where
             current_tag_name: None,
             is_root: true,
             in_svg: false,
+            indent_level: 0,
         },
     );
     if !ctx.external_formatter_errors.is_empty() {

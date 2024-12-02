@@ -1,13 +1,6 @@
 ---
 source: dprint_plugin/tests/integration.rs
 ---
-<script>
-  {
-    `First line
-   second line`;
-  }
-</script>
-
 <html lang="en">
   <body>
     <script type="module">
