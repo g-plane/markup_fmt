@@ -7,7 +7,7 @@ use dprint_core::{
     plugins::{FileMatchingInfo, PluginInfo, SyncPluginHandler, SyncPluginInfo},
 };
 use markup_fmt::{
-    config::{FormatOptions, Quotes},
+    config::{FormatOptions, Quotes, ScriptFormatter},
     detect_language, format_text, FormatError, Hints,
 };
 use std::path::Path;
@@ -129,14 +129,26 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
     additional_config.insert("fileIndentLevel".into(), (hints.indent_level as i32).into());
 
     if hints.attr {
-        // Only for dprint-plugin-typescript currently,
-        // because it conflicts with the `quoteStyle` option in Biome.
         match config.language.quotes {
             Quotes::Double => {
-                additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
+                if matches!(
+                    config.language.script_formatter,
+                    Some(ScriptFormatter::Biome)
+                ) {
+                    additional_config.insert("quoteStyle".into(), "single".into());
+                } else {
+                    additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
+                }
             }
             Quotes::Single => {
-                additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
+                if matches!(
+                    config.language.script_formatter,
+                    Some(ScriptFormatter::Biome)
+                ) {
+                    additional_config.insert("quoteStyle".into(), "double".into());
+                } else {
+                    additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
+                }
             }
         }
         if hints.ext == "css" {
