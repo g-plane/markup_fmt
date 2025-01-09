@@ -882,11 +882,24 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
             .strip_suffix('-')
             .map(|content| (content, "-"))
             .unwrap_or((content, ""));
-        Doc::text("{%")
+
+        let docs = Doc::text("{%")
             .append(Doc::text(prefix))
-            .append(Doc::line_or_space())
-            .append(Doc::text(content.trim()))
-            .nest(ctx.indent_width)
+            .append(Doc::line_or_space());
+
+        let docs = if content.trim().starts_with("set") {
+            if let Some((left, right)) = content.split_once('=') {
+                docs.append(Doc::text(left.trim()))
+                    .append(Doc::text(" = "))
+                    .append(Doc::text(right.trim()))
+            } else {
+                docs.append(Doc::text(content.trim()))
+            }
+        } else {
+            docs.append(Doc::text(content.trim()))
+        };
+
+        docs.nest(ctx.indent_width)
             .append(Doc::line_or_space())
             .append(Doc::text(suffix))
             .append(Doc::text("%}"))
