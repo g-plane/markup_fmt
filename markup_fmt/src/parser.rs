@@ -1287,10 +1287,10 @@ impl<'s> Parser<'s> {
                 | "autoescape"
                 | "embed"
                 | "with"
-                | "set"
                 | "trans"
                 | "raw"
-        ) {
+        ) || matches!(tag_name, "set") && !&first_tag.content.contains('=')
+        {
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
             loop {
