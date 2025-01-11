@@ -1289,7 +1289,7 @@ impl<'s> Parser<'s> {
                 | "with"
                 | "trans"
                 | "raw"
-        ) || matches!(tag_name, "set") && !&first_tag.content.contains('=')
+        ) || tag_name == "set" && !first_tag.content.contains('=')
         {
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
