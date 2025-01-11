@@ -1,7 +1,19 @@
 ---
 source: markup_fmt/tests/fmt.rs
+snapshot_kind: text
 ---
 {% include "sidebar.html" without context %}
 {% include "sidebar.html" ignore missing %}
 {% import 'forms.html' as forms %}
 {% import 'forms.html' as forms %}
+
+{% set navigation = [('index.html', 'Index'), ('about.html', 'About')] %}
+{% set key, value = call_something() %}
+{% set iterated = false %}
+{% for item in seq %}
+  {{ item }} {% set iterated = true %}
+{% endfor %}
+{% set ns = namespace(found=false) %}
+{% set ns.foo = 'bar' %}
+{% set pipe = joiner("|") %}
+{% set pipe = joiner("|") %}
