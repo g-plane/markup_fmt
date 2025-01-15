@@ -2310,7 +2310,8 @@ impl<'s> Parser<'s> {
                             if is_tag_name_char(c)
                                 || c == '/'
                                 || c == '!'
-                                || c == '>' && matches!(self.language, Language::Astro) =>
+                                || c == '>' && matches!(self.language, Language::Astro)
+                                || c == '{' && matches!(self.language, Language::Jinja) =>
                         {
                             end = i;
                             break;
