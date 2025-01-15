@@ -2,13 +2,15 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div class="contact-info-column">
-  {% if contact.email %}<a href="mailto:{{ contact.email }}">{{
-      contact.email
-    }}</a>{% endif %}
   {% if contact.email %}
-    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+  {% endif %}
   {% if contact.email %}
-    <a href="mailto:{{ contact.email }}"> {{ contact.email }}</a>{% endif %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+  {% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}"> {{ contact.email }}</a>
+  {% endif %}
   {% if contact.email %}
     <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
   {% endif %}

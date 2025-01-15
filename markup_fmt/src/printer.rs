@@ -2668,19 +2668,38 @@ fn format_control_structure_block_children<'s, E, F>(
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
+    let is_whitespace_sensitive = state.current_tag_name.map_or(true, |current_tag_name| {
+        ctx.is_whitespace_sensitive(current_tag_name)
+    });
+    let is_empty = is_empty_element(&children, is_whitespace_sensitive);
+    let has_multiple_non_text_children = get_has_multiple_non_text_children(&children);
+
+    let (leading_ws, trailing_ws) = if is_empty {
+        (Doc::nil(), Doc::nil())
+    } else if is_whitespace_sensitive {
+        (
+            format_ws_sensitive_leading_ws(&children),
+            format_ws_sensitive_trailing_ws(&children),
+        )
+    } else if has_multiple_non_text_children {
+        (Doc::hard_line(), Doc::hard_line())
+    } else {
+        (
+            format_ws_insensitive_leading_ws(&children),
+            format_ws_insensitive_trailing_ws(&children),
+        )
+    };
     match children {
-        [
-            Node {
-                kind: NodeKind::Text(text_node),
-                ..
-            },
-        ] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
-        _ => format_ws_sensitive_leading_ws(children)
+        [Node {
+            kind: NodeKind::Text(text_node),
+            ..
+        }] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
+        _ => leading_ws
             .append(format_children_without_inserting_linebreak(
                 children, ctx, state,
             ))
             .nest(ctx.indent_width)
-            .append(format_ws_sensitive_trailing_ws(children)),
+            .append(trailing_ws),
     }
 }
 
