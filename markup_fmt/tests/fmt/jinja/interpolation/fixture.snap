@@ -1,5 +1,6 @@
 ---
 source: markup_fmt/tests/fmt.rs
+snapshot_kind: text
 ---
 <div>
   {{ x }} {{ x }} {{ x }}
@@ -29,3 +30,15 @@ source: markup_fmt/tests/fmt.rs
   {{ user.first_name }}
   {{ user.last_name }}!
 </span>
+
+<h{{ heading_level|default:2 }}> Hello </h{{ heading_level|default:2 }}>
+<h{{ heading_level|default:2 }}> Hello </h{{ heading_level|default:2 }}>
+<h{{ heading_level|default:2 }}>
+  very-very-very-very-very-very-very-very-very-long-title
+</h{{ heading_level|default:2 }}>
+
+<h{{ partial_tag_name }}a> Hello </h{{ partial_tag_name }}a>
+<h{{ partial_tag_name }}a> Hello </h{{ partial_tag_name }}a>
+<h{{ partial_tag_name }}a>
+  very-very-very-very-very-very-very-very-very-long-title
+</h{{ partial_tag_name }}a>
