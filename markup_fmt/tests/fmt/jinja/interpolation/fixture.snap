@@ -1,6 +1,5 @@
 ---
 source: markup_fmt/tests/fmt.rs
-snapshot_kind: text
 ---
 <div>
   {{ x }} {{ x }} {{ x }}
