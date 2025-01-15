@@ -1880,7 +1880,7 @@ fn reflow_raw(s: &str) -> impl Iterator<Item = Doc<'_>> {
     )
 }
 
-fn reflow_owned<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
+fn reflow_owned<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + 'i {
     itertools::intersperse(
         s.split('\n')
             .map(|s| Doc::text(s.strip_suffix('\r').unwrap_or(s).to_owned())),
@@ -1888,7 +1888,7 @@ fn reflow_owned<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
     )
 }
 
-fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + '_ {
+fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + 'i {
     let indent = s
         .lines()
         .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
