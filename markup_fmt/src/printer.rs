@@ -2189,16 +2189,15 @@ where
 /// Determines if a given node is "text-like".
 /// Text-like nodes should remain on the same line whenever possible.
 fn is_text_like(node: &Node) -> bool {
-    match &node.kind {
+    matches!(
+        node.kind,
         NodeKind::Text(..)
-        | NodeKind::VueInterpolation(..)
-        | NodeKind::SvelteInterpolation(..)
-        | NodeKind::AstroExpr(..)
-        | NodeKind::JinjaInterpolation(..)
-        | NodeKind::VentoInterpolation(..) => true,
-        NodeKind::Element(element) => element.tag_name.eq_ignore_ascii_case("label"),
-        _ => false,
-    }
+            | NodeKind::VueInterpolation(..)
+            | NodeKind::SvelteInterpolation(..)
+            | NodeKind::AstroExpr(..)
+            | NodeKind::JinjaInterpolation(..)
+            | NodeKind::VentoInterpolation(..)
+    )
 }
 
 fn format_children_without_inserting_linebreak<'s, E, F>(
