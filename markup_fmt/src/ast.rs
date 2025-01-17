@@ -62,6 +62,7 @@ pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
     JinjaBlock(JinjaBlock<'s, Attribute<'s>>),
     JinjaTag(JinjaTag<'s>),
+    JinjaComment(JinjaComment<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
     VentoTagOrBlock(NodeKind<'s>),

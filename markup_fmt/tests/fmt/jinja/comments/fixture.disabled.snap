@@ -16,3 +16,14 @@ source: markup_fmt/tests/fmt.rs
         #}
   </body>
 </html>
+
+<div
+  {#    resource index will be used for showing-hiding fields   #}
+  resource-index="{{ field.field.resource_index }}"
+  {# note: commented-out template because we no longer use this
+                {% for user in users %}
+                    ...
+                {% endfor %}
+            #}
+>
+</div>
