@@ -338,8 +338,8 @@ impl<'s> DocGen<'s> for Attribute<'s> {
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
             Attribute::Astro(astro_attribute) => astro_attribute.doc(ctx, state),
             Attribute::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
-            Attribute::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
             Attribute::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
+            Attribute::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
             Attribute::VentoTagOrBlock(vento_tag_or_block) => vento_tag_or_block.doc(ctx, state),
         }
     }
