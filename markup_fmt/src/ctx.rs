@@ -85,7 +85,7 @@ where
             }
             _ => match self.options.whitespace_sensitivity {
                 WhitespaceSensitivity::Css => {
-                    helpers::is_whitespace_sensitive_tag(tag_name, self.language.clone())
+                    helpers::is_whitespace_sensitive_tag(tag_name, self.language)
                 }
                 WhitespaceSensitivity::Strict => true,
                 WhitespaceSensitivity::Ignore => false,

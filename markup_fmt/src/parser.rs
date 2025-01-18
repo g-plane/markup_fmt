@@ -14,7 +14,7 @@ use crate::{
 };
 use std::{cmp::Ordering, iter::Peekable, ops::ControlFlow, str::CharIndices};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Supported languages.
 pub enum Language {
     Html,
@@ -930,7 +930,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectElement));
         };
         let tag_name = self.parse_tag_name()?;
-        let void_element = helpers::is_void_element(tag_name, self.language.clone());
+        let void_element = helpers::is_void_element(tag_name, self.language);
 
         let mut attrs = vec![];
         let mut first_attr_same_line = true;
@@ -1403,7 +1403,7 @@ impl<'s> Parser<'s> {
                 match chars.next() {
                     Some((_, c))
                         if is_html_tag_name_char(c)
-                            || is_special_tag_name_char(c, &self.language) =>
+                            || is_special_tag_name_char(c, self.language) =>
                     {
                         self.parse_element().map(NodeKind::Element)
                     }
@@ -2305,7 +2305,7 @@ impl<'s> Parser<'s> {
                     match chars.next() {
                         Some((_, c))
                             if is_html_tag_name_char(c)
-                                || is_special_tag_name_char(c, &self.language)
+                                || is_special_tag_name_char(c, self.language)
                                 || c == '/'
                                 || c == '!' =>
                         {
@@ -2566,14 +2566,17 @@ fn is_html_tag_name_char(c: char) -> bool {
         || c == '\\'
 }
 
-/// Checks whether a character is valid in an HTML tag name, for a specific template languages.
+/// Checks whether a character is valid in an HTML tag name, for specific template languages.
 ///
 /// For example:
 /// - Astro allows '>' in tag names (for fragments)
 /// - Jinja allows '{' for template expressions like <{{ tag_name }}>
-fn is_special_tag_name_char(c: char, language: &Language) -> bool {
-    c == '>' && matches!(language, Language::Astro)
-        || c == '{' && matches!(language, Language::Jinja)
+fn is_special_tag_name_char(c: char, language: Language) -> bool {
+    match language {
+        Language::Astro => c == '>',
+        Language::Jinja => c == '{',
+        _ => false,
+    }
 }
 
 fn is_attr_name_char(c: char) -> bool {

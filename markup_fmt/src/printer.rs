@@ -413,11 +413,11 @@ impl<'s> DocGen<'s> for Element<'s> {
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
-        let self_closing = if helpers::is_void_element(tag_name, ctx.language.clone()) {
+        let self_closing = if helpers::is_void_element(tag_name, ctx.language) {
             ctx.options
                 .html_void_self_closing
                 .unwrap_or(self.self_closing)
-        } else if helpers::is_html_tag(tag_name, ctx.language.clone()) {
+        } else if helpers::is_html_tag(tag_name, ctx.language) {
             ctx.options
                 .html_normal_self_closing
                 .unwrap_or(self.self_closing)
@@ -429,9 +429,9 @@ impl<'s> DocGen<'s> for Element<'s> {
             ctx.options
                 .component_self_closing
                 .unwrap_or(self.self_closing)
-        } else if helpers::is_svg_tag(self.tag_name, ctx.language.clone()) {
+        } else if helpers::is_svg_tag(self.tag_name, ctx.language) {
             ctx.options.svg_self_closing.unwrap_or(self.self_closing)
-        } else if helpers::is_mathml_tag(self.tag_name, ctx.language.clone()) {
+        } else if helpers::is_mathml_tag(self.tag_name, ctx.language) {
             ctx.options.mathml_self_closing.unwrap_or(self.self_closing)
         } else {
             self.self_closing
