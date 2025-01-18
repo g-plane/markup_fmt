@@ -687,10 +687,10 @@ impl<'s> Parser<'s> {
                 let result = if matches!(self.chars.peek(), Some((_, '{'))) {
                     let mut chars = self.chars.clone();
                     chars.next();
-                    if let Some((_, '{')) = chars.next() {
-                        self.parse_native_attr().map(Attribute::Native)
-                    } else {
-                        self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr)
+                    match chars.next() {
+                        Some((_, '{')) => self.parse_native_attr().map(Attribute::Native),
+                        Some((_, '#')) => self.parse_jinja_comment().map(Attribute::JinjaComment),
+                        _ => self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr),
                     }
                 } else {
                     self.parse_native_attr().map(Attribute::Native)

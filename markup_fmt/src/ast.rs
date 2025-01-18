@@ -61,6 +61,7 @@ pub enum AstroExprChild<'s> {
 pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
     JinjaBlock(JinjaBlock<'s, Attribute<'s>>),
+    JinjaComment(JinjaComment<'s>),
     JinjaTag(JinjaTag<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
