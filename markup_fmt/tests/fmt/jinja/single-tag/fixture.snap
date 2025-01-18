@@ -1,6 +1,5 @@
 ---
 source: markup_fmt/tests/fmt.rs
-snapshot_kind: text
 ---
 {% include "sidebar.html" without context %}
 {% include "sidebar.html" ignore missing %}

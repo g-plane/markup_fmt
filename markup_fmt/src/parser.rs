@@ -565,7 +565,7 @@ impl<'s> Parser<'s> {
                     let mut chars = self.chars.clone();
                     chars.next();
                     if chars
-                        .next_if(|(_, c)| is_tag_name_char(*c) || *c == '!' || *c == '>')
+                        .next_if(|(_, c)| is_html_tag_name_char(*c) || *c == '!' || *c == '>')
                         .is_some()
                     {
                         let prev = unsafe { self.source.get_unchecked(pos..i) };
@@ -1401,7 +1401,10 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, c)) if is_tag_name_char(c) => {
+                    Some((_, c))
+                        if is_html_tag_name_char(c)
+                            || is_special_tag_name_char(c, &self.language) =>
+                    {
                         self.parse_element().map(NodeKind::Element)
                     }
                     Some((_, '!')) => {
@@ -1418,9 +1421,6 @@ impl<'s> Parser<'s> {
                         } else {
                             self.parse_comment().map(NodeKind::Comment)
                         }
-                    }
-                    Some((_, '>')) if matches!(self.language, Language::Astro) => {
-                        self.parse_element().map(NodeKind::Element)
                     }
                     _ => self.parse_text_node().map(NodeKind::Text),
                 }
@@ -2198,11 +2198,12 @@ impl<'s> Parser<'s> {
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
         let start = match self.chars.peek() {
-            Some((i, c)) if is_tag_name_char(*c) => {
+            Some((i, c)) if is_html_tag_name_char(*c) => {
                 let start = *i;
                 self.chars.next();
                 start
             }
+            Some((i, '{')) if matches!(self.language, Language::Jinja) => *i,
             Some((_, '>')) if matches!(self.language, Language::Astro) => {
                 // Astro allows fragment
                 return Ok("");
@@ -2211,8 +2212,24 @@ impl<'s> Parser<'s> {
         };
         let mut end = start;
 
-        while let Some((i, _)) = self.chars.next_if(|(_, c)| is_tag_name_char(*c)) {
-            end = i;
+        while let Some((i, c)) = self.chars.peek() {
+            if is_html_tag_name_char(*c) {
+                end = *i;
+                self.chars.next();
+            } else if *c == '{' && matches!(self.language, Language::Jinja) {
+                let current_i = *i;
+                let mut chars = self.chars.clone();
+                chars.next();
+                if chars.next_if(|(_, c)| *c == '{').is_some() {
+                    // We use inclusive range when returning string, so we need to substract 1 here.
+                    end =
+                        current_i + self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
         }
 
         unsafe { Ok(self.source.get_unchecked(start..=end)) }
@@ -2287,10 +2304,10 @@ impl<'s> Parser<'s> {
                     chars.next();
                     match chars.next() {
                         Some((_, c))
-                            if is_tag_name_char(c)
+                            if is_html_tag_name_char(c)
+                                || is_special_tag_name_char(c, &self.language)
                                 || c == '/'
-                                || c == '!'
-                                || c == '>' && matches!(self.language, Language::Astro) =>
+                                || c == '!' =>
                         {
                             end = i;
                             break;
@@ -2538,7 +2555,8 @@ impl<'s> Parser<'s> {
     }
 }
 
-fn is_tag_name_char(c: char) -> bool {
+/// Returns true if the provided character is a valid HTML tag name character.
+fn is_html_tag_name_char(c: char) -> bool {
     c.is_ascii_alphanumeric()
         || c == '-'
         || c == '_'
@@ -2546,6 +2564,16 @@ fn is_tag_name_char(c: char) -> bool {
         || c == ':'
         || !c.is_ascii()
         || c == '\\'
+}
+
+/// Checks whether a character is valid in an HTML tag name, for a specific template languages.
+///
+/// For example:
+/// - Astro allows '>' in tag names (for fragments)
+/// - Jinja allows '{' for template expressions like <{{ tag_name }}>
+fn is_special_tag_name_char(c: char, language: &Language) -> bool {
+    c == '>' && matches!(language, Language::Astro)
+        || c == '{' && matches!(language, Language::Jinja)
 }
 
 fn is_attr_name_char(c: char) -> bool {
