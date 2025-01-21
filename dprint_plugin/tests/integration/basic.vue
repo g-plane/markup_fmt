@@ -19,4 +19,11 @@ function greet(msg:string){alert(msg)}
   <button @click="e=>console.log(e)"></button>
   <button :class="" @click="">{{}}{{/**/}}</button>
   <v-list-item @click="$triggerDialog('editScreen', { screenId: screen.id }); close()" />
+  <div
+    :style="{
+      'height': '200px',
+      /* position: relative; */
+    }"
+  >
+  </div>
 </template>

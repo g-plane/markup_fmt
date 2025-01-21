@@ -1812,11 +1812,9 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                     }
                 }
                 "#" | "slot" => ctx.format_binding(value, value_start, state),
-                _ => {
-                    if value.trim().trim_end_matches(';').contains(';')
-                        && !helpers::UNESCAPING_AC.is_match(value)
-                    {
-                        ctx.with_escaping_quotes(value, |code, ctx| {
+                _ => ctx.with_escaping_quotes(value, |code, ctx| {
+                    ctx.try_format_expr(&code, true, value_start, state)
+                        .unwrap_or_else(|_| {
                             let formatted = ctx
                                 .format_script(&code, "ts", value_start, state)
                                 .trim()
@@ -1827,12 +1825,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                                 formatted.trim_end_matches(';').to_owned()
                             }
                         })
-                    } else {
-                        ctx.with_escaping_quotes(value, |code, ctx| {
-                            ctx.format_expr(&code, true, value_start, state)
-                        })
-                    }
-                }
+                }),
             };
             if !(matches!(ctx.options.v_bind_same_name_short_hand, Some(true))
                 && is_v_bind

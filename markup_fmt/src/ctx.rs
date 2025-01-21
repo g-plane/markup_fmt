@@ -119,8 +119,24 @@ where
         start: usize,
         state: &State,
     ) -> String {
+        match self.try_format_expr(code, attr, start, state) {
+            Ok(formatted) => formatted,
+            Err(e) => {
+                self.external_formatter_errors.push(e);
+                code.to_owned()
+            }
+        }
+    }
+
+    pub(crate) fn try_format_expr(
+        &mut self,
+        code: &str,
+        attr: bool,
+        start: usize,
+        state: &State,
+    ) -> Result<String, E> {
         if code.trim().is_empty() {
-            String::new()
+            Ok(String::new())
         } else {
             // Trim original code before sending it to the external formatter.
             // This makes sure the code will be trimmed
@@ -133,7 +149,7 @@ where
                 + "<>{"
                 + code.trim()
                 + "}</>";
-            let formatted = self.format_with_external_formatter(
+            let formatted = self.try_format_with_external_formatter(
                 wrapped,
                 Hints {
                     print_width: self
@@ -144,20 +160,20 @@ where
                     attr,
                     ext: "tsx",
                 },
-            );
+            )?;
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             let formatted = formatted
                 .strip_prefix("<>")
                 .and_then(|s| s.strip_suffix("</>"))
                 .unwrap_or(formatted)
                 .trim();
-            formatted
+            Ok(formatted
                 .strip_prefix('{')
                 .and_then(|s| s.strip_suffix('}'))
                 .unwrap_or(formatted)
                 .trim_start()
                 .trim_end_matches(|c: char| c.is_ascii_whitespace() || c == ';')
-                .to_owned()
+                .to_owned())
         }
     }
 
@@ -377,6 +393,18 @@ where
                 self.external_formatter_errors.push(e);
                 code.into()
             }
+        }
+    }
+
+    fn try_format_with_external_formatter<'a>(
+        &mut self,
+        code: String,
+        hints: Hints<'b>,
+    ) -> Result<Cow<'a, str>, E> {
+        match (self.external_formatter)(&code, hints) {
+            Ok(Cow::Owned(formatted)) => Ok(Cow::from(formatted)),
+            Ok(Cow::Borrowed(..)) => Ok(Cow::from(code)),
+            Err(e) => Err(e),
         }
     }
 }
