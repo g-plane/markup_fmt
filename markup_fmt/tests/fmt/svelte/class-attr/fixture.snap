@@ -1,5 +1,6 @@
 ---
 source: markup_fmt/tests/fmt.rs
+snapshot_kind: text
 ---
 <div
   class="{icon.name} rounded-full border {icon.borderColor} {icon.bgColor} p-3 text-3xl {icon.color}"

@@ -1,5 +1,6 @@
 ---
 source: markup_fmt/tests/fmt.rs
+snapshot_kind: text
 ---
 <input name="address" maxlength="200">
 <input name="address" maxlength="200">

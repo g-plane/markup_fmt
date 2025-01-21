@@ -141,6 +141,12 @@ pub(crate) fn resolve_config(
                 false,
                 &mut diagnostics,
             ),
+            prefer_single_line_opening_tag: get_value(
+                &mut config,
+                "preferSingleLineOpeningTag",
+                false,
+                &mut diagnostics,
+            ),
             html_normal_self_closing: get_nullable_value(
                 &mut config,
                 "html.normal.selfClosing",

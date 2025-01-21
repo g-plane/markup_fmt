@@ -1,5 +1,6 @@
 ---
 source: dprint_plugin/tests/integration.rs
+snapshot_kind: text
 ---
 <template>
   <div v-if="(label = 'a')"></div>
