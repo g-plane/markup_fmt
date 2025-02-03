@@ -453,109 +453,130 @@ impl<'s> DocGen<'s> for Element<'s> {
             Cow::from(self.tag_name)
         }));
 
-        let attrs_sep = if !self.first_attr_same_line
-            && !ctx.options.prefer_attrs_single_line
-            && self.attrs.len() > 1
-            && !ctx
-                .options
-                .max_attrs_per_line
-                .map(|value| value.get() > 1)
-                .unwrap_or_default()
-        {
-            Doc::hard_line()
-        } else {
-            Doc::line_or_space()
-        };
-        let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
-            // fix #2
-            if self.attrs.is_empty() {
-                Doc::line_or_nil()
-            } else {
-                Doc::line_or_space()
-            }
-            .concat(itertools::intersperse(
-                self.attrs.chunks(max.into()).map(|chunk| {
-                    Doc::list(
-                        itertools::intersperse(
-                            chunk.iter().map(|attr| attr.doc(ctx, &state)),
-                            attrs_sep.clone(),
-                        )
-                        .collect(),
-                    )
-                    .group()
-                }),
-                Doc::hard_line(),
-            ))
-            .nest(ctx.indent_width)
-        } else {
-            Doc::list(
-                self.attrs
-                    .iter()
-                    .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx, &state)].into_iter())
-                    .collect(),
-            )
-            .nest(ctx.indent_width)
-        };
+        match self.attrs.as_slice() {
+            [single_attr] if !is_whitespace_sensitive => {
+                // Try to avoid breaking on multiple lines for a single attribute.
+                docs.push(Doc::space());
+                docs.push(single_attr.doc(ctx, &state));
 
-        if self.void_element {
-            docs.push(attrs);
-            if self_closing {
-                docs.push(Doc::line_or_space());
-                docs.push(Doc::text("/>"));
-            } else {
-                if !ctx.options.closing_bracket_same_line {
-                    docs.push(Doc::line_or_nil());
+                if self_closing && is_empty {
+                    docs.push(Doc::text(" />"));
+                    return Doc::list(docs).group();
+                } else {
+                    docs.push(Doc::text(">"))
+                };
+
+                if self.void_element {
+                    return Doc::list(docs).group();
                 }
-                docs.push(Doc::text(">"));
             }
-            return Doc::list(docs).group();
-        }
-        if self_closing && is_empty {
-            docs.push(attrs);
-            docs.push(Doc::line_or_space());
-            docs.push(Doc::text("/>"));
-            return Doc::list(docs).group();
-        }
-        if ctx.options.closing_bracket_same_line {
-            docs.push(attrs.append(Doc::text(">")).group());
-        } else {
-            // for #16
-            if is_whitespace_sensitive
-                && !self.attrs.is_empty() // there're no attributes, so don't insert line break
-                && self
-                    .children
-                    .first()
-                    .is_some_and(|child| {
-                        if let NodeKind::Text(text_node) = &child.kind {
-                            !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
-                        } else {
-                            false
+            _ => {
+                let attrs_sep = if !self.first_attr_same_line
+                    && !ctx.options.prefer_attrs_single_line
+                    && self.attrs.len() > 1
+                    && !ctx
+                        .options
+                        .max_attrs_per_line
+                        .map(|value| value.get() > 1)
+                        .unwrap_or_default()
+                {
+                    Doc::hard_line()
+                } else {
+                    Doc::line_or_space()
+                };
+                let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
+                    // fix #2
+                    if self.attrs.is_empty() {
+                        Doc::line_or_nil()
+                    } else {
+                        Doc::line_or_space()
+                    }
+                    .concat(itertools::intersperse(
+                        self.attrs.chunks(max.into()).map(|chunk| {
+                            Doc::list(
+                                itertools::intersperse(
+                                    chunk.iter().map(|attr| attr.doc(ctx, &state)),
+                                    attrs_sep.clone(),
+                                )
+                                .collect(),
+                            )
+                            .group()
+                        }),
+                        Doc::hard_line(),
+                    ))
+                    .nest(ctx.indent_width)
+                } else {
+                    Doc::list(
+                        self.attrs
+                            .iter()
+                            .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx, &state)].into_iter())
+                            .collect(),
+                    )
+                    .nest(ctx.indent_width)
+                };
+            
+
+                if self.void_element {
+                    docs.push(attrs);
+                    if self_closing {
+                        docs.push(Doc::line_or_space());
+                        docs.push(Doc::text("/>"));
+                    } else {
+                        if !ctx.options.closing_bracket_same_line {
+                            docs.push(Doc::line_or_nil());
                         }
-                    })
-                && self
-                    .children
-                    .last()
-                    .is_some_and(|child| {
-                        if let NodeKind::Text(text_node) = &child.kind {
-                            !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
-                        } else {
-                            false
-                        }
-                    })
-            {
-                docs.push(
-                    attrs
-                        .group()
-                        .append(Doc::line_or_nil())
-                        .append(Doc::text(">")),
-                );
-            } else {
-                docs.push(
-                    attrs
-                        .append(Doc::line_or_nil())
-                        .append(Doc::text(">"))
-                        .group(),
-                );
+                        docs.push(Doc::text(">"));
+                    }
+                    return Doc::list(docs).group();
+                }
+                if self_closing && is_empty {
+                    docs.push(attrs);
+                    docs.push(Doc::line_or_space());
+                    docs.push(Doc::text("/>"));
+                    return Doc::list(docs).group();
+                }
+                if ctx.options.closing_bracket_same_line {
+                    docs.push(attrs.append(Doc::text(">")).group());
+                } else {
+                    // for #16
+                    if is_whitespace_sensitive
+                        && !self.attrs.is_empty() // there're no attributes, so don't insert line break
+                        && self
+                        .children
+                        .first()
+                        .is_some_and(|child| {
+                            if let NodeKind::Text(text_node) = &child.kind {
+                                !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
+                            } else {
+                                false
+                            }
+                        })
+                        && self
+                        .children
+                        .last()
+                        .is_some_and(|child| {
+                            if let NodeKind::Text(text_node) = &child.kind {
+                                !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
+                            } else {
+                                false
+                            }
+                        })
+                    {
+                        docs.push(
+                            attrs
+                                .group()
+                                .append(Doc::line_or_nil())
+                                .append(Doc::text(">")),
+                        );
+                    } else {
+                        docs.push(
+                            attrs
+                                .append(Doc::line_or_nil())
+                                .append(Doc::text(">"))
+                                .group(),
+                        );
+                    }
+                }
             }
         }
 

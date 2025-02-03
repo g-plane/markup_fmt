@@ -30,19 +30,13 @@ source: markup_fmt/tests/fmt.rs
   very very very very very very very very very very very very very very very
   very long string
 </div>
-<div
-  very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute
->
+<div very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute>
   string
 </div>
-<div
-  very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute="value"
->
+<div very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute="value">
   string
 </div>
-<div
-  attribute="very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-value"
->
+<div attribute="very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-value">
   string
 </div>
 <div attribute="value">
