@@ -56,9 +56,7 @@ source: markup_fmt/tests/fmt.rs
     Scrolling_Bxsh($headerShadow)
   "
 >
-  <div
-    class="Bgc(#fff) M(a) Maw(1301px) Miw(1000px) Pb(12px) Pt(22px) Pos(r) TranslateZ(0) Z(6)"
-  >
+  <div class="Bgc(#fff) M(a) Maw(1301px) Miw(1000px) Pb(12px) Pt(22px) Pos(r) TranslateZ(0) Z(6)">
     <h1 class="Fz(0) Pstart(15px) Pos(a)">
       <a
         id="header-logo"

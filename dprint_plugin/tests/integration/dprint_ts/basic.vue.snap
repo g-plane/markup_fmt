@@ -30,13 +30,11 @@ function greet(msg: string) {
       close();
     '
   />
-  <div
-    :style="
-      {
-        'height': '200px',
-        /* position: relative; */
-      }
-    "
-  >
+  <div :style="
+    {
+      'height': '200px',
+      /* position: relative; */
+    }
+  ">
   </div>
 </template>
