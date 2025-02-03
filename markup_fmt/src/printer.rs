@@ -455,8 +455,17 @@ impl<'s> DocGen<'s> for Element<'s> {
         docs.push(Doc::text(formatted_tag_name.clone()));
 
         match self.attrs.as_slice() {
-            [single_attr] if !is_whitespace_sensitive => {
-                // Try to avoid breaking on multiple lines for a single attribute.
+            [single_attr]
+                if !is_whitespace_sensitive
+                    && !matches!(
+                        single_attr,
+                        Attribute::JinjaBlock(..)
+                            | Attribute::JinjaTag(..)
+                            | Attribute::VentoTagOrBlock(..)
+                    ) =>
+            {
+                // Avoid breaking on multiple lines for a single attribute in non whitespace sensitive context.
+                // Skip this for templating Blocks because they usually span across multiple lines.
                 docs.push(Doc::space());
                 docs.push(single_attr.doc(ctx, &state));
 
@@ -515,7 +524,6 @@ impl<'s> DocGen<'s> for Element<'s> {
                     )
                     .nest(ctx.indent_width)
                 };
-            
 
                 if self.void_element {
                     docs.push(attrs);

@@ -1,6 +1,5 @@
 ---
 source: markup_fmt/tests/fmt.rs
-snapshot_kind: text
 ---
 <div
   {% if colored_with_absolute_dates %}
@@ -33,9 +32,7 @@ snapshot_kind: text
   {% endif %}
 />
 
-<details {% if category %}
-  open
-{% endif %}>
+<details {% if category %}open{% endif %}>
   <summary>Details</summary>
   Something small enough to escape casual notice.
 </details>
@@ -144,12 +141,14 @@ snapshot_kind: text
   {% endif %}
 {% endfor %}
 
-<picture {% for key, val in attributes.items %}
-  {{ key }}{{ key }}="{{ val }}"
-  data-{{ key }}{{ key }}="{{ val }}"
-  {{ key }}-{{ key }}="{{ val }}"
-  data-{{ key }}-{{ key }}="{{ val }}"
-  {{ key }}="{{ val }}"
-  data-{{ key }}="{{ val }}"
-{% endfor %}>
+<picture
+  {% for key, val in attributes.items %}
+    {{ key }}{{ key }}="{{ val }}"
+    data-{{ key }}{{ key }}="{{ val }}"
+    {{ key }}-{{ key }}="{{ val }}"
+    data-{{ key }}-{{ key }}="{{ val }}"
+    {{ key }}="{{ val }}"
+    data-{{ key }}="{{ val }}"
+  {% endfor %}
+>
 </picture>
