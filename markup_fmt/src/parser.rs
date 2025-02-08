@@ -2651,3 +2651,24 @@ impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
         Attribute::JinjaBlock(block)
     }
 }
+
+impl<'s> Attribute<'s> {
+    pub fn contains_newline(&self) -> bool {
+        match self {
+            Attribute::Native(attr) => attr
+                .value
+                .map(|(value, _)| value.contains('\n'))
+                .unwrap_or(false),
+            Attribute::VueDirective(attr) => attr
+                .value
+                .map(|(value, _)| value.contains('\n'))
+                .unwrap_or(false),
+            Attribute::Astro(attr) => attr.expr.0.contains('\n'),
+            Attribute::Svelte(attr) => attr.expr.0.contains('\n'),
+            Attribute::JinjaComment(comment) => comment.raw.contains('\n'),
+            Attribute::JinjaTag(tag) => tag.content.contains('\n'),
+            // Templating blocks usually span across multiple lines so let's just assume true.
+            Attribute::JinjaBlock(..) | Attribute::VentoTagOrBlock(..) => true,
+        }
+    }
+}
