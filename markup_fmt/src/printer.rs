@@ -2419,9 +2419,9 @@ where
         } else {
             Doc::text("'")
         }
-    } else if has_double {
+    } else if has_double && !matches!(ctx.language, Language::Jinja) {
         Doc::text("'")
-    } else if has_single {
+    } else if has_single && !matches!(ctx.language, Language::Jinja) {
         Doc::text("\"")
     } else if let Quotes::Double = ctx.options.quotes {
         Doc::text("\"")
