@@ -455,7 +455,7 @@ impl<'s> DocGen<'s> for Element<'s> {
         docs.push(Doc::text(formatted_tag_name.clone()));
 
         match self.attrs.as_slice() {
-            [single_attr] if !is_whitespace_sensitive && !single_attr.contains_newline() => {
+            [single_attr] if !is_whitespace_sensitive && !single_attr.is_multiline() => {
                 docs.push(Doc::space());
                 docs.push(single_attr.doc(ctx, &state));
 

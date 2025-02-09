@@ -2653,11 +2653,11 @@ impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
 }
 
 impl<'s> Attribute<'s> {
-    pub fn contains_newline(&self) -> bool {
+    pub fn is_multiline(&self) -> bool {
         match self {
             Attribute::Native(attr) => attr
                 .value
-                .map(|(value, _)| value.contains('\n'))
+                .map(|(value, _)| value.trim().contains('\n'))
                 .unwrap_or(false),
             Attribute::VueDirective(attr) => attr
                 .value
