@@ -963,25 +963,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 }
                 _ => Cow::from(value),
             };
-            let has_single = value.contains('\'');
-            let has_double = value.contains('"');
-            let quote = if has_double && has_single {
-                if let Some(quote) = self.quote {
-                    Doc::text(quote.to_string())
-                } else if let Quotes::Double = ctx.options.quotes {
-                    Doc::text("\"")
-                } else {
-                    Doc::text("'")
-                }
-            } else if has_double {
-                Doc::text("'")
-            } else if has_single {
-                Doc::text("\"")
-            } else if let Quotes::Double = ctx.options.quotes {
-                Doc::text("\"")
-            } else {
-                Doc::text("'")
-            };
+            let quote = compute_attr_value_quote(&value, self.quote, ctx);
             let mut docs = Vec::with_capacity(5);
             docs.push(name);
             docs.push(Doc::text("="));
@@ -2413,4 +2395,37 @@ where
             code,
             state,
         )))
+}
+
+/// Computes the appropriate quote character (single or double) to use for an attribute value.
+///
+/// This will try to respect the configured `quotes` but might change it
+/// to ensure the result is valid html.
+fn compute_attr_value_quote<'s, E, F>(
+    attr_value: &Cow<str>,
+    initial_quote: Option<char>,
+    ctx: &mut Ctx<'s, E, F>,
+) -> Doc<'s>
+where
+    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+{
+    let has_single = attr_value.contains('\'');
+    let has_double = attr_value.contains('"');
+    if has_double && has_single {
+        if let Some(quote) = initial_quote {
+            Doc::text(quote.to_string())
+        } else if let Quotes::Double = ctx.options.quotes {
+            Doc::text("\"")
+        } else {
+            Doc::text("'")
+        }
+    } else if has_double {
+        Doc::text("'")
+    } else if has_single {
+        Doc::text("\"")
+    } else if let Quotes::Double = ctx.options.quotes {
+        Doc::text("\"")
+    } else {
+        Doc::text("'")
+    }
 }
