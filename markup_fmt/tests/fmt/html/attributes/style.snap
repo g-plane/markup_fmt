@@ -20,9 +20,7 @@ border-radius: 8px;transition: transform .2s ease-out;"
 >
 </div>
 
-<div
-  style="background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);"
->
+<div style="background: linear-gradient(to left, hotpink, hsla(240, 100%, 50%, .05), transparent);">
 </div>
 
 <div style="color : red;

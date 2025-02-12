@@ -400,6 +400,17 @@ impl<'s> DocGen<'s> for Element<'s> {
             .split_once(':')
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
+        let formatted_tag_name = if matches!(
+            ctx.language,
+            Language::Html | Language::Jinja | Language::Vento
+        ) && css_dataset::tags::STANDARD_HTML_TAGS
+            .iter()
+            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
+        {
+            Cow::from(self.tag_name.to_ascii_lowercase())
+        } else {
+            Cow::from(self.tag_name)
+        };
         let is_root = state.is_root;
         let mut state = State {
             current_tag_name: Some(tag_name),
@@ -407,12 +418,6 @@ impl<'s> DocGen<'s> for Element<'s> {
             in_svg: tag_name.eq_ignore_ascii_case("svg"),
             indent_level: state.indent_level,
         };
-        let should_lower_cased = matches!(
-            ctx.language,
-            Language::Html | Language::Jinja | Language::Vento
-        ) && css_dataset::tags::STANDARD_HTML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name));
 
         let self_closing = if helpers::is_void_element(tag_name, ctx.language) {
             ctx.options
@@ -447,115 +452,128 @@ impl<'s> DocGen<'s> for Element<'s> {
         let mut docs = Vec::with_capacity(5);
 
         docs.push(Doc::text("<"));
-        docs.push(Doc::text(if should_lower_cased {
-            Cow::from(self.tag_name.to_ascii_lowercase())
-        } else {
-            Cow::from(self.tag_name)
-        }));
+        docs.push(Doc::text(formatted_tag_name.clone()));
 
-        let attrs_sep = if !self.first_attr_same_line
-            && !ctx.options.prefer_attrs_single_line
-            && self.attrs.len() > 1
-            && !ctx
-                .options
-                .max_attrs_per_line
-                .map(|value| value.get() > 1)
-                .unwrap_or_default()
-        {
-            Doc::hard_line()
-        } else {
-            Doc::line_or_space()
-        };
-        let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
-            // fix #2
-            if self.attrs.is_empty() {
-                Doc::line_or_nil()
-            } else {
-                Doc::line_or_space()
-            }
-            .concat(itertools::intersperse(
-                self.attrs.chunks(max.into()).map(|chunk| {
-                    Doc::list(
-                        itertools::intersperse(
-                            chunk.iter().map(|attr| attr.doc(ctx, &state)),
-                            attrs_sep.clone(),
-                        )
-                        .collect(),
-                    )
-                    .group()
-                }),
-                Doc::hard_line(),
-            ))
-            .nest(ctx.indent_width)
-        } else {
-            Doc::list(
-                self.attrs
-                    .iter()
-                    .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx, &state)].into_iter())
-                    .collect(),
-            )
-            .nest(ctx.indent_width)
-        };
-
-        if self.void_element {
-            docs.push(attrs);
-            if self_closing {
-                docs.push(Doc::line_or_space());
-                docs.push(Doc::text("/>"));
-            } else {
-                if !ctx.options.closing_bracket_same_line {
-                    docs.push(Doc::line_or_nil());
+        match self.attrs.as_slice() {
+            [attr] if !is_whitespace_sensitive && !is_multi_line_attr(attr) => {
+                docs.push(Doc::space());
+                docs.push(attr.doc(ctx, &state));
+                if self_closing && is_empty {
+                    docs.push(Doc::text(" />"));
+                    return Doc::list(docs);
+                } else {
+                    docs.push(Doc::text(">"));
+                };
+                if self.void_element {
+                    return Doc::list(docs);
                 }
-                docs.push(Doc::text(">"));
             }
-            return Doc::list(docs).group();
-        }
-        if self_closing && is_empty {
-            docs.push(attrs);
-            docs.push(Doc::line_or_space());
-            docs.push(Doc::text("/>"));
-            return Doc::list(docs).group();
-        }
-        if ctx.options.closing_bracket_same_line {
-            docs.push(attrs.append(Doc::text(">")).group());
-        } else {
-            // for #16
-            if is_whitespace_sensitive
-                && !self.attrs.is_empty() // there're no attributes, so don't insert line break
-                && self
-                    .children
-                    .first()
-                    .is_some_and(|child| {
-                        if let NodeKind::Text(text_node) = &child.kind {
-                            !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
-                        } else {
-                            false
+            _ => {
+                let attrs_sep = if !self.first_attr_same_line
+                    && !ctx.options.prefer_attrs_single_line
+                    && self.attrs.len() > 1
+                    && !ctx
+                        .options
+                        .max_attrs_per_line
+                        .map(|value| value.get() > 1)
+                        .unwrap_or_default()
+                {
+                    Doc::hard_line()
+                } else {
+                    Doc::line_or_space()
+                };
+                let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
+                    // fix #2
+                    if self.attrs.is_empty() {
+                        Doc::line_or_nil()
+                    } else {
+                        Doc::line_or_space()
+                    }
+                    .concat(itertools::intersperse(
+                        self.attrs.chunks(max.into()).map(|chunk| {
+                            Doc::list(
+                                itertools::intersperse(
+                                    chunk.iter().map(|attr| attr.doc(ctx, &state)),
+                                    attrs_sep.clone(),
+                                )
+                                .collect(),
+                            )
+                            .group()
+                        }),
+                        Doc::hard_line(),
+                    ))
+                    .nest(ctx.indent_width)
+                } else {
+                    Doc::list(
+                        self.attrs
+                            .iter()
+                            .flat_map(|attr| [attrs_sep.clone(), attr.doc(ctx, &state)].into_iter())
+                            .collect(),
+                    )
+                    .nest(ctx.indent_width)
+                };
+
+                if self.void_element {
+                    docs.push(attrs);
+                    if self_closing {
+                        docs.push(Doc::line_or_space());
+                        docs.push(Doc::text("/>"));
+                    } else {
+                        if !ctx.options.closing_bracket_same_line {
+                            docs.push(Doc::line_or_nil());
                         }
-                    })
-                && self
-                    .children
-                    .last()
-                    .is_some_and(|child| {
-                        if let NodeKind::Text(text_node) = &child.kind {
-                            !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
-                        } else {
-                            false
-                        }
-                    })
-            {
-                docs.push(
-                    attrs
-                        .group()
-                        .append(Doc::line_or_nil())
-                        .append(Doc::text(">")),
-                );
-            } else {
-                docs.push(
-                    attrs
-                        .append(Doc::line_or_nil())
-                        .append(Doc::text(">"))
-                        .group(),
-                );
+                        docs.push(Doc::text(">"));
+                    }
+                    return Doc::list(docs).group();
+                }
+                if self_closing && is_empty {
+                    docs.push(attrs);
+                    docs.push(Doc::line_or_space());
+                    docs.push(Doc::text("/>"));
+                    return Doc::list(docs).group();
+                }
+                if ctx.options.closing_bracket_same_line {
+                    docs.push(attrs.append(Doc::text(">")).group());
+                } else {
+                    // for #16
+                    if is_whitespace_sensitive
+                        && !self.attrs.is_empty() // there're no attributes, so don't insert line break
+                        && self
+                        .children
+                        .first()
+                        .is_some_and(|child| {
+                            if let NodeKind::Text(text_node) = &child.kind {
+                                !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
+                            } else {
+                                false
+                            }
+                        })
+                        && self
+                        .children
+                        .last()
+                        .is_some_and(|child| {
+                            if let NodeKind::Text(text_node) = &child.kind {
+                                !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
+                            } else {
+                                false
+                            }
+                        })
+                    {
+                        docs.push(
+                            attrs
+                                .group()
+                                .append(Doc::line_or_nil())
+                                .append(Doc::text(">")),
+                        );
+                    } else {
+                        docs.push(
+                            attrs
+                                .append(Doc::line_or_nil())
+                                .append(Doc::text(">"))
+                                .group(),
+                        );
+                    }
+                }
             }
         }
 
@@ -756,11 +774,7 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         docs.push(
             Doc::text("</")
-                .append(Doc::text(if should_lower_cased {
-                    Cow::from(self.tag_name.to_ascii_lowercase())
-                } else {
-                    Cow::from(self.tag_name)
-                }))
+                .append(Doc::text(formatted_tag_name))
                 .append(Doc::line_or_nil())
                 .append(Doc::text(">"))
                 .group(),
@@ -1964,6 +1978,25 @@ fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
 }
 fn is_all_ascii_whitespace(s: &str) -> bool {
     !s.is_empty() && s.as_bytes().iter().all(|byte| byte.is_ascii_whitespace())
+}
+
+fn is_multi_line_attr(attr: &Attribute) -> bool {
+    match attr {
+        Attribute::Native(attr) => attr
+            .value
+            .map(|(value, _)| value.trim().contains('\n'))
+            .unwrap_or(false),
+        Attribute::VueDirective(attr) => attr
+            .value
+            .map(|(value, _)| value.contains('\n'))
+            .unwrap_or(false),
+        Attribute::Astro(attr) => attr.expr.0.contains('\n'),
+        Attribute::Svelte(attr) => attr.expr.0.contains('\n'),
+        Attribute::JinjaComment(comment) => comment.raw.contains('\n'),
+        Attribute::JinjaTag(tag) => tag.content.contains('\n'),
+        // Templating blocks usually span across multiple lines so let's just assume true.
+        Attribute::JinjaBlock(..) | Attribute::VentoTagOrBlock(..) => true,
+    }
 }
 
 fn should_ignore_node<'s, E, F>(index: usize, nodes: &[Node], ctx: &Ctx<'s, E, F>) -> bool

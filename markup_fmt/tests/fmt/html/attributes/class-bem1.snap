@@ -14,12 +14,8 @@ source: markup_fmt/tests/fmt.rs
 </div>
 
 <div class="a-bem-block a-bem-block--with-modifier">
-  <div
-    class="a-bem-block__element a-bem-block__element--with-modifier also-another-block"
-  >
-    <div
-      class="a-bem-block__element a-bem-block__element--with-modifier also-another-block__element"
-    >
+  <div class="a-bem-block__element a-bem-block__element--with-modifier also-another-block">
+    <div class="a-bem-block__element a-bem-block__element--with-modifier also-another-block__element">
     </div>
   </div>
 </div>
