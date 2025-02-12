@@ -2402,13 +2402,14 @@ where
 /// This will try to respect the configured `quotes` but might change it
 /// to ensure the result is valid html.
 fn compute_attr_value_quote<'s, E, F>(
-    attr_value: &Cow<str>,
+    attr_value: &str,
     initial_quote: Option<char>,
     ctx: &mut Ctx<'s, E, F>,
 ) -> Doc<'s>
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
+    let is_jinja = matches!(ctx.language, Language::Jinja);
     let has_single = attr_value.contains('\'');
     let has_double = attr_value.contains('"');
     if has_double && has_single {
@@ -2419,9 +2420,9 @@ where
         } else {
             Doc::text("'")
         }
-    } else if has_double && !matches!(ctx.language, Language::Jinja) {
+    } else if has_double && !is_jinja {
         Doc::text("'")
-    } else if has_single && !matches!(ctx.language, Language::Jinja) {
+    } else if has_single && !is_jinja {
         Doc::text("\"")
     } else if let Quotes::Double = ctx.options.quotes {
         Doc::text("\"")
