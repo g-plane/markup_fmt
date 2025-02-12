@@ -22,16 +22,14 @@ source: markup_fmt/tests/fmt.rs
     <div class="dot"></div>
     <div class="dot"></div>
   </div>
-</pre
-  >
+</pre>
 </template>
 
 <!-- copied from https://github.com/gitlabhq/gitlabhq/blob/master/app/assets/javascripts/vue_shared/components/code_block.vue -->
 <template>
   <pre class="code-block rounded">
     <code class="d-block">{{ code }}</code>
-  </pre
-  >
+  </pre>
 </template>
 
 <template>
@@ -44,6 +42,5 @@ source: markup_fmt/tests/fmt.rs
   <pre class="woot">
   123{{ wqeqwwqwqweqweqwewwq || wqeqwwqwqweqweqwewwq || wqeqwwqwqweqweqwewwq || wqeqwwqwqweqweqwewwq }}123
   123{{ wqeqwwqwqweqweqwewwq || wqeqwwqwqweqweqwewwq || wqeqwwqwqweqweqwewwq || wqeqwwqwqweqweqwewwq }}123
-    </pre
-  >
+    </pre>
 </template>

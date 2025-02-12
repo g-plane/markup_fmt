@@ -38,8 +38,7 @@ source: markup_fmt/tests/fmt.rs
 <div
 >
   string
-</div
->
+</div>
 <div
 >
   very
@@ -60,20 +59,16 @@ source: markup_fmt/tests/fmt.rs
   very
   long
   string
-</div
->
+</div>
 <div very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute>
   string
-</div
->
+</div>
 <div very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-attribute="value">
   string
-</div
->
+</div>
 <div attribute="very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-very-long-value">
   string
-</div
->
+</div>
 <div attribute="value">
   very
   very
@@ -93,8 +88,7 @@ source: markup_fmt/tests/fmt.rs
   very
   long
   string
-</div
->
+</div>
 <div
   attribute="value"
   attributea="value"
@@ -104,8 +98,7 @@ source: markup_fmt/tests/fmt.rs
   attributef="value"
 >
   string
-</div
->
+</div>
 <div
   attribute="value"
   attributea="value"
@@ -132,8 +125,7 @@ source: markup_fmt/tests/fmt.rs
   very
   long
   string
-</div
->
+</div>
 <video
   width="320"
   height="240"
@@ -155,31 +147,25 @@ source: markup_fmt/tests/fmt.rs
   the
   video
   tag.
-</video
->
+</video>
 <div
 >
   <div
   >
     string
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
   >
     string
-  </div
-  >
+  </div>
   <div
   >
     string
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
@@ -187,55 +173,42 @@ source: markup_fmt/tests/fmt.rs
     <div
     >
       string
-    </div
-    >
-  </div
-  >
+    </div>
+  </div>
   <div
   >
     string
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
   >
     string
-  </div
-  >
+  </div>
   <div
   >
     <div
     >
       string
-    </div
-    >
-  </div
-  >
-</div
->
+    </div>
+  </div>
+</div>
 <div
 >
   <div
   >
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
   >
-  </div
-  >
+  </div>
   <div
   >
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
@@ -251,53 +224,39 @@ source: markup_fmt/tests/fmt.rs
             <div
             >
               string
-            </div
-            >
-          </div
-          >
-        </div
-        >
-      </div
-      >
-    </div
-    >
-  </div
-  >
-</div
->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div
 >
   <div
   >
     string
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
   >
     string
-  </div
-  >
-</div
->
+  </div>
+</div>
 <div
 >
   <div
   >
     string
-  </div
-  >
+  </div>
 
   <div
   >
     string
-  </div
-  >
-</div
->
+  </div>
+</div>
 <ul
 >
   123<li
@@ -305,63 +264,49 @@ source: markup_fmt/tests/fmt.rs
     id="bar"
   >
     First
-  </li
-  >456<li class="baz">
+  </li>456<li class="baz">
     Second
-  </li
-  >789
-</ul
->
+  </li>789
+</ul>
 <span
 >*<b
-  >200</b
-  ></span
->
+  >200</b></span>
 <img
   src="longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"
 />123
 <div
 >
   123<meta attr />456
-</div
->
+</div>
 <p
 >
   x<span
     a="b"
-  ></span
-  >
-</p
->
+  ></span>
+</p>
 <p
 >
   x<meta a>
-</p
->
+</p>
 <p
 >
   x<meta
   >
-</p
->
+</p>
 <span
-></span
->
+></span>
 
 <label
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-></label
->
+></label>
 |
 <span
-></span
->
+></span>
 <br
 />
 <button xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>
   12345678901234567890
-</button
->
+</button>
 <br
 /><br
 />
@@ -372,15 +317,13 @@ source: markup_fmt/tests/fmt.rs
 >
   Disabled
   Cancel
-</button
->
+</button>
 <br
 /><br
 />
 <button xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>
   12345678901234567890
-</button
->
+</button>
 <br
 /><br
 />
@@ -391,8 +334,7 @@ source: markup_fmt/tests/fmt.rs
 >
   Disabled
   Cancel
-</button
->
+</button>
 <br
 /><br
 />
@@ -400,57 +342,43 @@ source: markup_fmt/tests/fmt.rs
 >
   "<span
     [innerHTML]="title"
-  ></span
-  >"
+  ></span>"
   is
   the
   <i
   >property
-    bound</i
-  >
+    bound</i>
   title.
-</p
->
+</p>
 <li
 >
   12345678901234567890123456789012345678901234567890123456789012345678901234567890
-</li
->
+</li>
 <div
 >
   <app-nav
-  ></app-nav
-  >
+  ></app-nav>
   <router-outlet
-  ></router-outlet
-  >
+  ></router-outlet>
   <app-footer
-  ></app-footer
-  >
+  ></app-footer>
 
   <app-nav
     [input]="something"
-  ></app-nav
-  >
+  ></app-nav>
   <router-outlet
-  ></router-outlet
-  >
+  ></router-outlet>
   <app-footer
-  ></app-footer
-  >
+  ></app-footer>
 
   <app-primary-navigation
-  ></app-primary-navigation
-  >
+  ></app-primary-navigation>
   <router-outlet
-  ></router-outlet
-  >
+  ></router-outlet>
   <app-footer
     [input]="something"
-  ></app-footer
-  >
-</div
->
+  ></app-footer>
+</div>
 <x:root
 ><span
   >tag
@@ -461,9 +389,7 @@ source: markup_fmt/tests/fmt.rs
     should
     also
     lower
-    cased</span
-  ></x:root
->
+    cased</span></x:root>
 <div
 >
   Lorem
@@ -475,10 +401,8 @@ source: markup_fmt/tests/fmt.rs
   adipiscing
   elit,
   "<strong
-  >seddoeiusmod</strong
-  >".
-</div
->
+  >seddoeiusmod</strong>".
+</div>
 <div
 >
   Lorem
@@ -490,10 +414,8 @@ source: markup_fmt/tests/fmt.rs
   adipiscing
   elit,
   <strong
-  >seddoeiusmod</strong
-  >.
-</div
->
+  >seddoeiusmod</strong>.
+</div>
 <span
 >
   <i
@@ -505,18 +427,15 @@ source: markup_fmt/tests/fmt.rs
   <i
     class="fa fa-refresh fa-spin"
   />
-</span
->
+</span>
 
 <!-- #5810 -->
 <table
 >
   <tr
   >
-  </tr
-  >
-</table
-><div
+  </tr>
+</table><div
 >
   Should
   not
@@ -526,25 +445,20 @@ source: markup_fmt/tests/fmt.rs
   before
   this
   div
-</div
->
+</div>
 
 <!-- self-closing -->
 <span
 ><input
     type="checkbox"
   />
-</span
->
+</span>
 <span
 ><span
   ><input
       type="checkbox"
-    /></span
-  ></span
->
+    /></span></span>
 <span
 ><input
     type="checkbox"
-  /></span
->
+  /></span>

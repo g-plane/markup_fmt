@@ -16,10 +16,7 @@ source: markup_fmt/tests/fmt.rs
       is
       a
       paragraph.
-    </p
-    >
+    </p>
     <!-- Comments are not displayed in the browser -->
-  </body
-  >
-</html
->
+  </body>
+</html>

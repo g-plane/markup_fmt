@@ -6,17 +6,13 @@ source: markup_fmt/tests/fmt.rs
   aaaaaaaaaa
   <a
     href="longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"
-  >bbbbbbbbbb</a
-  >
+  >bbbbbbbbbb</a>
   cccccccccc
-</div
->
+</div>
 <div
 >
   aaaaaaaaaa
   <a
     href="longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"
-  >bbbbbbbbbb</a
-  >cccccccccc
-</div
->
+  >bbbbbbbbbb</a>cccccccccc
+</div>

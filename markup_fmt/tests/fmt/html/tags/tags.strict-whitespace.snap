@@ -68,8 +68,8 @@ source: markup_fmt/tests/fmt.rs
 <div><div>string</div><div><div>string</div></div></div>
 <div><div></div></div>
 <div><div></div><div></div></div>
-<div><div><div><div><div><div><div>string</div></div></div></div></div></div
-  ></div>
+<div><div><div><div><div><div><div
+            >string</div></div></div></div></div></div></div>
 <div>
   <div>string</div>
 </div>
@@ -114,8 +114,7 @@ source: markup_fmt/tests/fmt.rs
 <br /><br />
 <p>"<span [innerHTML]="title"></span>" is the <i>property bound</i> title.</p>
 <li
->12345678901234567890123456789012345678901234567890123456789012345678901234567890</li
->
+>12345678901234567890123456789012345678901234567890123456789012345678901234567890</li>
 <div>
   <app-nav></app-nav>
   <router-outlet></router-outlet>
@@ -129,8 +128,8 @@ source: markup_fmt/tests/fmt.rs
   <router-outlet></router-outlet>
   <app-footer [input]="something"></app-footer>
 </div>
-<x:root><span>tag name in other namespace should also lower cased</span></x:root
->
+<x:root><span>tag name in other namespace should also lower
+    cased</span></x:root>
 <div>
   Lorem ipsum dolor sit amet, consectetur adipiscing elit, "<strong
   >seddoeiusmod</strong>".

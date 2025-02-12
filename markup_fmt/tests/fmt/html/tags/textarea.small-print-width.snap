@@ -31,40 +31,24 @@ source: markup_fmt/tests/fmt.rs
                           name="text"
                         >
                         String
-                        </textarea
-                        >
-                      </div
-                      >
-                    </div
-                    >
-                  </div
-                  >
-                </div
-                >
-              </div
-              >
-            </div
-            >
-          </div
-          >
-        </div
-        >
-      </div
-      >
-    </div
-    >
-  </div
-  >
-</div
->
+                        </textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <textarea
-></textarea
->
+></textarea>
 
 <div
 >
   <textarea
-  >lorem ipsum</textarea
-  >
-</div
->
+  >lorem ipsum</textarea>
+</div>

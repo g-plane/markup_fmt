@@ -9,8 +9,7 @@ source: markup_fmt/tests/fmt.rs
   from
   right
   to
-  left</marquee
->
+  left</marquee>
 
 <marquee
   direction="up"
@@ -21,8 +20,7 @@ source: markup_fmt/tests/fmt.rs
   from
   bottom
   to
-  top</marquee
->
+  top</marquee>
 
 <marquee
   direction="down"
@@ -38,7 +36,5 @@ source: markup_fmt/tests/fmt.rs
     text
     will
     bounce
-  </marquee
-  >
-</marquee
->
+  </marquee>
+</marquee>

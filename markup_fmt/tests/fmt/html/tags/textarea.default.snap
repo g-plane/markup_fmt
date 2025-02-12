@@ -19,8 +19,7 @@ source: markup_fmt/tests/fmt.rs
                           name="text"
                         >
                         String
-                        </textarea
-                        >
+                        </textarea>
                       </div>
                     </div>
                   </div>

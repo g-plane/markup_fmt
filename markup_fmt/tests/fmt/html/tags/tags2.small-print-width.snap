@@ -12,10 +12,8 @@ source: markup_fmt/tests/fmt.rs
     long
     long
     long
-    long</noscript
-  >after
-</div
->
+    long</noscript>after
+</div>
 
 <div
 >
@@ -28,12 +26,9 @@ source: markup_fmt/tests/fmt.rs
       long
       long
       long
-    </summary
-    >details
-  </details
-  >after
-</div
->
+    </summary>details
+  </details>after
+</div>
 
 <div
 >
@@ -47,10 +42,8 @@ source: markup_fmt/tests/fmt.rs
     long
     long
     long
-  </dialog
-  >after
-</div
->
+  </dialog>after
+</div>
 
 <div
 >
@@ -63,10 +56,8 @@ source: markup_fmt/tests/fmt.rs
       name="autoplay"
       value="true"
     />
-  </object
-  >after
-</div
->
+  </object>after
+</div>
 
 <div
 >
@@ -78,10 +69,8 @@ source: markup_fmt/tests/fmt.rs
     optimum=".5"
     value=".2"
   >
-  </meter
-  >after
-</div
->
+  </meter>after
+</div>
 
 <div
 >
@@ -89,7 +78,5 @@ source: markup_fmt/tests/fmt.rs
     value=".5"
     max="1"
   >
-  </progress
-  >after
-</div
->
+  </progress>after
+</div>

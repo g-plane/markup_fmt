@@ -8,8 +8,7 @@ source: markup_fmt/tests/fmt.rs
   <li
   >
     First
-  </li
-  >
+  </li>
   <!-- 123
 456
    789
@@ -17,8 +16,7 @@ source: markup_fmt/tests/fmt.rs
   <li
   >
     Second
-  </li
-  >
+  </li>
   <!--
 
 
@@ -31,8 +29,7 @@ source: markup_fmt/tests/fmt.rs
   <li
   >
     Second
-  </li
-  >
+  </li>
   <!--
 
 
@@ -42,40 +39,30 @@ source: markup_fmt/tests/fmt.rs
 
 
 -->
-</ul
->
+</ul>
 <span
 ><!--
 --><span
-  >a</span
-  ><!--
+  >a</span><!--
 --><span
-  >b</span
-  ><!--
---></span
->
+  >b</span><!--
+--></span>
 
 <span
 ><!-- 1
 --><span
-  >a</span
-  ><!-- 2
+  >a</span><!-- 2
 --><span
-  >b</span
-  ><!-- 3
---></span
->
+  >b</span><!-- 3
+--></span>
 
 <span
 ><!--
 1 --><span
-  >a</span
-  ><!--
+  >a</span><!--
 2 --><span
-  >b</span
-  ><!--
-3 --></span
->
+  >b</span><!--
+3 --></span>
 
 123<!---->456
 123<!--x-->456

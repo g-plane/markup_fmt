@@ -17,10 +17,8 @@ source: markup_fmt/tests/fmt.rs
     <title
     >
       Document
-    </title
-    >
-  </head
-  >
+    </title>
+  </head>
   <body
   >
     <header
@@ -31,10 +29,8 @@ source: markup_fmt/tests/fmt.rs
           href="/"
         >My
           fancy
-          blog</a
-        >
-      </h1
-      >
+          blog</a>
+      </h1>
       ...
       <search
       >
@@ -43,8 +39,7 @@ source: markup_fmt/tests/fmt.rs
             for="query"
           >Find
             an
-            article</label
-          >
+            article</label>
           <input
             id="query"
             name="q"
@@ -52,20 +47,13 @@ source: markup_fmt/tests/fmt.rs
           >
           <button type="submit">
             Go!
-          </button
-          >
-        </form
-        >
-      </search
-      >
+          </button>
+        </form>
+      </search>
 
       <search
       >
-      </search
-      >
-    </header
-    >
-  </body
-  >
-</html
->
+      </search>
+    </header>
+  </body>
+</html>

@@ -13,8 +13,7 @@ source: markup_fmt/tests/fmt.rs
       text
     </span>
     <span
-      long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"></span
-    >
+      long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"></span>
     <img
       long_long_attribute="long_long_long_long_long_long_long_long_long_long_long_value"
     />

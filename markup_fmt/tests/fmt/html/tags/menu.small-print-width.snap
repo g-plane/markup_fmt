@@ -7,25 +7,18 @@ source: markup_fmt/tests/fmt.rs
   >
     <button onclick="copy()">
       Copy
-    </button
-    >
-  </li
-  >
+    </button>
+  </li>
   <li
   >
     <button onclick="cut()">
       Cut
-    </button
-    >
-  </li
-  >
+    </button>
+  </li>
   <li
   >
     <button onclick="paste()">
       Paste
-    </button
-    >
-  </li
-  >
-</menu
->
+    </button>
+  </li>
+</menu>

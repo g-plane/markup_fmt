@@ -4,5 +4,4 @@ source: markup_fmt/tests/fmt.rs
 <CaseSensitive
   CaseSensitive="true"
 >hello
-  world</CaseSensitive
->
+  world</CaseSensitive>
