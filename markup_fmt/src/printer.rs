@@ -455,19 +455,17 @@ impl<'s> DocGen<'s> for Element<'s> {
         docs.push(Doc::text(formatted_tag_name.clone()));
 
         match self.attrs.as_slice() {
-            [single_attr] if !is_whitespace_sensitive && !single_attr.is_multiline() => {
+            [attr] if !is_whitespace_sensitive && !is_multi_line_attr(attr) => {
                 docs.push(Doc::space());
-                docs.push(single_attr.doc(ctx, &state));
-
+                docs.push(attr.doc(ctx, &state));
                 if self_closing && is_empty {
                     docs.push(Doc::text(" />"));
-                    return Doc::list(docs).group();
+                    return Doc::list(docs);
                 } else {
-                    docs.push(Doc::text(">"))
+                    docs.push(Doc::text(">"));
                 };
-
                 if self.void_element {
-                    return Doc::list(docs).group();
+                    return Doc::list(docs);
                 }
             }
             _ => {
@@ -1980,6 +1978,25 @@ fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
 }
 fn is_all_ascii_whitespace(s: &str) -> bool {
     !s.is_empty() && s.as_bytes().iter().all(|byte| byte.is_ascii_whitespace())
+}
+
+fn is_multi_line_attr(attr: &Attribute) -> bool {
+    match attr {
+        Attribute::Native(attr) => attr
+            .value
+            .map(|(value, _)| value.trim().contains('\n'))
+            .unwrap_or(false),
+        Attribute::VueDirective(attr) => attr
+            .value
+            .map(|(value, _)| value.contains('\n'))
+            .unwrap_or(false),
+        Attribute::Astro(attr) => attr.expr.0.contains('\n'),
+        Attribute::Svelte(attr) => attr.expr.0.contains('\n'),
+        Attribute::JinjaComment(comment) => comment.raw.contains('\n'),
+        Attribute::JinjaTag(tag) => tag.content.contains('\n'),
+        // Templating blocks usually span across multiple lines so let's just assume true.
+        Attribute::JinjaBlock(..) | Attribute::VentoTagOrBlock(..) => true,
+    }
 }
 
 fn should_ignore_node<'s, E, F>(index: usize, nodes: &[Node], ctx: &Ctx<'s, E, F>) -> bool
