@@ -999,6 +999,13 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 docs.push(maybe_line_break);
             } else if self.name.eq_ignore_ascii_case("style") {
                 docs.push(Doc::text(ctx.format_style_attr(&value, value_start, state)));
+            } else if self.name.eq_ignore_ascii_case("accept")
+                && state
+                    .current_tag_name
+                    .map(|name| name.eq_ignore_ascii_case("input"))
+                    .unwrap_or_default()
+            {
+                docs.push(Doc::text(value.split(',').map(|s| s.trim()).join(", ")));
             } else {
                 docs.extend(reflow_owned(&value));
             }
