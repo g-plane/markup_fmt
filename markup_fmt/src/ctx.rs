@@ -330,7 +330,7 @@ where
                     }),
                 indent_level: state.indent_level,
                 attr: false,
-                ext: lang,
+                ext: if lang == "postcss" { "css" } else { lang },
             },
         )
     }
