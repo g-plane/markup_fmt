@@ -2197,33 +2197,31 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_tag_name(&mut self) -> PResult<&'s str> {
-        let start = match self.chars.peek() {
+        let (start, mut end) = match self.chars.peek() {
             Some((i, c)) if is_html_tag_name_char(*c) => {
+                let c = *c;
                 let start = *i;
                 self.chars.next();
-                start
+                (start, start + c.len_utf8())
             }
-            Some((i, '{')) if matches!(self.language, Language::Jinja) => *i,
+            Some((i, '{')) if matches!(self.language, Language::Jinja) => (*i, *i + 1),
             Some((_, '>')) if matches!(self.language, Language::Astro) => {
                 // Astro allows fragment
                 return Ok("");
             }
             _ => return Err(self.emit_error(SyntaxErrorKind::ExpectTagName)),
         };
-        let mut end = start;
 
         while let Some((i, c)) = self.chars.peek() {
             if is_html_tag_name_char(*c) {
-                end = *i;
+                end = *i + c.len_utf8();
                 self.chars.next();
             } else if *c == '{' && matches!(self.language, Language::Jinja) {
                 let current_i = *i;
                 let mut chars = self.chars.clone();
                 chars.next();
                 if chars.next_if(|(_, c)| *c == '{').is_some() {
-                    // We use inclusive range when returning string, so we need to substract 1 here.
-                    end =
-                        current_i + self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
+                    end = current_i + self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
                 } else {
                     break;
                 }
@@ -2232,7 +2230,7 @@ impl<'s> Parser<'s> {
             }
         }
 
-        unsafe { Ok(self.source.get_unchecked(start..=end)) }
+        unsafe { Ok(self.source.get_unchecked(start..end)) }
     }
 
     fn parse_text_node(&mut self) -> PResult<TextNode<'s>> {
