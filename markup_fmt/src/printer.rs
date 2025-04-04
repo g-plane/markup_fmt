@@ -67,14 +67,14 @@ impl<'s> DocGen<'s> for AngularFor<'s> {
             docs.push(Doc::text("; track "));
             docs.push(Doc::text(ctx.format_expr(track, false, start, state)));
         }
-        if let Some((aliases, start)) = self.aliases {
+        self.aliases.iter().for_each(|(aliases, start)| {
             docs.push(Doc::text("; "));
             docs.extend(reflow_with_indent(
-                ctx.format_script(aliases, "js", start, state)
+                ctx.format_script(aliases, "js", *start, state)
                     .trim()
                     .trim_end_matches(';'),
             ));
-        }
+        });
         docs.push(Doc::text(") {"));
         docs.push(format_control_structure_block_children(
             &self.children,

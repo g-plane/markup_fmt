@@ -8,7 +8,7 @@ pub struct AngularFor<'s> {
     pub binding: (&'s str, usize),
     pub expr: (&'s str, usize),
     pub track: Option<(&'s str, usize)>,
-    pub aliases: Option<(&'s str, usize)>,
+    pub aliases: Vec<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
     pub empty: Option<Vec<Node<'s>>>,
 }

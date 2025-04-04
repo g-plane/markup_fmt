@@ -29,3 +29,7 @@ source: markup_fmt/tests/fmt.rs
     <li><strong>{{ item.name }}</strong></li>
   }
 </div>
+
+@for (item of items; track item.id; let first = $first; let last = $last) {
+  <p>{{ item.name }}</p>
+}

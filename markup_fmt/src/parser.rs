@@ -180,8 +180,8 @@ impl<'s> Parser<'s> {
             }
         }
 
-        let mut aliases = None;
-        if self.chars.next_if(|(_, c)| *c == ';').is_some() {
+        let mut aliases = vec![];
+        while self.chars.next_if(|(_, c)| *c == ';').is_some() {
             self.skip_ws();
             let mut chars = self.chars.clone();
             if chars
@@ -192,7 +192,7 @@ impl<'s> Parser<'s> {
             {
                 if let Some((start, _)) = self.chars.peek() {
                     let start = *start;
-                    aliases = Some(self.parse_angular_inline_script(start)?);
+                    aliases.push(self.parse_angular_inline_script(start)?);
                 }
             }
         }
