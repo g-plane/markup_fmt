@@ -205,9 +205,9 @@ impl<'s> Parser<'s> {
         self.skip_ws();
         let children = self.parse_angular_control_flow_children()?;
 
-        self.skip_ws();
         let mut empty = None;
         let mut chars = self.chars.clone();
+        while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
         if chars
             .next_if(|(_, c)| *c == '@')
             .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
