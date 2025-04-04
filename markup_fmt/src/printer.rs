@@ -16,28 +16,6 @@ pub(super) trait DocGen<'s> {
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>;
 }
 
-impl<'s> DocGen<'s> for AngularCase<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
-    where
-        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
-    {
-        Doc::text("@case (")
-            .append(Doc::text(ctx.format_expr(
-                self.expr.0,
-                false,
-                self.expr.1,
-                state,
-            )))
-            .append(Doc::text(") {"))
-            .append(format_control_structure_block_children(
-                &self.children,
-                ctx,
-                state,
-            ))
-            .append(Doc::text("}"))
-    }
-}
-
 impl<'s> DocGen<'s> for AngularElseIf<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -209,24 +187,38 @@ impl<'s> DocGen<'s> for AngularSwitch<'s> {
             state,
         )));
         docs.push(Doc::text(") {"));
-
         docs.extend(
-            self.cases
+            self.arms
                 .iter()
-                .flat_map(|case| [Doc::hard_line(), case.doc(ctx, state)]),
+                .flat_map(|arm| [Doc::hard_line(), arm.doc(ctx, state)]),
         );
-
-        if let Some(default) = self.default.as_ref() {
-            docs.push(Doc::hard_line());
-            docs.push(Doc::text("@default {"));
-            docs.push(format_control_structure_block_children(default, ctx, state));
-            docs.push(Doc::text("}"));
-        }
-
         Doc::list(docs)
             .nest(ctx.indent_width)
             .append(Doc::hard_line())
             .append(Doc::text("}"))
+    }
+}
+
+impl<'s> DocGen<'s> for AngularSwitchArm<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text(format!("@{}", self.keyword)));
+        if let Some(expr) = self.expr {
+            docs.push(Doc::text(" ("));
+            docs.push(Doc::text(ctx.format_expr(expr.0, false, expr.1, state)));
+            docs.push(Doc::text(")"));
+        }
+        docs.push(Doc::text(" {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+        Doc::list(docs)
     }
 }
 

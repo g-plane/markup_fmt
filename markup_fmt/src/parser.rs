@@ -440,8 +440,7 @@ impl<'s> Parser<'s> {
         }
         self.skip_ws();
 
-        let mut cases = Vec::with_capacity(2);
-        let mut default = None;
+        let mut arms = Vec::with_capacity(2);
         while let Some((_, '@')) = self.chars.peek() {
             self.chars.next();
             match self.chars.peek() {
@@ -466,7 +465,11 @@ impl<'s> Parser<'s> {
                     }
                     self.skip_ws();
                     let children = self.parse_angular_control_flow_children()?;
-                    cases.push(AngularCase { expr, children });
+                    arms.push(AngularSwitchArm {
+                        keyword: "case",
+                        expr: Some(expr),
+                        children,
+                    });
                     self.skip_ws();
                 }
                 Some((_, 'd')) => {
@@ -484,8 +487,12 @@ impl<'s> Parser<'s> {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("default")));
                     }
                     self.skip_ws();
-                    default = Some(self.parse_angular_control_flow_children()?);
-                    break;
+                    arms.push(AngularSwitchArm {
+                        keyword: "default",
+                        expr: None,
+                        children: self.parse_angular_control_flow_children()?,
+                    });
+                    self.skip_ws();
                 }
                 _ => return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case"))),
             }
@@ -496,11 +503,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}')));
         }
 
-        Ok(AngularSwitch {
-            expr,
-            cases,
-            default,
-        })
+        Ok(AngularSwitch { expr, arms })
     }
 
     fn parse_astro_attr(&mut self) -> PResult<AstroAttribute<'s>> {

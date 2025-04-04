@@ -1,8 +1,3 @@
-pub struct AngularCase<'s> {
-    pub expr: (&'s str, usize),
-    pub children: Vec<Node<'s>>,
-}
-
 pub struct AngularElseIf<'s> {
     pub expr: (&'s str, usize),
     pub reference: Option<(&'s str, usize)>,
@@ -38,8 +33,13 @@ pub struct AngularLet<'s> {
 
 pub struct AngularSwitch<'s> {
     pub expr: (&'s str, usize),
-    pub cases: Vec<AngularCase<'s>>,
-    pub default: Option<Vec<Node<'s>>>,
+    pub arms: Vec<AngularSwitchArm<'s>>,
+}
+
+pub struct AngularSwitchArm<'s> {
+    pub keyword: &'static str,
+    pub expr: Option<(&'s str, usize)>,
+    pub children: Vec<Node<'s>>,
 }
 
 pub struct AstroAttribute<'s> {

@@ -12,3 +12,12 @@ source: markup_fmt/tests/fmt.rs
     <span>Default case (Not 1 or 2)</span>
   }
 }
+
+@switch (value) {
+  @default {
+    <p>default</p>
+  }
+  @case ('first') {
+    <p>first</p>
+  }
+}
