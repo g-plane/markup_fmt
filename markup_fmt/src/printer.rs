@@ -878,8 +878,7 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
             .strip_prefix('-')
             .map(|content| ("-", content))
             .unwrap_or(("", self.content));
-        let (content, suffix) = self
-            .content
+        let (content, suffix) = content
             .strip_suffix('-')
             .map(|content| (content, "-"))
             .unwrap_or((content, ""));
