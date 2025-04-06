@@ -33,10 +33,10 @@ source: markup_fmt/tests/fmt.rs
 {%- if foo -%}...{% endif %}
 
 <div>
-  {% + if something %}yay{% endif %}
+  {%+ if something %}yay{% endif %}
 </div>
 <div>
-  {% if something + %}
+  {% if something +%}
     yay
   {% endif %}
 </div>
