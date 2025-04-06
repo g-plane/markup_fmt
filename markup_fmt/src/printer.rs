@@ -873,17 +873,20 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
-        let (prefix, content) = self
-            .content
-            .strip_prefix('-')
-            .map(|content| ("-", content))
-            .or_else(|| self.content.strip_prefix('+').map(|content| ("+", content)))
-            .unwrap_or(("", self.content));
-        let (content, suffix) = content
-            .strip_suffix('-')
-            .map(|content| (content, "-"))
-            .or_else(|| self.content.strip_suffix('+').map(|content| (content, "+")))
-            .unwrap_or((content, ""));
+        let (prefix, content) = if let Some(content) = self.content.strip_prefix('-') {
+            ("-", content)
+        } else if let Some(content) = self.content.strip_prefix('+') {
+            ("+", content)
+        } else {
+            ("", self.content)
+        };
+        let (content, suffix) = if let Some(content) = content.strip_suffix('-') {
+            (content, "-")
+        } else if let Some(content) = content.strip_suffix('+') {
+            (content, "+")
+        } else {
+            (content, "")
+        };
 
         let docs = Doc::text("{%")
             .append(Doc::text(prefix))
