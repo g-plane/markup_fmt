@@ -92,18 +92,30 @@ pub struct FrontMatter<'s> {
     pub start: usize,
 }
 
+/// A Jinja block containing nested Jinja tags or HTML elements.
+///
+/// See https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures.
 pub struct JinjaBlock<'s, T> {
     pub body: Vec<JinjaTagOrChildren<'s, T>>,
 }
 
+/// A Jinja comment: `{# ... #}`.
+///
+/// See https://jinja.palletsprojects.com/en/stable/templates/#comments.
 pub struct JinjaComment<'s> {
     pub raw: &'s str,
 }
 
+/// A Jinja interpolation: `{{ ... }}`.
+///
+/// See https://jinja.palletsprojects.com/en/stable/templates/#expressions.
 pub struct JinjaInterpolation<'s> {
     pub expr: &'s str,
 }
 
+/// A Jinja tag: `{% ... %}`.
+///
+/// See https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures.
 pub struct JinjaTag<'s> {
     pub content: &'s str,
 }
