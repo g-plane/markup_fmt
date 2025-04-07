@@ -1,0 +1,42 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<!-- From https://jinja.palletsprojects.com/en/stable/templates/ -->
+
+{%- pluralize -%}
+{{ count }} apples
+{%- endtrans %}
+
+{% for user in users %}
+  {%- if loop.index >= 10 %}{% break %}{% endif %}
+{%- endfor %}
+
+{%- for item in sitemap recursive %}
+  <li>
+    <a href="{{ item.href|e }}">{{ item.title }}</a>
+    {%- if item.children -%}
+      <ul class="submenu">{{ loop(item.children) }}</ul>
+    {%- endif %}
+  </li>
+{%- endfor %}
+
+{% for item in seq -%}
+  {{ item }}
+{%- endfor %}
+
+{%- macro textarea(name, value='', rows=10, cols=40) -%}
+  <textarea name="{{ name }}" rows="{{ rows }}" cols="{{ cols
+        }}"
+  >{{ value|e }}</textarea>
+{%- endmacro %}
+
+{%- if foo -%}...{% endif %}
+
+<div>
+  {%+ if something %}yay{% endif %}
+</div>
+<div>
+  {% if something +%}
+    yay
+  {% endif %}
+</div>
