@@ -1,4 +1,4 @@
-/// An Angular for loop: `@for ( ... )`.
+/// Angular for loop: `@for ( ... )`.
 ///
 /// See https://angular.dev/api/core/@for.
 pub struct AngularFor<'s> {
@@ -10,7 +10,7 @@ pub struct AngularFor<'s> {
     pub empty: Option<Vec<Node<'s>>>,
 }
 
-/// An Angular conditional block: `@if ( condition )`.
+/// Angular conditional block: `@if ( condition )`.
 ///
 /// See https://angular.dev/api/core/@if.
 pub struct AngularIf<'s> {
@@ -21,7 +21,7 @@ pub struct AngularIf<'s> {
     pub else_children: Option<Vec<Node<'s>>>,
 }
 
-/// An Angular else-if block: `@else if ( condition )`.
+/// Angular else-if block: `@else if ( condition )`.
 ///
 /// See https://angular.dev/api/core/@if.
 pub struct AngularElseIf<'s> {
@@ -30,7 +30,7 @@ pub struct AngularElseIf<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// An Angular interpolation: `{{ expression }}`.
+/// Angular interpolation: `{{ expression }}`.
 ///
 /// See https://angular.dev/guide/templates/binding#render-dynamic-text-with-text-interpolation.
 pub struct AngularInterpolation<'s> {
@@ -38,7 +38,7 @@ pub struct AngularInterpolation<'s> {
     pub start: usize,
 }
 
-/// An Angular let variable declaration: `@let name = expression`.
+/// Angular let variable declaration: `@let name = expression`.
 ///
 /// See https://angular.dev/api/core/@let.
 pub struct AngularLet<'s> {
@@ -46,7 +46,7 @@ pub struct AngularLet<'s> {
     pub expr: (&'s str, usize),
 }
 
-/// An Angular switch statement: `@switch (expression)`.
+/// Angular switch statement: `@switch (expression)`.
 ///
 /// See https://angular.dev/api/core/@switch.
 pub struct AngularSwitch<'s> {
@@ -63,7 +63,7 @@ pub struct AngularSwitchArm<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// An Astro attribute: `{expression}` or `name={expression}`.
+/// Astro attribute: `{expression}` or `name={expression}`.
 ///
 /// See https://docs.astro.build/en/reference/astro-syntax/#dynamic-attributes.
 pub struct AstroAttribute<'s> {
@@ -71,7 +71,7 @@ pub struct AstroAttribute<'s> {
     pub expr: (&'s str, usize),
 }
 
-/// An Astro expression block: `{...}`.
+/// Astro expression block: `{...}`.
 ///
 /// See https://docs.astro.build/en/reference/astro-syntax/#dynamic-html.
 pub struct AstroExpr<'s> {
@@ -97,14 +97,14 @@ pub enum Attribute<'s> {
     VueDirective(VueDirective<'s>),
 }
 
-/// A comment in HTML: `<!-- ... -->`.
+/// Comment in HTML: `<!-- ... -->`.
 ///
 /// See https://developer.mozilla.org/en-US/docs/Web/HTML/Comments
 pub struct Comment<'s> {
     pub raw: &'s str,
 }
 
-/// An HTML doctype declaration: `<!DOCTYPE ...>`.
+/// HTML doctype declaration: `<!DOCTYPE ...>`.
 ///
 /// See https://developer.mozilla.org/en-US/docs/Glossary/Doctype
 pub struct Doctype<'s> {
@@ -112,7 +112,7 @@ pub struct Doctype<'s> {
     pub value: &'s str,
 }
 
-/// An HTML element with its attributes and children.
+/// HTML element with its attributes and children.
 ///
 /// See https://developer.mozilla.org/en-US/docs/Web/HTML/Element
 pub struct Element<'s> {
@@ -132,28 +132,28 @@ pub struct FrontMatter<'s> {
     pub start: usize,
 }
 
-/// A Jinja block containing nested Jinja tags or HTML elements.
+/// Jinja block containing nested Jinja tags or HTML elements.
 ///
 /// See https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures.
 pub struct JinjaBlock<'s, T> {
     pub body: Vec<JinjaTagOrChildren<'s, T>>,
 }
 
-/// A Jinja comment: `{# ... #}`.
+/// Jinja comment: `{# ... #}`.
 ///
 /// See https://jinja.palletsprojects.com/en/stable/templates/#comments.
 pub struct JinjaComment<'s> {
     pub raw: &'s str,
 }
 
-/// A Jinja interpolation: `{{ ... }}`.
+/// Jinja interpolation: `{{ ... }}`.
 ///
 /// See https://jinja.palletsprojects.com/en/stable/templates/#expressions.
 pub struct JinjaInterpolation<'s> {
     pub expr: &'s str,
 }
 
-/// A Jinja tag: `{% ... %}`.
+/// Jinja tag: `{% ... %}`.
 ///
 /// See https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures.
 pub struct JinjaTag<'s> {
@@ -165,7 +165,7 @@ pub enum JinjaTagOrChildren<'s, T> {
     Children(Vec<T>),
 }
 
-/// A standard HTML attribute.
+/// Standard HTML attribute.
 ///
 /// See https://developer.mozilla.org/en-US/docs/Glossary/Attribute
 pub struct NativeAttribute<'s> {
@@ -214,7 +214,7 @@ pub struct Root<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// A Svelte `@` tag: (`@render`, `@const`, etc).
+/// Svelte `@` tag: (`@render`, `@const`, etc).
 ///
 /// See https://svelte.dev/docs/svelte/@render.
 pub struct SvelteAtTag<'s> {
@@ -222,7 +222,7 @@ pub struct SvelteAtTag<'s> {
     pub expr: (&'s str, usize),
 }
 
-/// A Svelte attribute: `{expression}` or `name={expression}`.
+/// Svelte attribute: `{expression}` or `name={expression}`.
 ///
 /// See https://svelte.dev/docs/svelte/basic-markup#Element-attributes.
 pub struct SvelteAttribute<'s> {
@@ -230,7 +230,7 @@ pub struct SvelteAttribute<'s> {
     pub expr: (&'s str, usize),
 }
 
-/// A Svelte await block `{#await expression}...{:then name}...{:catch name}...{/await}`.
+/// Svelte await block `{#await expression}...{:then name}...{:catch name}...{/await}`.
 ///
 /// See https://svelte.dev/docs/svelte/await.
 pub struct SvelteAwaitBlock<'s> {
@@ -254,7 +254,7 @@ pub struct SvelteThenBlock<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// A Svelte each block: `{#each expression as name}...{/each}`.
+/// Svelte each block: `{#each expression as name}...{/each}`.
 ///
 /// See https://svelte.dev/docs/svelte/each.
 pub struct SvelteEachBlock<'s> {
@@ -266,7 +266,7 @@ pub struct SvelteEachBlock<'s> {
     pub else_children: Option<Vec<Node<'s>>>,
 }
 
-/// A Svelte if block: `{#if expression}...{:else if expression}...{/if}`.
+/// Svelte if block: `{#if expression}...{:else if expression}...{/if}`.
 ///
 /// See https://svelte.dev/docs/svelte/if.
 pub struct SvelteIfBlock<'s> {
@@ -282,14 +282,14 @@ pub struct SvelteElseIfBlock<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// A Svelte interpolation: `{expression}`.
+/// Svelte interpolation: `{expression}`.
 ///
 /// See https://svelte.dev/docs/svelte/basic-markup#Text-expressions.
 pub struct SvelteInterpolation<'s> {
     pub expr: (&'s str, usize),
 }
 
-/// A Svelte key block: `{#key expression}...{/key}`.
+/// Svelte key block: `{#key expression}...{/key}`.
 ///
 /// See https://svelte.dev/docs/svelte/key.
 pub struct SvelteKeyBlock<'s> {
@@ -297,7 +297,7 @@ pub struct SvelteKeyBlock<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// A Svelte snippet block: `{#snippet name()}...{/snippet}`.
+/// Svelte snippet block: `{#snippet name()}...{/snippet}`.
 ///
 /// See https://svelte.dev/docs/svelte/snippet.
 pub struct SvelteSnippetBlock<'s> {
@@ -305,28 +305,28 @@ pub struct SvelteSnippetBlock<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// A plain text node.
+/// Plain text node.
 pub struct TextNode<'s> {
     pub raw: &'s str,
     pub line_breaks: usize,
     pub start: usize,
 }
 
-/// A Vento block: `{{ keyword ... }}...{{ /keyword }}`
+/// Vento block: `{{ keyword ... }}...{{ /keyword }}`
 ///
 /// See https://vento.js.org/syntax/blocks.
 pub struct VentoBlock<'s> {
     pub body: Vec<VentoTagOrChildren<'s>>,
 }
 
-/// A Vento comment: `{{# ... #}}`.
+/// Vento comment: `{{# ... #}}`.
 ///
 /// See https://vento.js.org/syntax/comments/.
 pub struct VentoComment<'s> {
     pub raw: &'s str,
 }
 
-/// A Vento eval block for JavaScript evaluation: `{{> ... }}`.
+/// Vento eval block for JavaScript evaluation: `{{> ... }}`.
 ///
 /// See https://vento.js.org/syntax/javascript/.
 pub struct VentoEval<'s> {
@@ -334,7 +334,7 @@ pub struct VentoEval<'s> {
     pub start: usize,
 }
 
-/// A Vento interpolation `{{ ... }}`.
+/// Vento interpolation `{{ ... }}`.
 ///
 /// See https://vento.js.org/syntax/print/.
 pub struct VentoInterpolation<'s> {
@@ -342,7 +342,7 @@ pub struct VentoInterpolation<'s> {
     pub start: usize,
 }
 
-/// A Vento tag: `{{ keyword ... }}`.
+/// Vento tag: `{{ keyword ... }}`.
 ///
 /// See https://vento.js.org/syntax/include/.
 pub struct VentoTag<'s> {
@@ -356,7 +356,7 @@ pub enum VentoTagOrChildren<'s> {
     Children(Vec<Node<'s>>),
 }
 
-/// A Vue directive: `v-if`, `v-for`, etc.
+/// Vue directive: `v-if`, `v-for`, etc.
 ///
 /// See https://vuejs.org/guide/essentials/template-syntax.html#directives.
 pub struct VueDirective<'s> {
@@ -365,7 +365,7 @@ pub struct VueDirective<'s> {
     pub value: Option<(&'s str, usize)>,
 }
 
-/// A Vue interpolation: `{{ expression }}`.
+/// Vue interpolation: `{{ expression }}`.
 ///
 /// See https://vuejs.org/guide/essentials/template-syntax.html#text-interpolation.
 pub struct VueInterpolation<'s> {
