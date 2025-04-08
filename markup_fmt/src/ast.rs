@@ -63,7 +63,7 @@ pub struct AngularSwitchArm<'s> {
     pub children: Vec<Node<'s>>,
 }
 
-/// An Astro attribute: `{expression}` / `name={expression}`.
+/// An Astro attribute: `{expression}` or `name={expression}`.
 ///
 /// See https://docs.astro.build/en/reference/astro-syntax/#dynamic-attributes.
 pub struct AstroAttribute<'s> {
@@ -80,15 +80,12 @@ pub struct AstroExpr<'s> {
     pub start: usize,
 }
 
-/// An enum representing children of an `AstroExpr`.
-///
 /// See https://docs.astro.build/en/core-concepts/astro-syntax/#dynamic-html.
 pub enum AstroExprChild<'s> {
     Script(&'s str),
     Template(Vec<Node<'s>>),
 }
 
-/// An enum representing different types of attributes in a document.
 pub enum Attribute<'s> {
     Astro(AstroAttribute<'s>),
     JinjaBlock(JinjaBlock<'s, Attribute<'s>>),
@@ -225,7 +222,7 @@ pub struct SvelteAtTag<'s> {
     pub expr: (&'s str, usize),
 }
 
-/// A Svelte attribute: `{expression}` / `name={expression}`.
+/// A Svelte attribute: `{expression}` or `name={expression}`.
 ///
 /// See https://svelte.dev/docs/svelte/basic-markup#Element-attributes.
 pub struct SvelteAttribute<'s> {
