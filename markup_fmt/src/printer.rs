@@ -1972,6 +1972,8 @@ fn is_all_ascii_whitespace(s: &str) -> bool {
 
 fn is_multi_line_attr(attr: &Attribute) -> bool {
     match attr {
+        // External formatter (Malva) always format style attr on a single line (see `singleLineTopLevelDeclarations`)
+        Attribute::Native(attr) if attr.name.eq_ignore_ascii_case("style") => false,
         Attribute::Native(attr) => attr
             .value
             .map(|(value, _)| value.trim().contains('\n'))
