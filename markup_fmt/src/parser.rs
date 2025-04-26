@@ -1726,7 +1726,10 @@ impl<'s> Parser<'s> {
             .is_some()
         {
             self.skip_ws();
-            Some(self.parse_svelte_binding()?)
+            Some(match self.chars.peek() {
+                Some((_, '}')) => None,
+                _ => Some(self.parse_svelte_binding()?),
+            })
         } else {
             None
         };
@@ -1742,7 +1745,10 @@ impl<'s> Parser<'s> {
             .is_some()
         {
             self.skip_ws();
-            Some(self.parse_svelte_binding()?)
+            Some(match self.chars.peek() {
+                Some((_, '}')) => None,
+                _ => Some(self.parse_svelte_binding()?),
+            })
         } else {
             None
         };
@@ -1769,8 +1775,14 @@ impl<'s> Parser<'s> {
             .is_ok()
         {
             self.skip_ws();
-            let binding = self.parse_svelte_binding()?;
-            self.skip_ws();
+            let binding = match self.chars.peek() {
+                Some((_, '}')) => None,
+                _ => {
+                    let binding = self.parse_svelte_binding()?;
+                    self.skip_ws();
+                    Some(binding)
+                }
+            };
             if self.chars.next_if(|(_, c)| *c == '}').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteThenBlock));
             }
@@ -1798,9 +1810,12 @@ impl<'s> Parser<'s> {
             self.skip_ws();
             let binding = match self.chars.peek() {
                 Some((_, '}')) => None,
-                _ => Some(self.parse_svelte_binding()?),
+                _ => {
+                    let binding = self.parse_svelte_binding()?;
+                    self.skip_ws();
+                    Some(binding)
+                }
             };
-            self.skip_ws();
             if self.chars.next_if(|(_, c)| *c == '}').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteCatchBlock));
             }

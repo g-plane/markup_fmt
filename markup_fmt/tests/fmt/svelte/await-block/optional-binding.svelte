@@ -1,0 +1,39 @@
+{#await thing}
+  <p>loading</p>
+{:catch err}
+  <p>error: {err}</p>
+{/await}
+
+{#await thing}
+  <p>loading</p>
+{:catch}
+  <p>error</p>
+{/await}
+
+{#await thing}
+  <p>loading</p>
+{:then value}
+  <p>done: {value}</p>
+{/await}
+
+{#await thing}
+  <p>loading</p>
+{:then}
+  <p>done</p>
+{/await}
+
+{#await thing then}
+  <p>done</p>
+{/await}
+
+{#await thing then value}
+  <p>done: {value}</p>
+{/await}
+
+{#await thing catch}
+  <p>error</p>
+{/await}
+
+{#await thing catch err}
+  <p>error: {err}</p>
+{/await}

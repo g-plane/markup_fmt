@@ -1191,16 +1191,22 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
             state,
         )));
 
-        if let Some((then_binding, start)) = self.then_binding {
+        if let Some(then) = self.then_binding {
             head.push(Doc::line_or_space());
-            head.push(Doc::text("then "));
-            head.push(Doc::text(ctx.format_binding(then_binding, start, state)));
+            head.push(Doc::text("then"));
+            if let Some((binding, start)) = then {
+                head.push(Doc::space());
+                head.push(Doc::text(ctx.format_binding(binding, start, state)));
+            }
         }
 
-        if let Some((catch_binding, start)) = self.catch_binding {
+        if let Some(catch) = self.catch_binding {
             head.push(Doc::line_or_space());
-            head.push(Doc::text("catch "));
-            head.push(Doc::text(ctx.format_binding(catch_binding, start, state)));
+            head.push(Doc::text("catch"));
+            if let Some((binding, start)) = catch {
+                head.push(Doc::space());
+                head.push(Doc::text(ctx.format_binding(binding, start, state)));
+            }
         }
 
         let mut docs = Vec::with_capacity(5);
@@ -1441,18 +1447,19 @@ impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
-        Doc::text("{:then ")
-            .append(Doc::text(ctx.format_binding(
-                self.binding.0,
-                self.binding.1,
-                state,
-            )))
-            .append(Doc::text("}"))
-            .append(format_control_structure_block_children(
-                &self.children,
-                ctx,
-                state,
-            ))
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("{:then"));
+        if let Some((binding, start)) = self.binding {
+            docs.push(Doc::space());
+            docs.push(Doc::text(ctx.format_binding(binding, start, state)));
+        }
+        docs.push(Doc::text("}"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        Doc::list(docs)
     }
 }
 

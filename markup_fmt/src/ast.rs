@@ -235,8 +235,8 @@ pub struct SvelteAttribute<'s> {
 /// See https://svelte.dev/docs/svelte/await.
 pub struct SvelteAwaitBlock<'s> {
     pub expr: (&'s str, usize),
-    pub then_binding: Option<(&'s str, usize)>,
-    pub catch_binding: Option<(&'s str, usize)>,
+    pub then_binding: Option<Option<(&'s str, usize)>>, // binding can be optional with `then` keyword only
+    pub catch_binding: Option<Option<(&'s str, usize)>>, // binding can be optional with `catch` keyword only
     pub children: Vec<Node<'s>>,
     pub then_block: Option<SvelteThenBlock<'s>>,
     pub catch_block: Option<SvelteCatchBlock<'s>>,
@@ -250,7 +250,7 @@ pub struct SvelteCatchBlock<'s> {
 
 /// The `{:then value}...` part of a `SvelteAwaitBlock`.
 pub struct SvelteThenBlock<'s> {
-    pub binding: (&'s str, usize),
+    pub binding: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
 }
 
