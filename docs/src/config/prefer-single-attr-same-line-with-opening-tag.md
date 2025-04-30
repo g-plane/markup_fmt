@@ -1,4 +1,4 @@
-# `preferSingleAttrSameLineWithTagName`
+# `preferSingleAttrSameLineWithOpeningTag`
 
 Control whether single attribute should be put on the same line with tag name.
 

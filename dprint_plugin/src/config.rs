@@ -141,9 +141,9 @@ pub(crate) fn resolve_config(
                 false,
                 &mut diagnostics,
             ),
-            prefer_single_attr_same_line_with_tag_name: get_value(
+            prefer_single_attr_same_line_with_opening_tag: get_value(
                 &mut config,
-                "preferSingleAttrSameLineWithTagName",
+                "preferSingleAttrSameLineWithOpeningTag",
                 true,
                 &mut diagnostics,
             ),
