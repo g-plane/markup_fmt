@@ -138,6 +138,12 @@ pub struct LanguageOptions {
 
     #[cfg_attr(
         feature = "config_serde",
+        serde(alias = "preferSingleAttrSameLineWithTagName")
+    )]
+    pub prefer_single_attr_same_line_with_tag_name: bool,
+
+    #[cfg_attr(
+        feature = "config_serde",
         serde(rename = "html.normal.self_closing", alias = "html.normal.selfClosing")
     )]
     pub html_normal_self_closing: Option<bool>,
@@ -241,6 +247,7 @@ impl Default for LanguageOptions {
             closing_tag_line_break_for_empty: ClosingTagLineBreakForEmpty::default(),
             max_attrs_per_line: None,
             prefer_attrs_single_line: false,
+            prefer_single_attr_same_line_with_tag_name: true,
             html_normal_self_closing: None,
             html_void_self_closing: None,
             component_self_closing: None,

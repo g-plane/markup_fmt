@@ -141,6 +141,12 @@ pub(crate) fn resolve_config(
                 false,
                 &mut diagnostics,
             ),
+            prefer_single_attr_same_line_with_tag_name: get_value(
+                &mut config,
+                "preferSingleAttrSameLineWithTagName",
+                true,
+                &mut diagnostics,
+            ),
             html_normal_self_closing: get_nullable_value(
                 &mut config,
                 "html.normal.selfClosing",

@@ -446,8 +446,12 @@ impl<'s> DocGen<'s> for Element<'s> {
         docs.push(Doc::text("<"));
         docs.push(Doc::text(formatted_tag_name.clone()));
 
-        match self.attrs.as_slice() {
-            [attr] if !is_whitespace_sensitive && !is_multi_line_attr(attr) => {
+        match &*self.attrs {
+            [attr]
+                if ctx.options.prefer_single_attr_same_line_with_tag_name
+                    && !is_whitespace_sensitive
+                    && !is_multi_line_attr(attr) =>
+            {
                 docs.push(Doc::space());
                 docs.push(attr.doc(ctx, &state));
                 if self_closing && is_empty {
@@ -461,14 +465,19 @@ impl<'s> DocGen<'s> for Element<'s> {
                 }
             }
             _ => {
-                let attrs_sep = if !self.first_attr_same_line
-                    && !ctx.options.prefer_attrs_single_line
-                    && self.attrs.len() > 1
-                    && !ctx
+                let attrs_sep = if self.first_attr_same_line {
+                    Doc::line_or_space()
+                } else if self.attrs.len() <= 1 {
+                    if ctx.options.prefer_single_attr_same_line_with_tag_name {
+                        Doc::line_or_space()
+                    } else {
+                        Doc::hard_line()
+                    }
+                } else if !ctx.options.prefer_attrs_single_line
+                    && ctx
                         .options
                         .max_attrs_per_line
-                        .map(|value| value.get() > 1)
-                        .unwrap_or_default()
+                        .is_none_or(|value| value.get() <= 1)
                 {
                     Doc::hard_line()
                 } else {

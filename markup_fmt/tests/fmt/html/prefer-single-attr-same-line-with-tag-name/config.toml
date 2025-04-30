@@ -1,0 +1,7 @@
+[default]
+
+[disabled]
+preferSingleAttrSameLineWithTagName = false
+
+[enabled]
+preferSingleAttrSameLineWithTagName = true
