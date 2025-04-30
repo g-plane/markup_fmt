@@ -13,7 +13,7 @@
   - [closingTagLineBreakForEmpty](./config/closing-tag-line-break-for-empty.md)
   - [maxAttrsPerLine](./config/max-attrs-per-line.md)
   - [preferAttrsSingleLine](./config/prefer-attrs-single-line.md)
-  - [preferSingleAttrSameLineWithOpeningTag](./config/prefer-single-attr-same-line-with-opening-tag.md)
+  - [singleAttrSameLine](./config/single-attr-same-line.md)
   - [*.selfClosing](./config/self-closing.md)
   - [whitespaceSensitivity](./config/whitespace-sensitivity.md)
   - [doctypeKeywordCase](./config/doctype-keyword-case.md)

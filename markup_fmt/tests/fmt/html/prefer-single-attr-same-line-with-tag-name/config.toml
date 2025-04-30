@@ -1,7 +1,7 @@
 [default]
 
 [disabled]
-preferSingleAttrSameLineWithOpeningTag = false
+singleAttrSameLine = false
 
 [enabled]
-preferSingleAttrSameLineWithOpeningTag = true
+singleAttrSameLine = true

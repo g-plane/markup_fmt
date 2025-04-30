@@ -448,7 +448,7 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         match &*self.attrs {
             [attr]
-                if ctx.options.prefer_single_attr_same_line_with_opening_tag
+                if ctx.options.single_attr_same_line
                     && !is_whitespace_sensitive
                     && !is_multi_line_attr(attr) =>
             {
@@ -468,7 +468,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                 let attrs_sep = if self.first_attr_same_line {
                     Doc::line_or_space()
                 } else if self.attrs.len() <= 1 {
-                    if ctx.options.prefer_single_attr_same_line_with_opening_tag {
+                    if ctx.options.single_attr_same_line {
                         Doc::line_or_space()
                     } else {
                         Doc::hard_line()
