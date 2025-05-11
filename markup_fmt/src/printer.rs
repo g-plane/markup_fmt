@@ -1275,13 +1275,11 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
             self.expr.1,
             state,
         )));
-        head.push(Doc::text(" as"));
-        head.push(Doc::line_or_space());
-        head.push(Doc::text(ctx.format_binding(
-            self.binding.0,
-            self.binding.1,
-            state,
-        )));
+        if let Some(binding) = self.binding {
+            head.push(Doc::text(" as"));
+            head.push(Doc::line_or_space());
+            head.push(Doc::text(ctx.format_binding(binding.0, binding.1, state)));
+        }
 
         if let Some(index) = self.index {
             head.push(Doc::text(","));

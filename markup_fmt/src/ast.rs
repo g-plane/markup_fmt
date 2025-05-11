@@ -259,7 +259,7 @@ pub struct SvelteThenBlock<'s> {
 /// See https://svelte.dev/docs/svelte/each.
 pub struct SvelteEachBlock<'s> {
     pub expr: (&'s str, usize),
-    pub binding: (&'s str, usize),
+    pub binding: Option<(&'s str, usize)>,
     pub index: Option<&'s str>,
     pub key: Option<(&'s str, usize)>,
     pub children: Vec<Node<'s>>,
