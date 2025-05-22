@@ -527,23 +527,18 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .nest(ctx.indent_width)
                 };
 
-                if self.void_element {
-                    docs.push(attrs);
-                    if self_closing {
-                        docs.push(Doc::line_or_space());
-                        docs.push(Doc::text("/>"));
-                    } else {
-                        if !ctx.options.closing_bracket_same_line {
-                            docs.push(Doc::line_or_nil());
-                        }
-                        docs.push(Doc::text(">"));
-                    }
-                    return Doc::list(docs).group();
-                }
-                if self_closing && is_empty {
+                if self_closing && (self.void_element || is_empty) {
                     docs.push(attrs);
                     docs.push(Doc::line_or_space());
                     docs.push(Doc::text("/>"));
+                    return Doc::list(docs).group();
+                }
+                if self.void_element {
+                    docs.push(attrs);
+                    if !ctx.options.closing_bracket_same_line {
+                        docs.push(Doc::line_or_nil());
+                    }
+                    docs.push(Doc::text(">"));
                     return Doc::list(docs).group();
                 }
                 if ctx.options.closing_bracket_same_line {
