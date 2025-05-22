@@ -1,8 +1,7 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<pre
->
+<pre>
 Hello,
   world!   {JSON.stringify({   foo:'bar'},null,
   2)}Goodbye.

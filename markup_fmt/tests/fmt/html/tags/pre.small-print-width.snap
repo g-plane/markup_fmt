@@ -1,8 +1,7 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<pre
->
+<pre>
 --------------------------------------------------------------------------------
 
 
@@ -26,8 +25,7 @@ source: markup_fmt/tests/fmt.rs
 
 --------------------------------------------------------------------------------
 </pre>
-<pre
->
+<pre>
 
         Text in a pre element
 
@@ -40,25 +38,20 @@ source: markup_fmt/tests/fmt.rs
    line breaks
 
 </pre>
-<pre
->     Foo     Bar     </pre>
-<pre
->
+<pre>     Foo     Bar     </pre>
+<pre>
      Foo     Bar
 </pre>
-<pre
->
+<pre>
 Foo     Bar
 </pre>
-<pre
->
+<pre>
      Foo     Bar</pre>
 <figure
   role="img"
   aria-labelledby="cow-caption"
 >
-  <pre
-  >
+  <pre>
 ___________________________
 < I'm an expert in my field. >
 ---------------------------
@@ -99,16 +92,11 @@ ___________________________
 >
      Foo     Bar
 </pre>
-<div
->
-  <div
-  >
-    <div
-    >
-      <div
-      >
-        <pre
-        >
+<div>
+  <div>
+    <div>
+      <div>
+        <pre>
           ______
           STRING
           ______
@@ -117,57 +105,37 @@ ___________________________
     </div>
   </div>
 </div>
-<pre
-></pre>
+<pre></pre>
 
-<pre
-><code #foo></code></pre>
+<pre><code #foo></code></pre>
 
-<details
->
-  <pre
-  >
+<details>
+  <pre>
 <!--Comments-->
   </pre>
 </details>
 
-<details
->
-  <pre
-  >
+<details>
+  <pre>
   <!--Comments-->
 </pre>
 </details>
 
 <!-- #6028 -->
-<pre
-><br></pre>
-<pre
-><HR></pre>
-<pre
-><br/></pre>
-<pre
-><HR/></pre>
-<pre
-><br /></pre>
-<pre
-><HR /></pre>
-<pre
-><span></span></pre>
-<pre
-><DIV></DIV></pre>
-<pre
-><br/>long long long text long long long text long long long text long long long text <br></pre>
-<pre
-><br>long long long text long long long text long long long text long long long text <BR/></pre>
+<pre><br></pre>
+<pre><HR></pre>
+<pre><br/></pre>
+<pre><HR/></pre>
+<pre><br /></pre>
+<pre><HR /></pre>
+<pre><span></span></pre>
+<pre><DIV></DIV></pre>
+<pre><br/>long long long text long long long text long long long text long long long text <br></pre>
+<pre><br>long long long text long long long text long long long text long long long text <BR/></pre>
 
-<pre
-><a></pre>
-<pre
-></b></pre>
+<pre><a></pre>
+<pre></b></pre>
 
-<div
->
-  <pre
-  ><pre></pre></pre>
+<div>
+  <pre><pre></pre></pre>
 </div>
