@@ -448,20 +448,18 @@ impl<'s> DocGen<'s> for Element<'s> {
 
         match &*self.attrs {
             [] => {
-                // there're no attributes, so don't insert line break.
-                if self.void_element {
-                    if self_closing {
-                        docs.push(Doc::text(" />"));
-                    } else {
-                        docs.push(Doc::text(">"));
-                    }
-                    return Doc::list(docs).group();
-                }
-                if self_closing && is_empty {
+                if self_closing && (self.void_element || is_empty) {
                     docs.push(Doc::text(" />"));
                     return Doc::list(docs).group();
                 }
-                if !is_whitespace_sensitive || is_empty {
+
+                if self.void_element {
+                    docs.push(Doc::text(">"));
+                    return Doc::list(docs).group();
+                }
+
+                // Handle regular elements
+                if is_empty || !is_whitespace_sensitive {
                     docs.push(Doc::text(">"));
                 } else {
                     docs.push(Doc::line_or_nil().append(Doc::text(">")).group());
