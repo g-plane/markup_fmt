@@ -1,14 +1,10 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<br
-/>
-<br
-/>
-<br
-/>
-<br
-/>
+<br />
+<br />
+<br />
+<br />
 <br
   attribute-a
 />
@@ -35,12 +31,10 @@ source: markup_fmt/tests/fmt.rs
   attribute-e="value"
   attribute-f="value"
 />
-<div
->
+<div>
   string
 </div>
-<div
->
+<div>
   very
   very
   very
@@ -148,81 +142,56 @@ source: markup_fmt/tests/fmt.rs
   video
   tag.
 </video>
-<div
->
-  <div
-  >
+<div>
+  <div>
     string
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
     string
   </div>
-  <div
-  >
+  <div>
     string
   </div>
 </div>
-<div
->
-  <div
-  >
-    <div
-    >
+<div>
+  <div>
+    <div>
       string
     </div>
   </div>
-  <div
-  >
+  <div>
     string
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
     string
   </div>
-  <div
-  >
-    <div
-    >
+  <div>
+    <div>
       string
     </div>
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
   </div>
-  <div
-  >
+  <div>
   </div>
 </div>
-<div
->
-  <div
-  >
-    <div
-    >
-      <div
-      >
-        <div
-        >
-          <div
-          >
-            <div
-            >
+<div>
+  <div>
+    <div>
+      <div>
+        <div>
+          <div>
+            <div>
               string
             </div>
           </div>
@@ -231,34 +200,26 @@ source: markup_fmt/tests/fmt.rs
     </div>
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
     string
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
     string
   </div>
 </div>
-<div
->
-  <div
-  >
+<div>
+  <div>
     string
   </div>
 
-  <div
-  >
+  <div>
     string
   </div>
 </div>
-<ul
->
+<ul>
   123<li
     class="foo"
     id="bar"
@@ -274,42 +235,32 @@ source: markup_fmt/tests/fmt.rs
 <img
   src="longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong"
 />123
-<div
->
+<div>
   123<meta attr />456
 </div>
-<p
->
+<p>
   x<span
     a="b"
   ></span>
 </p>
-<p
->
+<p>
   x<meta a>
 </p>
-<p
->
-  x<meta
-  >
+<p>
+  x<meta>
 </p>
-<span
-></span>
+<span></span>
 
 <label
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ></label>
 |
-<span
-></span>
-<br
-/>
+<span></span>
+<br />
 <button xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>
   12345678901234567890
 </button>
-<br
-/><br
-/>
+<br /><br />
 
 <button
   bind-disabled="isUnchanged"
@@ -318,15 +269,11 @@ source: markup_fmt/tests/fmt.rs
   Disabled
   Cancel
 </button>
-<br
-/><br
-/>
+<br /><br />
 <button xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>
   12345678901234567890
 </button>
-<br
-/><br
-/>
+<br /><br />
 
 <button
   bind-disabled="isUnchanged"
@@ -335,11 +282,8 @@ source: markup_fmt/tests/fmt.rs
   Disabled
   Cancel
 </button>
-<br
-/><br
-/>
-<p
->
+<br /><br />
+<p>
   "<span
     [innerHTML]="title"
   ></span>"
@@ -350,31 +294,22 @@ source: markup_fmt/tests/fmt.rs
     bound</i>
   title.
 </p>
-<li
->
+<li>
   12345678901234567890123456789012345678901234567890123456789012345678901234567890
 </li>
-<div
->
-  <app-nav
-  ></app-nav>
-  <router-outlet
-  ></router-outlet>
-  <app-footer
-  ></app-footer>
+<div>
+  <app-nav></app-nav>
+  <router-outlet></router-outlet>
+  <app-footer></app-footer>
 
   <app-nav
     [input]="something"
   ></app-nav>
-  <router-outlet
-  ></router-outlet>
-  <app-footer
-  ></app-footer>
+  <router-outlet></router-outlet>
+  <app-footer></app-footer>
 
-  <app-primary-navigation
-  ></app-primary-navigation>
-  <router-outlet
-  ></router-outlet>
+  <app-primary-navigation></app-primary-navigation>
+  <router-outlet></router-outlet>
   <app-footer
     [input]="something"
   ></app-footer>
@@ -390,8 +325,7 @@ source: markup_fmt/tests/fmt.rs
     also
     lower
     cased</span></x:root>
-<div
->
+<div>
   Lorem
   ipsum
   dolor
@@ -403,8 +337,7 @@ source: markup_fmt/tests/fmt.rs
   "<strong
   >seddoeiusmod</strong>".
 </div>
-<div
->
+<div>
   Lorem
   ipsum
   dolor
@@ -430,13 +363,10 @@ source: markup_fmt/tests/fmt.rs
 </span>
 
 <!-- #5810 -->
-<table
->
-  <tr
-  >
+<table>
+  <tr>
   </tr>
-</table><div
->
+</table><div>
   Should
   not
   insert

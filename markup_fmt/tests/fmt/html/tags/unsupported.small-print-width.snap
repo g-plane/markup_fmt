@@ -1,6 +1,5 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<center
->
+<center>
 </center>

@@ -2,10 +2,8 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <!DOCTYPE html>
-<html
->
-  <body
-  >
+<html>
+  <body>
     <!--[if IE 5]>This is IE 5<br><![endif]-->
     <!--[if IE 6]>This is IE 6<br><![endif]-->
     <!--[if IE 7]>This is IE 7<br><![endif]-->
@@ -17,33 +15,27 @@ source: markup_fmt/tests/fmt.rs
 <!DOCTYPE html>
 <!--[if lt IE 9]><html lang="zh-CN"><![endif]-->
 <html lang="zh-CN">
-  <head
-  >
+  <head>
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html lang="zh-CN"><div><![endif]-->
 <html lang="zh-CN">
-  <head
-  >
+  <head>
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html lang="zh-CN"><div></div><![endif]-->
 <html lang="zh-CN">
-  <head
-  >
+  <head>
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
 
@@ -51,11 +43,9 @@ source: markup_fmt/tests/fmt.rs
   width="100%"
   align="center"
 >
-  <center
-  >
+  <center>
     <!--[if (gte mso 9)|(IE)]><table cellpadding="0" cellspacing="0" border="0" width="600" align="center"><tr><td><![endif]-->
-    <div
-    >
+    <div>
     </div>
     <!--[if (gte mso 9)|(IE)]></td></tr></table><![endif]-->
   </center>
@@ -64,14 +54,11 @@ source: markup_fmt/tests/fmt.rs
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><![endif]-->
 <!--[if gte IE 9]><!-->
-<html
->
+<html>
   <!--<![endif]-->
-  <head
-  >
+  <head>
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
 
@@ -80,25 +67,20 @@ source: markup_fmt/tests/fmt.rs
 <!--[if gte IE 9]><!-->
 <html hello>
   <!--<![endif]-->
-  <head
-  >
+  <head>
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
 
 <!DOCTYPE html>
 <!--[if lt IE 9]><html class="legacy-ie"><head><![endif]-->
 <!--[if gte IE 9]><!-->
-<html
->
-  <head
-  >
+<html>
+  <head>
     <!--<![endif]-->
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
 
@@ -106,13 +88,10 @@ source: markup_fmt/tests/fmt.rs
 <!--[if lt IE 9]><html class="legacy-ie"><![endif]-->
 <!--[if gte IE 9
 ]><!-->
-<html
->
+<html>
   <!--<![endif]-->
-  <head
-  >
+  <head>
   </head>
-  <body
-  >
+  <body>
   </body>
 </html>
