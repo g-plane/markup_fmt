@@ -452,13 +452,10 @@ impl<'s> DocGen<'s> for Element<'s> {
                     docs.push(Doc::text(" />"));
                     return Doc::list(docs).group();
                 }
-
                 if self.void_element {
                     docs.push(Doc::text(">"));
                     return Doc::list(docs).group();
                 }
-
-                // Handle regular elements
                 if is_empty || !is_whitespace_sensitive {
                     docs.push(Doc::text(">"));
                 } else {
