@@ -447,6 +447,21 @@ impl<'s> DocGen<'s> for Element<'s> {
         docs.push(Doc::text(formatted_tag_name.clone()));
 
         match &*self.attrs {
+            [] => {
+                if self_closing && (self.void_element || is_empty) {
+                    docs.push(Doc::text(" />"));
+                    return Doc::list(docs).group();
+                }
+                if self.void_element {
+                    docs.push(Doc::text(">"));
+                    return Doc::list(docs).group();
+                }
+                if is_empty || !is_whitespace_sensitive {
+                    docs.push(Doc::text(">"));
+                } else {
+                    docs.push(Doc::line_or_nil().append(Doc::text(">")).group());
+                }
+            }
             [attr]
                 if ctx.options.single_attr_same_line
                     && !is_whitespace_sensitive
@@ -484,26 +499,21 @@ impl<'s> DocGen<'s> for Element<'s> {
                     Doc::line_or_space()
                 };
                 let attrs = if let Some(max) = ctx.options.max_attrs_per_line {
-                    // fix #2
-                    if self.attrs.is_empty() {
-                        Doc::line_or_nil()
-                    } else {
-                        Doc::line_or_space()
-                    }
-                    .concat(itertools::intersperse(
-                        self.attrs.chunks(max.into()).map(|chunk| {
-                            Doc::list(
-                                itertools::intersperse(
-                                    chunk.iter().map(|attr| attr.doc(ctx, &state)),
-                                    attrs_sep.clone(),
+                    Doc::line_or_space()
+                        .concat(itertools::intersperse(
+                            self.attrs.chunks(max.into()).map(|chunk| {
+                                Doc::list(
+                                    itertools::intersperse(
+                                        chunk.iter().map(|attr| attr.doc(ctx, &state)),
+                                        attrs_sep.clone(),
+                                    )
+                                    .collect(),
                                 )
-                                .collect(),
-                            )
-                            .group()
-                        }),
-                        Doc::hard_line(),
-                    ))
-                    .nest(ctx.indent_width)
+                                .group()
+                            }),
+                            Doc::hard_line(),
+                        ))
+                        .nest(ctx.indent_width)
                 } else {
                     Doc::list(
                         self.attrs
@@ -514,23 +524,18 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .nest(ctx.indent_width)
                 };
 
-                if self.void_element {
-                    docs.push(attrs);
-                    if self_closing {
-                        docs.push(Doc::line_or_space());
-                        docs.push(Doc::text("/>"));
-                    } else {
-                        if !ctx.options.closing_bracket_same_line {
-                            docs.push(Doc::line_or_nil());
-                        }
-                        docs.push(Doc::text(">"));
-                    }
-                    return Doc::list(docs).group();
-                }
-                if self_closing && is_empty {
+                if self_closing && (self.void_element || is_empty) {
                     docs.push(attrs);
                     docs.push(Doc::line_or_space());
                     docs.push(Doc::text("/>"));
+                    return Doc::list(docs).group();
+                }
+                if self.void_element {
+                    docs.push(attrs);
+                    if !ctx.options.closing_bracket_same_line {
+                        docs.push(Doc::line_or_nil());
+                    }
+                    docs.push(Doc::text(">"));
                     return Doc::list(docs).group();
                 }
                 if ctx.options.closing_bracket_same_line {
@@ -538,21 +543,14 @@ impl<'s> DocGen<'s> for Element<'s> {
                 } else {
                     // for #16
                     if is_whitespace_sensitive
-                        && !self.attrs.is_empty() // there're no attributes, so don't insert line break
-                        && self
-                        .children
-                        .first()
-                        .is_some_and(|child| {
+                        && self.children.first().is_some_and(|child| {
                             if let NodeKind::Text(text_node) = &child.kind {
                                 !text_node.raw.starts_with(|c: char| c.is_ascii_whitespace())
                             } else {
                                 false
                             }
                         })
-                        && self
-                        .children
-                        .last()
-                        .is_some_and(|child| {
+                        && self.children.last().is_some_and(|child| {
                             if let NodeKind::Text(text_node) = &child.kind {
                                 !text_node.raw.ends_with(|c: char| c.is_ascii_whitespace())
                             } else {

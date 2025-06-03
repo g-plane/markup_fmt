@@ -3,8 +3,7 @@ source: markup_fmt/tests/fmt.rs
 ---
 <!DOCTYPE html>
 <html lang="en">
-  <head
-  >
+  <head>
     <meta charset="UTF-8">
     <meta
       http-equiv="X-UA-Compatible"
@@ -14,17 +13,13 @@ source: markup_fmt/tests/fmt.rs
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     >
-    <title
-    >
+    <title>
       Document
     </title>
   </head>
-  <body
-  >
-    <header
-    >
-      <h1
-      >
+  <body>
+    <header>
+      <h1>
         <a
           href="/"
         >My
@@ -32,8 +27,7 @@ source: markup_fmt/tests/fmt.rs
           blog</a>
       </h1>
       ...
-      <search
-      >
+      <search>
         <form action="search.php">
           <label
             for="query"
@@ -51,8 +45,7 @@ source: markup_fmt/tests/fmt.rs
         </form>
       </search>
 
-      <search
-      >
+      <search>
       </search>
     </header>
   </body>
