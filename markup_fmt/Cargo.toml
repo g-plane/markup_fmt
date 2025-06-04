@@ -18,8 +18,8 @@ tiny_pretty = { version = "0.2", features = ["unicode-width"] }
 
 [dev-dependencies]
 insta.workspace = true
-similar-asserts = "1.5"
-toml = "0.8"
+similar-asserts.workspace = true
+toml.workspace = true
 
 [features]
 config_serde = ["serde"]

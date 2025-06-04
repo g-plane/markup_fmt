@@ -4,6 +4,8 @@ resolver = "2"
 
 [workspace.dependencies]
 insta = { version = "1.43", features = ["glob"] }
+similar-asserts = "1.7"
+toml = "0.8"
 
 [profile.release]
 lto = true
