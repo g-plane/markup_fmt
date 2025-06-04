@@ -327,6 +327,7 @@ impl<'s> DocGen<'s> for Attribute<'s> {
         match self {
             Attribute::Native(native_attribute) => native_attribute.doc(ctx, state),
             Attribute::Svelte(svelte_attribute) => svelte_attribute.doc(ctx, state),
+            Attribute::SvelteAttachment(svelte_attachment) => svelte_attachment.doc(ctx, state),
             Attribute::VueDirective(vue_directive) => vue_directive.doc(ctx, state),
             Attribute::Astro(astro_attribute) => astro_attribute.doc(ctx, state),
             Attribute::JinjaBlock(jinja_block) => jinja_block.doc(ctx, state),
@@ -1186,6 +1187,18 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for SvelteAttachment<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        let expr_code = ctx.format_expr(self.expr.0, false, self.expr.1, state);
+        Doc::text("{@attach ")
+            .concat(reflow_with_indent(&expr_code))
+            .append(Doc::text("}"))
+    }
+}
+
 impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -1996,6 +2009,7 @@ fn is_multi_line_attr(attr: &Attribute) -> bool {
             .unwrap_or(false),
         Attribute::Astro(attr) => attr.expr.0.contains('\n'),
         Attribute::Svelte(attr) => attr.expr.0.contains('\n'),
+        Attribute::SvelteAttachment(attr) => attr.expr.0.contains('\n'),
         Attribute::JinjaComment(comment) => comment.raw.contains('\n'),
         Attribute::JinjaTag(tag) => tag.content.contains('\n'),
         // Templating blocks usually span across multiple lines so let's just assume true.

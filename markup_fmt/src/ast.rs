@@ -104,6 +104,7 @@ pub enum Attribute<'s> {
     JinjaTag(JinjaTag<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
+    SvelteAttachment(SvelteAttachment<'s>),
     VentoTagOrBlock(NodeKind<'s>),
     VueDirective(VueDirective<'s>),
 }
@@ -253,6 +254,14 @@ pub struct SvelteAtTag<'s> {
 /// See https://svelte.dev/docs/svelte/basic-markup#Element-attributes.
 pub struct SvelteAttribute<'s> {
     pub name: Option<&'s str>,
+    pub expr: (&'s str, usize),
+}
+
+#[derive(Debug)]
+/// Svelte attachment: `{@attach expression}`.
+///
+/// See https://svelte.dev/docs/svelte/@attach.
+pub struct SvelteAttachment<'s> {
     pub expr: (&'s str, usize),
 }
 
