@@ -1,6 +1,7 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
+---
 /* https://example.com */
 const foo = "bar"
 ---

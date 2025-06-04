@@ -2,6 +2,9 @@
 members = ["dprint_plugin", "markup_fmt"]
 resolver = "2"
 
+[workspace.dependencies]
+insta = { version = "1.43", features = ["glob"] }
+
 [profile.release]
 lto = true
 opt-level = "s"

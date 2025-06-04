@@ -14,4 +14,3 @@ source: markup_fmt/tests/fmt.rs
     <h1>Hello World</h1>
   </body>
 </html>
-
