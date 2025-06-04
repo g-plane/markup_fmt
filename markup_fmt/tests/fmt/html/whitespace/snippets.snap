@@ -38,9 +38,7 @@ source: markup_fmt/tests/fmt.rs
 <img />    <img />
 <img />     <img />
 <i />   |   <i />
-<p>
-  <span>X</span>   or   <span>Y</span>
-</p><p>X   or   Y</p>
+<p><span>X</span>   or   <span>Y</span></p><p>X   or   Y</p>
 <!-- U+2005 -->
 <script type="text/unknown" lang="unknown">
 // comment

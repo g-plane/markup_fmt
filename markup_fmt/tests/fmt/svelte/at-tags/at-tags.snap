@@ -3,7 +3,8 @@ source: markup_fmt/tests/fmt.rs
 ---
 {#each [1, 2] as foo}
   {@const bar =
-        foo} {foo}{bar}
+        foo}
+  {foo}{bar}
 {/each}
 
 {#await aPromise then result}

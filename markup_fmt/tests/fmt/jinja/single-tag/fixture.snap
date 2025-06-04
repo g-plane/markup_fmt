@@ -10,7 +10,8 @@ source: markup_fmt/tests/fmt.rs
 {% set key, value = call_something() %}
 {% set iterated = false %}
 {% for item in seq %}
-  {{ item }} {% set iterated = true %}
+  {{ item }}
+  {% set iterated = true %}
 {% endfor %}
 {% set ns = namespace(found=false) %}
 {% set ns.foo = 'bar' %}

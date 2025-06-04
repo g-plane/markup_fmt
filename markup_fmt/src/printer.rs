@@ -273,7 +273,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                         .append(Doc::line_or_nil())
                         .append(format_children_without_inserting_linebreak(
                             nodes,
-                            has_two_more_non_text_children(nodes),
+                            has_two_more_non_text_children(nodes, ctx.language),
                             ctx,
                             state,
                         ))
@@ -576,7 +576,8 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
         }
 
-        let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
+        let has_two_more_non_text_children =
+            has_two_more_non_text_children(&self.children, ctx.language);
 
         let (leading_ws, trailing_ws) = if is_empty {
             (Doc::nil(), Doc::nil())
@@ -1089,7 +1090,8 @@ impl<'s> DocGen<'s> for Root<'s> {
             ctx.options.whitespace_sensitivity,
             WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict
         );
-        let has_two_more_non_text_children = has_two_more_non_text_children(&self.children);
+        let has_two_more_non_text_children =
+            has_two_more_non_text_children(&self.children, ctx.language);
 
         if is_whole_document_like
             && !matches!(
@@ -2087,8 +2089,12 @@ fn should_add_whitespace_after_text_node<'s>(
     }
 }
 
-fn has_two_more_non_text_children(children: &[Node]) -> bool {
-    children.iter().filter(|child| !is_text_like(child)).count() > 1
+fn has_two_more_non_text_children(children: &[Node], language: Language) -> bool {
+    children
+        .iter()
+        .filter(|child| !is_text_like(child, language))
+        .count()
+        > 1
 }
 
 fn format_attr_value<'s, E, F>(
@@ -2140,7 +2146,7 @@ where
             .fold(
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
-                    let is_current_text_like = is_text_like(child);
+                    let is_current_text_like = is_text_like(child, ctx.language);
                     if should_ignore_node(i, children, ctx) {
                         let raw = child.raw.trim_end_matches([' ', '\t']);
                         let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
@@ -2199,16 +2205,19 @@ where
 
 /// Determines if a given node is "text-like".
 /// Text-like nodes should remain on the same line whenever possible.
-fn is_text_like(node: &Node) -> bool {
-    matches!(
-        node.kind,
+fn is_text_like(node: &Node, language: Language) -> bool {
+    match &node.kind {
+        NodeKind::Element(element) => {
+            helpers::is_whitespace_sensitive_tag(element.tag_name, language)
+        }
         NodeKind::Text(..)
-            | NodeKind::VueInterpolation(..)
-            | NodeKind::SvelteInterpolation(..)
-            | NodeKind::AstroExpr(..)
-            | NodeKind::JinjaInterpolation(..)
-            | NodeKind::VentoInterpolation(..)
-    )
+        | NodeKind::VueInterpolation(..)
+        | NodeKind::SvelteInterpolation(..)
+        | NodeKind::AstroExpr(..)
+        | NodeKind::JinjaInterpolation(..)
+        | NodeKind::VentoInterpolation(..) => true,
+        _ => false,
+    }
 }
 
 fn format_children_without_inserting_linebreak<'s, E, F>(
@@ -2241,12 +2250,16 @@ where
                             let is_first = i == 0;
                             let is_last = i + 1 == children.len();
                             if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                                return if text_node.line_breaks > 1 {
-                                    Doc::empty_line().append(Doc::hard_line())
-                                } else if has_two_more_non_text_children {
-                                    Doc::hard_line()
-                                } else {
-                                    Doc::line_or_space()
+                                return match text_node.line_breaks {
+                                    0 => {
+                                        if has_two_more_non_text_children {
+                                            Doc::hard_line()
+                                        } else {
+                                            Doc::line_or_space()
+                                        }
+                                    }
+                                    1 => Doc::hard_line(),
+                                    _ => Doc::empty_line().append(Doc::hard_line()),
                                 };
                             }
 
@@ -2404,7 +2417,7 @@ where
         _ => format_ws_sensitive_leading_ws(children)
             .append(format_children_without_inserting_linebreak(
                 children,
-                has_two_more_non_text_children(children),
+                has_two_more_non_text_children(children, ctx.language),
                 ctx,
                 state,
             ))

@@ -84,9 +84,7 @@ source: markup_fmt/tests/fmt.rs
 
 <button bind-disabled="isUnchanged" on-click="onSave($event)">Disabled Cancel</button>
 <br /><br />
-<p>
-  "<span [innerHTML]="title"></span>" is the <i>property bound</i> title.
-</p>
+<p>"<span [innerHTML]="title"></span>" is the <i>property bound</i> title.</p>
 <li>12345678901234567890123456789012345678901234567890123456789012345678901234567890</li>
 <div>
   <app-nav></app-nav>

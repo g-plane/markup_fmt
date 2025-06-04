@@ -2,7 +2,9 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div>
-  {{ x }} {{ x }} {{ x }}
+  {{ x }}
+  {{ x }}
+  {{ x }}
 </div>
 
 <span>{{

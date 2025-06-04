@@ -177,18 +177,15 @@ e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
-    <span> inline </span>
-    <span> inline </span>
-    <span> inline </span>
-    <span> inline </span>
+    <span> inline </span><span> inline </span>
+    <span> inline </span><span> inline </span>
     <html:div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </html:div>
-    <html:DIV>block</html:DIV>
-    <HTML:DIV>BLOCK</HTML:DIV>
-    <html:div>block</html:div>
-    <html:div>block</html:div>
-    <html:div>block</html:div>
+    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV>
+    <html:div>block</html:div><html:div>block</html:div><html:div>
+      block
+    </html:div>
     <html:pre>
  pre pr
 e</html:pre>
@@ -198,10 +195,8 @@ e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
-    <html:span> inline </html:span>
-    <html:span> inline </html:span>
-    <html:span> inline </html:span>
-    <html:span> inline </html:span>
+    <html:span> inline </html:span><html:span> inline </html:span>
+    <html:span> inline </html:span><html:span> inline </html:span>
   </div>
 </div>
 

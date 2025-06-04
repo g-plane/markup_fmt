@@ -3,18 +3,11 @@ source: dprint_plugin/tests/integration.rs
 ---
 ---
 
----
-
 <html lang="en">
   <body>
     {[1, 2, 3].map((n) => <div>{n}</div><!--comment--><img>)}
     {[1, 2, 3].map((n) => <span>{n}</span><span></span>)}
-    {
-      [1, 2, 3].map((n) => (
-        <span>{n}</span>
-        <span></span>
-      ))
-    }
+    {[1, 2, 3].map((n) => <span>{n}</span> <span></span>)}
     {condition && <span>B<!-- A HTML comment --></span>}
     {
       true && (
@@ -26,7 +19,8 @@ source: dprint_plugin/tests/integration.rs
     {
       fields.map((field) => (
         <p class="instructions">
-          {"To get started, o"}{"pen the directory"} {"in your project."}
+          {"To get started, o"}{"pen the directory"}
+          {"in your project."}
         </p>
       ))
     }

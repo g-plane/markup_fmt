@@ -32,34 +32,22 @@ source: markup_fmt/tests/fmt.rs
 </ul>
 <span>
   <!--
--->
-  <span>a</span>
-  <!--
--->
-  <span>b</span>
-  <!--
+--><span>a</span><!--
+--><span>b</span><!--
 -->
 </span>
 
 <span>
   <!-- 1
--->
-  <span>a</span>
-  <!-- 2
--->
-  <span>b</span>
-  <!-- 3
+--><span>a</span><!-- 2
+--><span>b</span><!-- 3
 -->
 </span>
 
 <span>
   <!--
-1 -->
-  <span>a</span>
-  <!--
-2 -->
-  <span>b</span>
-  <!--
+1 --><span>a</span><!--
+2 --><span>b</span><!--
 3 -->
 </span>
 

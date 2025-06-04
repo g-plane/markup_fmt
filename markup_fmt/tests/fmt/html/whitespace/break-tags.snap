@@ -2,11 +2,5 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <a>Lorem</a>, ispum dolor sit <strong>amet</strong>.
-<div>
-  <a>Lorem</a>, ispum dolor sit <strong>amet</strong>.
-</div>
-<div>
-  <div>
-    <a>Lorem</a>, ispum dolor sit <strong>amet</strong>.
-  </div>
-</div>
+<div><a>Lorem</a>, ispum dolor sit <strong>amet</strong>.</div>
+<div><div><a>Lorem</a>, ispum dolor sit <strong>amet</strong>.</div></div>
