@@ -1,7 +1,7 @@
 use markup_fmt::{config::FormatOptions, detect_language, format_text};
-use std::{convert::Infallible, env, error::Error, fs, io};
+use std::{convert::Infallible, env, fs, io};
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> anyhow::Result<()> {
     let file_path = env::args().nth(1).unwrap();
     let language = detect_language(&file_path).unwrap();
     let code = fs::read_to_string(file_path)?;
@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if error.kind() == io::ErrorKind::NotFound {
                 FormatOptions::default()
             } else {
-                return Err(Box::new(error));
+                return Err(error.into());
             }
         }
     };

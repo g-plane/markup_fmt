@@ -12,7 +12,7 @@ publish = false
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-anyhow = "1.0"
+anyhow.workspace = true
 dprint-core = { version = "0.66", default-features = false, features = [
     "wasm",
 ] }

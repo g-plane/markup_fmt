@@ -880,6 +880,7 @@ name = "markup_fmt"
 version = "0.20.0"
 dependencies = [
  "aho-corasick",
+ "anyhow",
  "css_dataset",
  "insta",
  "itertools",
