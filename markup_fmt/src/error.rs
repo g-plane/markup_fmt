@@ -20,7 +20,11 @@ pub enum SyntaxErrorKind {
     ExpectAttrName,
     ExpectAttrValue,
     ExpectChar(char),
-    ExpectCloseTag,
+    ExpectCloseTag {
+        tag_name: String,
+        line: usize,
+        column: usize,
+    },
     ExpectComment,
     ExpectDoctype,
     ExpectElement,
@@ -61,7 +65,14 @@ impl fmt::Display for SyntaxErrorKind {
             SyntaxErrorKind::ExpectAttrName => "expected attribute name".into(),
             SyntaxErrorKind::ExpectAttrValue => "expected attribute value".into(),
             SyntaxErrorKind::ExpectChar(c) => format!("expected char '{c}'").into(),
-            SyntaxErrorKind::ExpectCloseTag => "expected close tag".into(),
+            SyntaxErrorKind::ExpectCloseTag {
+                tag_name,
+                line,
+                column,
+            } => format!(
+                "expected close tag for opening tag <{tag_name}> from line {line}, column {column}"
+            )
+            .into(),
             SyntaxErrorKind::ExpectComment => "expected comment".into(),
             SyntaxErrorKind::ExpectDoctype => "expected HTML doctype".into(),
             SyntaxErrorKind::ExpectElement => "expected element".into(),
