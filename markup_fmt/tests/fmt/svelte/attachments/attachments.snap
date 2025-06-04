@@ -1,0 +1,7 @@
+---
+source: markup_fmt/tests/fmt.rs
+assertion_line: 29
+---
+<button {@attach (node) => {}}></button>
+
+<button {@attach tooltip("")}></button>
