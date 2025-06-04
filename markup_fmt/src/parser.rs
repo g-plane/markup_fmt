@@ -687,7 +687,7 @@ impl<'s> Parser<'s> {
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Astro => self
                 .try_parse(Parser::parse_astro_attr)
-                .map(Attribute::Astro)                
+                .map(Attribute::Astro)
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Jinja => {
                 self.skip_ws();
