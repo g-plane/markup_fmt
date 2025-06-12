@@ -1,0 +1,17 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<a id="{% include 'url.html' %}">{% include 'url.html' %}</a>
+<a id="{% include 'url.html' %}AA">{% include 'url.html' %}</a>
+<a id="BB{% include 'url.html' %}AA">{% include 'url.html' %}</a>
+
+<a id="super-{% include 'url.html' %}-long-{{ id2 }}" class="fff">{%
+    include 'url.html'
+  %}</a>
+<a id="{%    include 'url.html'    %}" class="fff">{% include 'url.html' %}</a>
+
+<html alt="{% url ... %}"></html>
+
+<a id="{% include "url.html" %}">{% include 'url.html' %}</a>
+
+<input value="{% if initial_value %}{{ initial_value }}{% else %}''{% endif %}">

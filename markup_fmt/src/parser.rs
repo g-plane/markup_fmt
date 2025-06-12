@@ -831,12 +831,32 @@ impl<'s> Parser<'s> {
                         end = *i;
                         let mut chars = self.chars.clone();
                         chars.next();
-                        if chars.next_if(|(_, c)| *c == '{').is_some() {
-                            // We use inclusive range when returning string,
-                            // so we need to substract 1 here.
-                            end += self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
-                        } else {
-                            self.chars.next();
+                        match chars.peek() {
+                            Some((_, '%')) => {
+                                if let Ok(_) =
+                                    self.parse_jinja_tag_or_block(None, &mut Parser::parse_node)
+                                {
+                                    end = if let Some((i, _)) = self.chars.peek() {
+                                        *i - 1
+                                    } else {
+                                        return Err(
+                                            self.emit_error(SyntaxErrorKind::ExpectAttrValue)
+                                        );
+                                    };
+                                } else {
+                                    self.chars.next();
+                                }
+                            }
+                            Some((_, '{')) => {
+                                chars.next();
+                                // We use inclusive range when returning string,
+                                // so we need to substract 1 here.
+                                end +=
+                                    self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
+                            }
+                            _ => {
+                                self.chars.next();
+                            }
                         }
                     }
                     Some((i, c)) if is_unquoted_attr_value_char(*c) => {
