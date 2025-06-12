@@ -833,16 +833,14 @@ impl<'s> Parser<'s> {
                         chars.next();
                         match chars.peek() {
                             Some((_, '%')) => {
-                                if let Ok(_) =
-                                    self.parse_jinja_tag_or_block(None, &mut Parser::parse_node)
+                                if self
+                                    .parse_jinja_tag_or_block(None, &mut Parser::parse_node)
+                                    .is_ok()
                                 {
-                                    end = if let Some((i, _)) = self.chars.peek() {
-                                        *i - 1
-                                    } else {
-                                        return Err(
+                                    end =
+                                        self.chars.peek().map(|(i, _)| i - 1).ok_or_else(|| {
                                             self.emit_error(SyntaxErrorKind::ExpectAttrValue)
-                                        );
-                                    };
+                                        })?;
                                 } else {
                                     self.chars.next();
                                 }
@@ -851,8 +849,8 @@ impl<'s> Parser<'s> {
                                 chars.next();
                                 // We use inclusive range when returning string,
                                 // so we need to substract 1 here.
-                                end +=
-                                    self.parse_mustache_interpolation()?.0.len() + "{{}}".len() - 1;
+                                let (interpolation, _) = self.parse_mustache_interpolation()?;
+                                end += interpolation.len() + "{{}}".len() - 1;
                             }
                             _ => {
                                 self.chars.next();
