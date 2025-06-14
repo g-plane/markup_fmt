@@ -1630,10 +1630,11 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
             .is_none()
         {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttachment));
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttachment))
+        } else {
+            self.parse_svelte_or_astro_expr()
+                .map(|expr| SvelteAttachment { expr })
         }
-        let expr = self.parse_svelte_or_astro_expr()?;
-        Ok(SvelteAttachment { expr })
     }
 
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {
