@@ -1628,12 +1628,12 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
-            .is_none()
+            .is_some()
         {
-            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttachment))
-        } else {
             self.parse_svelte_or_astro_expr()
                 .map(|expr| SvelteAttachment { expr })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttachment))
         }
     }
 
