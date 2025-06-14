@@ -681,8 +681,12 @@ impl<'s> Parser<'s> {
                 .map(Attribute::VueDirective)
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Svelte => self
-                .try_parse(Parser::parse_svelte_attr)
-                .map(Attribute::Svelte)
+                .try_parse(Parser::parse_svelte_attachment)
+                .map(Attribute::SvelteAttachment)
+                .or_else(|_| {
+                    self.try_parse(Parser::parse_svelte_attr)
+                        .map(Attribute::Svelte)
+                })
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Astro => self
                 .try_parse(Parser::parse_astro_attr)
@@ -1631,6 +1635,27 @@ impl<'s> Parser<'s> {
         self.skip_ws();
         let expr = self.parse_svelte_or_astro_expr()?;
         Ok(SvelteAtTag { name, expr })
+    }
+
+    fn parse_svelte_attachment(&mut self) -> PResult<SvelteAttachment<'s>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '{')
+            .map(|_| self.skip_ws())
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '@'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .is_some()
+        {
+            self.parse_svelte_or_astro_expr()
+                .map(|expr| SvelteAttachment { expr })
+        } else {
+            Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAttachment))
+        }
     }
 
     fn parse_svelte_attr(&mut self) -> PResult<SvelteAttribute<'s>> {

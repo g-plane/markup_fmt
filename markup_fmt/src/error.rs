@@ -35,6 +35,7 @@ pub enum SyntaxErrorKind {
     ExpectKeyword(&'static str),
     ExpectMustacheInterpolation,
     ExpectSelfCloseTag,
+    ExpectSvelteAttachment,
     ExpectSvelteAtTag,
     ExpectSvelteAttr,
     ExpectSvelteAwaitBlock,
@@ -87,6 +88,7 @@ impl fmt::Display for SyntaxErrorKind {
                 "expected mustache-like interpolation".into()
             }
             SyntaxErrorKind::ExpectSelfCloseTag => "expected self close tag".into(),
+            SyntaxErrorKind::ExpectSvelteAttachment => "expected Svelte attachment".into(),
             SyntaxErrorKind::ExpectSvelteAtTag => "expected Svelte `{@` tag".into(),
             SyntaxErrorKind::ExpectSvelteAttr => "expected Svelte attribute".into(),
             SyntaxErrorKind::ExpectSvelteAwaitBlock => "expected Svelte await block".into(),
