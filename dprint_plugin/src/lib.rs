@@ -48,6 +48,8 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                     "njk",
                     "vto",
                     "component.html",
+                    "xml",
+                    "svg",
                 ]
                 .into_iter()
                 .map(String::from)

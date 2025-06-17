@@ -1,0 +1,6 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<svg>
+  <![CDATA[<greeting key='value'>Hello,    world!</greeting>]]>
+</svg>

@@ -338,6 +338,17 @@ impl<'s> DocGen<'s> for Attribute<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for Cdata<'s> {
+    fn doc<E, F>(&self, _: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("<![CDATA[")
+            .concat(reflow_raw(self.raw))
+            .append(Doc::text("]]>"))
+    }
+}
+
 impl<'s> DocGen<'s> for Comment<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
     where
@@ -580,7 +591,15 @@ impl<'s> DocGen<'s> for Element<'s> {
         let has_two_more_non_text_children =
             has_two_more_non_text_children(&self.children, ctx.language);
 
-        let (leading_ws, trailing_ws) = if is_empty {
+        let (leading_ws, trailing_ws) = if is_empty
+            || ctx.language == Language::Xml
+                && matches!(
+                    &*self.children,
+                    [Node {
+                        kind: NodeKind::Text(..),
+                        ..
+                    }]
+                ) {
             (Doc::nil(), Doc::nil())
         } else if is_whitespace_sensitive {
             (
@@ -1043,6 +1062,7 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
             NodeKind::AngularLet(angular_let) => angular_let.doc(ctx, state),
             NodeKind::AngularSwitch(angular_switch) => angular_switch.doc(ctx, state),
             NodeKind::AstroExpr(astro_expr) => astro_expr.doc(ctx, state),
+            NodeKind::Cdata(cdata) => cdata.doc(ctx, state),
             NodeKind::Comment(comment) => comment.doc(ctx, state),
             NodeKind::Doctype(doctype) => doctype.doc(ctx, state),
             NodeKind::Element(element) => element.doc(ctx, state),
@@ -1073,6 +1093,7 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
             }
             NodeKind::VentoTag(vento_tag) => vento_tag.doc(ctx, state),
             NodeKind::VueInterpolation(vue_interpolation) => vue_interpolation.doc(ctx, state),
+            NodeKind::XmlDecl(xml_decl) => xml_decl.doc(ctx, state),
         }
     }
 }
@@ -1484,23 +1505,31 @@ impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
 }
 
 impl<'s> DocGen<'s> for TextNode<'s> {
-    fn doc<E, F>(&self, _: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
-        // for #16
-        Doc::flat_or_break(Doc::text(self.raw.split_ascii_whitespace().join(" ")), {
-            let docs = itertools::intersperse(
-                self.raw.split_ascii_whitespace().map(Doc::text),
-                Doc::soft_line(),
-            )
-            .collect::<Vec<_>>();
-            if docs.is_empty() {
+        if ctx.language == Language::Xml {
+            if self.raw.chars().all(|c| c.is_ascii_whitespace()) {
                 Doc::nil()
             } else {
-                Doc::list(docs)
+                Doc::list(reflow_raw(self.raw).collect())
             }
-        })
+        } else {
+            // for #16
+            Doc::flat_or_break(Doc::text(self.raw.split_ascii_whitespace().join(" ")), {
+                let docs = itertools::intersperse(
+                    self.raw.split_ascii_whitespace().map(Doc::text),
+                    Doc::soft_line(),
+                )
+                .collect::<Vec<_>>();
+                if docs.is_empty() {
+                    Doc::nil()
+                } else {
+                    Doc::list(docs)
+                }
+            })
+        }
     }
 }
 
@@ -1875,6 +1904,23 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
             .nest(ctx.indent_width)
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
+            .group()
+    }
+}
+
+impl<'s> DocGen<'s> for XmlDecl<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("<?xml")
+            .concat(
+                self.attrs
+                    .iter()
+                    .flat_map(|attr| [Doc::line_or_space(), attr.doc(ctx, &state)].into_iter()),
+            )
+            .nest(ctx.indent_width)
+            .append(Doc::text("?>"))
             .group()
     }
 }

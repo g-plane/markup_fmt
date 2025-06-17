@@ -134,6 +134,7 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
         Some("astro") => Some(Language::Astro),
         Some("jinja" | "jinja2" | "j2" | "twig" | "njk") => Some(Language::Jinja),
         Some("vto") => Some(Language::Vento),
+        Some("xml" | "svg") => Some(Language::Xml),
         _ => None,
     }
 }
