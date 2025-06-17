@@ -272,10 +272,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                     Doc::flat_or_break(Doc::nil(), Doc::text("("))
                         .append(Doc::line_or_nil())
                         .append(format_children_without_inserting_linebreak(
-                            nodes,
-                            has_two_more_non_text_children(nodes, ctx.language),
-                            ctx,
-                            state,
+                            nodes, ctx, state,
                         ))
                         .nest(ctx.indent_width)
                         .append(Doc::line_or_nil())
@@ -774,7 +771,6 @@ impl<'s> DocGen<'s> for Element<'s> {
             }
             let children_doc = leading_ws.append(format_children_without_inserting_linebreak(
                 &self.children,
-                has_two_more_non_text_children,
                 ctx,
                 &state,
             ));
@@ -1127,13 +1123,8 @@ impl<'s> DocGen<'s> for Root<'s> {
             format_children_with_inserting_linebreak(&self.children, ctx, &state)
                 .append(Doc::hard_line())
         } else {
-            format_children_without_inserting_linebreak(
-                &self.children,
-                has_two_more_non_text_children,
-                ctx,
-                state,
-            )
-            .append(Doc::hard_line())
+            format_children_without_inserting_linebreak(&self.children, ctx, state)
+                .append(Doc::hard_line())
         }
     }
 }
@@ -2282,7 +2273,6 @@ fn is_text_like(node: &Node, language: Language) -> bool {
 
 fn format_children_without_inserting_linebreak<'s, E, F>(
     children: &[Node<'s>],
-    has_two_more_non_text_children: bool,
     ctx: &mut Ctx<'s, E, F>,
     state: &State<'s>,
 ) -> Doc<'s>
@@ -2293,55 +2283,62 @@ where
         children
             .iter()
             .enumerate()
-            .map(|(i, child)| {
-                if should_ignore_node(i, children, ctx) {
-                    let raw = child.raw.trim_end_matches([' ', '\t']);
-                    let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
-                    let doc =
-                        Doc::list(reflow_raw(last_line_break_removed.unwrap_or(raw)).collect());
-                    if i < children.len() - 1 && last_line_break_removed.is_some() {
-                        doc.append(Doc::hard_line())
+            .fold(
+                (Vec::with_capacity(children.len() * 2), true),
+                |(mut docs, is_prev_text_like), (i, child)| {
+                    if should_ignore_node(i, children, ctx) {
+                        let raw = child.raw.trim_end_matches([' ', '\t']);
+                        let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
+                        docs.extend(reflow_raw(last_line_break_removed.unwrap_or(raw)));
+                        if i < children.len() - 1 && last_line_break_removed.is_some() {
+                            docs.push(Doc::hard_line());
+                        }
                     } else {
-                        doc
-                    }
-                } else {
-                    match &child.kind {
-                        NodeKind::Text(text_node) => {
-                            let is_first = i == 0;
-                            let is_last = i + 1 == children.len();
-                            if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                                return match text_node.line_breaks {
-                                    0 => {
-                                        if has_two_more_non_text_children {
-                                            Doc::hard_line()
-                                        } else {
-                                            Doc::line_or_space()
+                        match &child.kind {
+                            NodeKind::Text(text_node) => {
+                                let is_first = i == 0;
+                                let is_last = i + 1 == children.len();
+                                if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
+                                    match text_node.line_breaks {
+                                        0 => {
+                                            if !is_prev_text_like
+                                                && children.get(i + 1).is_some_and(|next| {
+                                                    !is_text_like(next, ctx.language)
+                                                })
+                                            {
+                                                docs.push(Doc::line_or_space());
+                                            } else {
+                                                docs.push(Doc::soft_line());
+                                            }
+                                        }
+                                        1 => docs.push(Doc::hard_line()),
+                                        _ => {
+                                            docs.push(Doc::empty_line());
+                                            docs.push(Doc::hard_line());
                                         }
                                     }
-                                    1 => Doc::hard_line(),
-                                    _ => Doc::empty_line().append(Doc::hard_line()),
-                                };
-                            }
+                                    return (docs, true);
+                                }
 
-                            let mut docs = Vec::with_capacity(3);
-                            if let Some(doc) =
-                                should_add_whitespace_before_text_node(text_node, is_first)
-                            {
-                                docs.push(doc);
+                                if let Some(doc) =
+                                    should_add_whitespace_before_text_node(text_node, is_first)
+                                {
+                                    docs.push(doc);
+                                }
+                                docs.push(text_node.doc(ctx, state));
+                                if let Some(doc) =
+                                    should_add_whitespace_after_text_node(text_node, is_last)
+                                {
+                                    docs.push(doc);
+                                }
                             }
-                            docs.push(text_node.doc(ctx, state));
-                            if let Some(doc) =
-                                should_add_whitespace_after_text_node(text_node, is_last)
-                            {
-                                docs.push(doc);
-                            }
-                            Doc::list(docs)
+                            child => docs.push(child.doc(ctx, state)),
                         }
-                        child => child.doc(ctx, state),
                     }
-                }
-            })
-            .collect(),
+                    (docs, is_text_like(child, ctx.language))
+                },
+            )
+            .0,
     )
     .group()
 }
@@ -2476,10 +2473,7 @@ where
         }] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
         _ => format_ws_sensitive_leading_ws(children)
             .append(format_children_without_inserting_linebreak(
-                children,
-                has_two_more_non_text_children(children, ctx.language),
-                ctx,
-                state,
+                children, ctx, state,
             ))
             .nest(ctx.indent_width)
             .append(format_ws_sensitive_trailing_ws(children)),

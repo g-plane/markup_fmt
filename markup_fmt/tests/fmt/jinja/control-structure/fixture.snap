@@ -72,11 +72,9 @@ source: markup_fmt/tests/fmt.rs
 {% endtrans %}
 
 {% trans count=list|length %}
-  There is {{ count }}
-  {{ name }} object.
+  There is {{ count }} {{ name }} object.
   {% pluralize %}
-  There are {{ count }}
-  {{ name }} objects.
+  There are {{ count }} {{ name }} objects.
 {% endtrans %}
 
 {% raw %}

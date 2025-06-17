@@ -11,8 +11,8 @@ source: markup_fmt/tests/fmt.rs
 {/key}
 
 {#key bla}
-  <span>loooooooooooooooooooooooooooooong</span>
-  <span>loooooooooooooooooooooooooooooong</span>
+  <span>loooooooooooooooooooooooooooooong</span> <span
+  >loooooooooooooooooooooooooooooong</span>
 {/key}
 
 {#key bla}<p>loooooooooooooooooooooooooooooong</p><p>

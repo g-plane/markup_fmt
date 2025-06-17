@@ -13,17 +13,15 @@ source: markup_fmt/tests/fmt.rs
 <span> </span>
 <span> </span>
 <span> </span>
+<img /> <img />
 <img />
 <img />
+<img /> <img />
 <img />
 <img />
+<img /> <img />
 <img />
-<img />
-<img />
-<img />
-<img />
-<img />
-<img />
+
 <img />
 <div> </div>
 <div> </div>

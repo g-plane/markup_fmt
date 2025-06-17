@@ -18,15 +18,15 @@ e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
-    <span> inline </span><span> inline </span>
-    <span> inline </span><span> inline </span>
+    <span> inline </span><span> inline </span> <span> inline </span><span>
+      inline
+    </span>
     <html:div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </html:div>
-    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV>
-    <html:div>block</html:div><html:div>block</html:div><html:div>
+    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV> <html:div>
       block
-    </html:div>
+    </html:div><html:div>block</html:div><html:div>block</html:div>
     <html:pre>
  pre pr
 e</html:pre>
@@ -36,8 +36,9 @@ e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span></foo:bar>
+    <html:span> inline </html:span><html:span> inline </html:span> <html:span>
+      inline
+    </html:span><html:span> inline </html:span></foo:bar>
 </div>
 
 <!-- block tag with colon -->
@@ -57,15 +58,15 @@ e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
-    <span> inline </span><span> inline </span>
-    <span> inline </span><span> inline </span>
+    <span> inline </span><span> inline </span> <span> inline </span><span>
+      inline
+    </span>
     <html:div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </html:div>
-    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV>
-    <html:div>block</html:div><html:div>block</html:div><html:div>
+    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV> <html:div>
       block
-    </html:div>
+    </html:div><html:div>block</html:div><html:div>block</html:div>
     <html:pre>
  pre pr
 e</html:pre>
@@ -75,8 +76,9 @@ e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span></foo:div>
+    <html:span> inline </html:span><html:span> inline </html:span> <html:span>
+      inline
+    </html:span><html:span> inline </html:span></foo:div>
 </div>
 
 <!-- inline tag with colon -->
@@ -96,15 +98,15 @@ e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
-    <span> inline </span><span> inline </span>
-    <span> inline </span><span> inline </span>
+    <span> inline </span><span> inline </span> <span> inline </span><span>
+      inline
+    </span>
     <html:div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </html:div>
-    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV>
-    <html:div>block</html:div><html:div>block</html:div><html:div>
+    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV> <html:div>
       block
-    </html:div>
+    </html:div><html:div>block</html:div><html:div>block</html:div>
     <html:pre>
  pre pr
 e</html:pre>
@@ -114,8 +116,9 @@ e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span></foo:span>
+    <html:span> inline </html:span><html:span> inline </html:span> <html:span>
+      inline
+    </html:span><html:span> inline </html:span></foo:span>
 </div>
 
 <!-- unknown -->
@@ -135,15 +138,15 @@ e-wrap </textarea>
     <span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </span>
-    <span> inline </span><span> inline </span>
-    <span> inline </span><span> inline </span>
+    <span> inline </span><span> inline </span> <span> inline </span><span>
+      inline
+    </span>
     <html:div>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog block
     </html:div>
-    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV>
-    <html:div>block</html:div><html:div>block</html:div><html:div>
+    <html:DIV>block</html:DIV><HTML:DIV>BLOCK</HTML:DIV> <html:div>
       block
-    </html:div>
+    </html:div><html:div>block</html:div><html:div>block</html:div>
     <html:pre>
  pre pr
 e</html:pre>
@@ -153,8 +156,9 @@ e-wrap </html:textarea>
     <html:span>
       looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog inline
     </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span>
-    <html:span> inline </html:span><html:span> inline </html:span></foo-bar>
+    <html:span> inline </html:span><html:span> inline </html:span> <html:span>
+      inline
+    </html:span><html:span> inline </html:span></foo-bar>
 </div>
 
 <!-- without colon -->
