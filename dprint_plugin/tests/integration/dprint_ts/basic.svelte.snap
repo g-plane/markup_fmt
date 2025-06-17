@@ -26,6 +26,7 @@ function generateHtml(data: unknown) {
   (value)
 }...{/each}
 {#each [1, 2, 3] as Array<number> as value}{/each}
+{#each [] as Array<{ [P in keyof T as A | B]: T[P] }> as binding}{/each}
 
 {#if Math.random() > 0.5}...{:else if Date.now() > 0}...{/if}
 
