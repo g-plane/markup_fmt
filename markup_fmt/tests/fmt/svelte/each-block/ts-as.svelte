@@ -1,0 +1,4 @@
+{#each [] as const as binding }{/each}
+{#each [] as const as binding , index}{/each}
+{#each [] as const as binding (key)}{/each}
+{#each [] as type1 as type2 as type3   as   binding (  key  )}{/each}

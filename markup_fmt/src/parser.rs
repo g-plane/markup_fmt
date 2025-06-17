@@ -2044,12 +2044,19 @@ impl<'s> Parser<'s> {
                         if chars
                             .next_if(|(_, c)| *c == 'a')
                             .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
+                            .and_then(|_| chars.next_if(|(_, c)| c.is_ascii_whitespace()))
                             .is_some()
                         {
                             self.chars = chars;
                             self.skip_ws();
                             binding = Some(self.parse_svelte_binding()?);
-                            break;
+
+                            // fix for #127
+                            let mut chars = self.chars.clone();
+                            while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
+                            if matches!(chars.peek(), Some((_, '}' | '(' | ','))) {
+                                break;
+                            }
                         }
                     }
                     Some((_, '(')) => {

@@ -18,6 +18,7 @@ function generateHtml(data:unknown) {
 
 {#each [{value:1},{value:2}] as item,index (item   .  value)}...{/each}
 {#each [{value:1},{value:2},{value:3},{value:4}] as {    value},index (value)}...{/each}
+{#each [1 ,2 ,3]  as  Array < number > as value}{/each}
 
 {#if    Math.random(  )>0.5}...{:else if Date.now(   )>0    }...{/if}
 
