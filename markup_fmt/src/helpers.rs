@@ -100,8 +100,8 @@ pub(crate) fn is_whitespace_sensitive_tag(name: &str, language: Language) -> boo
         Language::Xml => true,
         _ => {
             name == "a"
-                || !NON_WS_SENSITIVE_TAGS.iter().any(|tag| *tag == name)
-                    && !css_dataset::tags::SVG_TAGS.iter().any(|tag| *tag == name)
+                || !NON_WS_SENSITIVE_TAGS.contains(&name)
+                    && !css_dataset::tags::SVG_TAGS.contains(&name)
         }
     }
 }
@@ -117,7 +117,7 @@ pub(crate) fn is_void_element(name: &str, language: Language) -> bool {
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(name)),
         Language::Xml => false,
-        _ => VOID_ELEMENTS.iter().any(|tag| *tag == name),
+        _ => VOID_ELEMENTS.contains(&name),
     }
 }
 
@@ -133,12 +133,8 @@ pub(crate) fn is_html_tag(name: &str, language: Language) -> bool {
         }
         Language::Xml => false,
         _ => {
-            css_dataset::tags::STANDARD_HTML_TAGS
-                .iter()
-                .any(|tag| *tag == name)
-                || css_dataset::tags::NON_STANDARD_HTML_TAGS
-                    .iter()
-                    .any(|tag| *tag == name)
+            css_dataset::tags::STANDARD_HTML_TAGS.contains(&name)
+                || css_dataset::tags::NON_STANDARD_HTML_TAGS.contains(&name)
         }
     }
 }
@@ -149,7 +145,7 @@ pub(crate) fn is_svg_tag(name: &str, language: Language) -> bool {
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(name))
     } else {
-        css_dataset::tags::SVG_TAGS.iter().any(|tag| *tag == name)
+        css_dataset::tags::SVG_TAGS.contains(&name)
     }
 }
 
@@ -159,9 +155,7 @@ pub(crate) fn is_mathml_tag(name: &str, language: Language) -> bool {
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(name)),
         Language::Xml => false,
-        _ => css_dataset::tags::MATH_ML_TAGS
-            .iter()
-            .any(|tag| *tag == name),
+        _ => css_dataset::tags::MATH_ML_TAGS.contains(&name),
     }
 }
 
