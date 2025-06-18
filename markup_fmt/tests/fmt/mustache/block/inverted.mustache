@@ -1,0 +1,11 @@
+{{^ boolean    }}={{/    boolean }}
+
+{{^bool}}
+* first
+{{/bool}}
+* {{two}}
+{{^bool}}
+* third
+{{/bool}}
+
+{{^bool}}B {{^bool}}C{{/bool}} D{{/bool}}

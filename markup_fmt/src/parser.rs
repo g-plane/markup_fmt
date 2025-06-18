@@ -24,6 +24,7 @@ pub enum Language {
     Angular,
     Jinja,
     Vento,
+    Mustache,
     Xml,
 }
 
@@ -676,7 +677,7 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Angular | Language::Xml => {
+            Language::Html | Language::Angular | Language::Mustache | Language::Xml => {
                 self.parse_native_attr().map(Attribute::Native)
             }
             Language::Vue => self
@@ -721,7 +722,10 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_attr_name(&mut self) -> PResult<&'s str> {
-        if matches!(self.language, Language::Jinja | Language::Vento) {
+        if matches!(
+            self.language,
+            Language::Jinja | Language::Vento | Language::Mustache
+        ) {
             let Some((start, mut end)) = (match self.chars.peek() {
                 Some((i, '{')) => {
                     let start = *i;
@@ -789,14 +793,17 @@ impl<'s> Parser<'s> {
         let quote = self.chars.next_if(|(_, c)| *c == '"' || *c == '\'');
 
         if let Some((start, quote)) = quote {
-            let is_jinja_or_vento = matches!(self.language, Language::Jinja | Language::Vento);
+            let can_interpolate = matches!(
+                self.language,
+                Language::Jinja | Language::Vento | Language::Mustache
+            );
             let start = start + 1;
             let mut end = start;
             let mut chars_stack = vec![];
             loop {
                 match self.chars.next() {
                     Some((i, c)) if c == quote => {
-                        if chars_stack.is_empty() || !is_jinja_or_vento {
+                        if chars_stack.is_empty() || !can_interpolate {
                             end = i;
                             break;
                         } else if chars_stack.last().is_some_and(|last| *last == c) {
@@ -805,11 +812,11 @@ impl<'s> Parser<'s> {
                             chars_stack.push(c);
                         }
                     }
-                    Some((_, '{')) if is_jinja_or_vento => {
+                    Some((_, '{')) if can_interpolate => {
                         chars_stack.push('{');
                     }
                     Some((_, '}'))
-                        if is_jinja_or_vento
+                        if can_interpolate
                             && chars_stack.last().is_some_and(|last| *last == '{') =>
                     {
                         chars_stack.pop();
@@ -833,7 +840,10 @@ impl<'s> Parser<'s> {
             loop {
                 match self.chars.peek() {
                     Some((i, '{'))
-                        if matches!(self.language, Language::Jinja | Language::Vento) =>
+                        if matches!(
+                            self.language,
+                            Language::Jinja | Language::Vento | Language::Mustache
+                        ) =>
                     {
                         end = *i;
                         let mut chars = self.chars.clone();
@@ -1428,6 +1438,40 @@ impl<'s> Parser<'s> {
         }
     }
 
+    fn parse_mustache_block_or_interpolation(&mut self) -> PResult<NodeKind<'s>> {
+        let (content, _) = self.parse_mustache_interpolation()?;
+        if let Some((prefix, rest)) = content
+            .split_at_checked(1)
+            .filter(|(c, _)| matches!(*c, "#" | "^" | "$" | "<"))
+        {
+            let trimmed_rest = rest.trim_ascii();
+            let mut children = vec![];
+            loop {
+                let chars = self.chars.clone();
+                if self
+                    .parse_mustache_interpolation()
+                    .ok()
+                    .and_then(|(content, _)| content.strip_prefix('/'))
+                    .is_some_and(|s| s.trim_ascii() == trimmed_rest)
+                {
+                    break;
+                } else {
+                    self.chars = chars;
+                }
+                children.push(self.parse_node()?);
+            }
+            Ok(NodeKind::MustacheBlock(MustacheBlock {
+                prefix,
+                content: rest,
+                children,
+            }))
+        } else {
+            Ok(NodeKind::MustacheInterpolation(MustacheInterpolation {
+                content,
+            }))
+        }
+    }
+
     fn parse_mustache_interpolation(&mut self) -> PResult<(&'s str, usize)> {
         let Some((start, _)) = self
             .chars
@@ -1502,6 +1546,7 @@ impl<'s> Parser<'s> {
                                 | Language::Astro
                                 | Language::Jinja
                                 | Language::Vento
+                                | Language::Mustache
                                 | Language::Xml
                         ) {
                             self.try_parse(Parser::parse_comment)
@@ -1554,6 +1599,9 @@ impl<'s> Parser<'s> {
                     Some((_, '{')) if matches!(self.language, Language::Vento) => {
                         self.parse_vento_tag_or_block(None)
                     }
+                    Some((_, '{')) if matches!(self.language, Language::Mustache) => {
+                        self.parse_mustache_block_or_interpolation()
+                    }
                     Some((_, '#')) if matches!(self.language, Language::Svelte) => {
                         match chars.next() {
                             Some((_, 'i')) => {
@@ -1593,7 +1641,7 @@ impl<'s> Parser<'s> {
             Some((_, '-'))
                 if matches!(
                     self.language,
-                    Language::Astro | Language::Jinja | Language::Vento
+                    Language::Astro | Language::Jinja | Language::Vento | Language::Mustache
                 ) && !self.state.has_front_matter =>
             {
                 let mut chars = self.chars.clone();
@@ -2422,6 +2470,7 @@ impl<'s> Parser<'s> {
                     | Language::Svelte
                     | Language::Jinja
                     | Language::Vento
+                    | Language::Mustache
                     | Language::Angular
             ) {
                 *c != '{'
@@ -2434,7 +2483,11 @@ impl<'s> Parser<'s> {
 
         if matches!(
             self.language,
-            Language::Vue | Language::Jinja | Language::Vento | Language::Angular
+            Language::Vue
+                | Language::Jinja
+                | Language::Vento
+                | Language::Angular
+                | Language::Mustache
         ) && first_char == '{'
             && matches!(self.chars.peek(), Some((_, '{')))
         {
@@ -2449,7 +2502,7 @@ impl<'s> Parser<'s> {
                     Language::Html | Language::Xml => {
                         self.chars.next();
                     }
-                    Language::Vue | Language::Vento | Language::Angular => {
+                    Language::Vue | Language::Vento | Language::Angular | Language::Mustache => {
                         let i = *i;
                         let mut chars = self.chars.clone();
                         chars.next();

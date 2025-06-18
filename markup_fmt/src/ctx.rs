@@ -30,7 +30,11 @@ where
 {
     pub(crate) fn script_indent(&self) -> bool {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento | Language::Angular => self
+            Language::Html
+            | Language::Jinja
+            | Language::Vento
+            | Language::Angular
+            | Language::Mustache => self
                 .options
                 .html_script_indent
                 .unwrap_or(self.options.script_indent),
@@ -52,7 +56,11 @@ where
 
     pub(crate) fn style_indent(&self) -> bool {
         match self.language {
-            Language::Html | Language::Jinja | Language::Vento | Language::Angular => self
+            Language::Html
+            | Language::Jinja
+            | Language::Vento
+            | Language::Angular
+            | Language::Mustache => self
                 .options
                 .html_style_indent
                 .unwrap_or(self.options.style_indent),

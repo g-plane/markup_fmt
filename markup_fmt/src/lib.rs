@@ -121,8 +121,7 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
         Some("html") => {
             if path
                 .file_stem()
-                .map(|file_stem| file_stem.to_string_lossy().ends_with(".component"))
-                .unwrap_or_default()
+                .is_some_and(|file_stem| file_stem.to_string_lossy().ends_with(".component"))
             {
                 Some(Language::Angular)
             } else {
@@ -134,6 +133,7 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
         Some("astro") => Some(Language::Astro),
         Some("jinja" | "jinja2" | "j2" | "twig" | "njk") => Some(Language::Jinja),
         Some("vto") => Some(Language::Vento),
+        Some("mustache") => Some(Language::Mustache),
         Some("xml" | "svg") => Some(Language::Xml),
         _ => None,
     }

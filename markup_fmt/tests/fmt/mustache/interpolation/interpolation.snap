@@ -1,0 +1,18 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+Hello from {Mustache }!
+
+{{template}}: {{planet}}
+
+These characters should not be HTML escaped: {{{forbidden}}}
+
+These characters should not be HTML escaped: {{&forbidden}}
+
+{{person.name}}
+{{.}}
+{{{.}}}
+
+{{> partial}}
+
+{{> * dynamic}}

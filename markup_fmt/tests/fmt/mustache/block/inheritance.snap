@@ -1,0 +1,13 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{$title}}={{/title}}
+
+{{$foo}}default {{#bar}}{{baz}}{{/bar}} content{{/foo}}
+
+{{<include}}{{/include}}
+
+{{<parent}}
+  {{$block}}
+    one two{{/block}}
+{{/parent}}

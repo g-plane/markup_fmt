@@ -403,7 +403,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             .unwrap_or(self.tag_name);
         let formatted_tag_name = if matches!(
             ctx.language,
-            Language::Html | Language::Jinja | Language::Vento
+            Language::Html | Language::Jinja | Language::Vento | Language::Mustache
         ) && css_dataset::tags::STANDARD_HTML_TAGS
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
@@ -934,6 +934,65 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for MustacheBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        let content = self.content.trim_ascii();
+        Doc::text("{{")
+            .append(Doc::text(self.prefix))
+            .concat(reflow_raw(content))
+            .nest(ctx.indent_width)
+            .append(Doc::line_or_nil())
+            .append(Doc::text("}}"))
+            .group()
+            .append(format_control_structure_block_children(
+                &self.children,
+                ctx,
+                state,
+            ))
+            .group()
+            .append(
+                Doc::text("{{/")
+                    .concat(reflow_raw(content))
+                    .append(Doc::line_or_nil())
+                    .append(Doc::text("}}"))
+                    .group(),
+            )
+    }
+}
+
+impl<'s> DocGen<'s> for MustacheInterpolation<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        if self.content.starts_with('!') {
+            Doc::text("{{")
+                .concat(reflow_raw(self.content))
+                .append(Doc::text("}}"))
+        } else {
+            let content = if let Some(content) = self
+                .content
+                .strip_prefix('{')
+                .and_then(|s| s.strip_suffix('}'))
+            {
+                Cow::from(format!("{{{}}}", content.trim()))
+            } else {
+                Cow::from(self.content.trim())
+            };
+            Doc::text("{{")
+                .append(Doc::line_or_nil())
+                .concat(reflow_owned(&content))
+                .nest(ctx.indent_width)
+                .append(Doc::line_or_nil())
+                .append(Doc::text("}}"))
+                .group()
+        }
+    }
+}
+
 impl<'s> DocGen<'s> for NativeAttribute<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -1069,6 +1128,10 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
                 jinja_interpolation.doc(ctx, state)
             }
             NodeKind::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
+            NodeKind::MustacheBlock(mustache_block) => mustache_block.doc(ctx, state),
+            NodeKind::MustacheInterpolation(mustache_interpolation) => {
+                mustache_interpolation.doc(ctx, state)
+            }
             NodeKind::SvelteAtTag(svelte_at_tag) => svelte_at_tag.doc(ctx, state),
             NodeKind::SvelteAwaitBlock(svelte_await_block) => svelte_await_block.doc(ctx, state),
             NodeKind::SvelteEachBlock(svelte_each_block) => svelte_each_block.doc(ctx, state),

@@ -87,7 +87,7 @@ static NON_WS_SENSITIVE_TAGS: [&str; 76] = [
 
 pub(crate) fn is_whitespace_sensitive_tag(name: &str, language: Language) -> bool {
     match language {
-        Language::Html | Language::Jinja | Language::Vento => {
+        Language::Html | Language::Jinja | Language::Vento | Language::Mustache => {
             // There's also a tag called "a" in SVG, so we need to check it specially.
             name.eq_ignore_ascii_case("a")
                 || !NON_WS_SENSITIVE_TAGS
@@ -113,7 +113,7 @@ static VOID_ELEMENTS: [&str; 14] = [
 
 pub(crate) fn is_void_element(name: &str, language: Language) -> bool {
     match language {
-        Language::Html | Language::Jinja | Language::Vento => VOID_ELEMENTS
+        Language::Html | Language::Jinja | Language::Vento | Language::Mustache => VOID_ELEMENTS
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(name)),
         Language::Xml => false,
@@ -123,7 +123,7 @@ pub(crate) fn is_void_element(name: &str, language: Language) -> bool {
 
 pub(crate) fn is_html_tag(name: &str, language: Language) -> bool {
     match language {
-        Language::Html | Language::Jinja | Language::Vento => {
+        Language::Html | Language::Jinja | Language::Vento | Language::Mustache => {
             css_dataset::tags::STANDARD_HTML_TAGS
                 .iter()
                 .any(|tag| tag.eq_ignore_ascii_case(name))
@@ -140,7 +140,10 @@ pub(crate) fn is_html_tag(name: &str, language: Language) -> bool {
 }
 
 pub(crate) fn is_svg_tag(name: &str, language: Language) -> bool {
-    if matches!(language, Language::Html | Language::Jinja | Language::Vento) {
+    if matches!(
+        language,
+        Language::Html | Language::Jinja | Language::Vento | Language::Mustache
+    ) {
         css_dataset::tags::SVG_TAGS
             .iter()
             .any(|tag| tag.eq_ignore_ascii_case(name))
@@ -151,9 +154,11 @@ pub(crate) fn is_svg_tag(name: &str, language: Language) -> bool {
 
 pub(crate) fn is_mathml_tag(name: &str, language: Language) -> bool {
     match language {
-        Language::Html | Language::Jinja | Language::Vento => css_dataset::tags::MATH_ML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(name)),
+        Language::Html | Language::Jinja | Language::Vento | Language::Mustache => {
+            css_dataset::tags::MATH_ML_TAGS
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(name))
+        }
         Language::Xml => false,
         _ => css_dataset::tags::MATH_ML_TAGS.contains(&name),
     }

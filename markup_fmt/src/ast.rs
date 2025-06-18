@@ -195,6 +195,24 @@ pub enum JinjaTagOrChildren<'s, T> {
 }
 
 #[derive(Debug)]
+/// Mustache block: `{{#variable}}{{/variable}}`.
+///
+/// See https://mustache.github.io/mustache.5.html
+pub struct MustacheBlock<'s> {
+    pub prefix: &'s str,
+    pub content: &'s str,
+    pub children: Vec<Node<'s>>,
+}
+
+#[derive(Debug)]
+/// Mustache interpolation: `{{expression}}`.
+///
+/// See https://mustache.github.io/mustache.5.html
+pub struct MustacheInterpolation<'s> {
+    pub content: &'s str,
+}
+
+#[derive(Debug)]
 /// Standard HTML attribute.
 ///
 /// See https://developer.mozilla.org/en-US/docs/Glossary/Attribute
@@ -227,6 +245,8 @@ pub enum NodeKind<'s> {
     JinjaComment(JinjaComment<'s>),
     JinjaInterpolation(JinjaInterpolation<'s>),
     JinjaTag(JinjaTag<'s>),
+    MustacheBlock(MustacheBlock<'s>),
+    MustacheInterpolation(MustacheInterpolation<'s>),
     SvelteAtTag(SvelteAtTag<'s>),
     SvelteAwaitBlock(Box<SvelteAwaitBlock<'s>>),
     SvelteEachBlock(SvelteEachBlock<'s>),
