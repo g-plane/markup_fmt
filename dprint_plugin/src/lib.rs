@@ -48,6 +48,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                     "njk",
                     "vto",
                     "component.html",
+                    "mustache",
                     "xml",
                     "svg",
                 ]
