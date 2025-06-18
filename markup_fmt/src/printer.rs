@@ -2101,17 +2101,19 @@ fn is_multi_line_attr(attr: &Attribute) -> bool {
     match attr {
         Attribute::Native(attr) => attr
             .value
-            .map(|(value, _)| value.trim().contains('\n'))
-            .unwrap_or(false),
-        Attribute::VueDirective(attr) => attr
-            .value
-            .map(|(value, _)| value.contains('\n'))
-            .unwrap_or(false),
-        Attribute::Astro(attr) => attr.expr.0.contains('\n'),
-        Attribute::Svelte(attr) => attr.expr.0.contains('\n'),
-        Attribute::SvelteAttachment(attr) => attr.expr.0.contains('\n'),
-        Attribute::JinjaComment(comment) => comment.raw.contains('\n'),
-        Attribute::JinjaTag(tag) => tag.content.contains('\n'),
+            .is_some_and(|(value, _)| value.trim().contains('\n')),
+        Attribute::VueDirective(attr) => attr.value.is_some_and(|(value, _)| value.contains('\n')),
+        Attribute::Astro(AstroAttribute {
+            expr: (value, ..), ..
+        })
+        | Attribute::Svelte(SvelteAttribute {
+            expr: (value, ..), ..
+        })
+        | Attribute::SvelteAttachment(SvelteAttachment {
+            expr: (value, ..), ..
+        })
+        | Attribute::JinjaComment(JinjaComment { raw: value, .. })
+        | Attribute::JinjaTag(JinjaTag { content: value, .. }) => value.contains('\n'),
         // Templating blocks usually span across multiple lines so let's just assume true.
         Attribute::JinjaBlock(..) | Attribute::VentoTagOrBlock(..) => true,
     }
@@ -2356,46 +2358,43 @@ where
                         if i < children.len() - 1 && last_line_break_removed.is_some() {
                             docs.push(Doc::hard_line());
                         }
-                    } else {
-                        if let NodeKind::Text(text_node) = &child.kind {
-                            let is_first = i == 0;
-                            let is_last = i + 1 == children.len();
-                            if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
-                                match text_node.line_breaks {
-                                    0 => {
-                                        if !is_prev_text_like
-                                            && children.get(i + 1).is_some_and(|next| {
-                                                !is_text_like(next, ctx.language)
-                                            })
-                                        {
-                                            docs.push(Doc::line_or_space());
-                                        } else {
-                                            docs.push(Doc::soft_line());
-                                        }
-                                    }
-                                    1 => docs.push(Doc::hard_line()),
-                                    _ => {
-                                        docs.push(Doc::empty_line());
-                                        docs.push(Doc::hard_line());
+                    } else if let NodeKind::Text(text_node) = &child.kind {
+                        let is_first = i == 0;
+                        let is_last = i + 1 == children.len();
+                        if !is_first && !is_last && is_all_ascii_whitespace(text_node.raw) {
+                            match text_node.line_breaks {
+                                0 => {
+                                    if !is_prev_text_like
+                                        && children
+                                            .get(i + 1)
+                                            .is_some_and(|next| !is_text_like(next, ctx.language))
+                                    {
+                                        docs.push(Doc::line_or_space());
+                                    } else {
+                                        docs.push(Doc::soft_line());
                                     }
                                 }
-                                return (docs, true);
+                                1 => docs.push(Doc::hard_line()),
+                                _ => {
+                                    docs.push(Doc::empty_line());
+                                    docs.push(Doc::hard_line());
+                                }
                             }
-
-                            if let Some(doc) =
-                                should_add_whitespace_before_text_node(text_node, is_first)
-                            {
-                                docs.push(doc);
-                            }
-                            docs.push(text_node.doc(ctx, state));
-                            if let Some(doc) =
-                                should_add_whitespace_after_text_node(text_node, is_last)
-                            {
-                                docs.push(doc);
-                            }
-                        } else {
-                            docs.push(child.kind.doc(ctx, state))
+                            return (docs, true);
                         }
+
+                        if let Some(doc) =
+                            should_add_whitespace_before_text_node(text_node, is_first)
+                        {
+                            docs.push(doc);
+                        }
+                        docs.push(text_node.doc(ctx, state));
+                        if let Some(doc) = should_add_whitespace_after_text_node(text_node, is_last)
+                        {
+                            docs.push(doc);
+                        }
+                    } else {
+                        docs.push(child.kind.doc(ctx, state))
                     }
                     (docs, is_text_like(child, ctx.language))
                 },
