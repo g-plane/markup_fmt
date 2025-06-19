@@ -512,26 +512,38 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_astro_attr(&mut self) -> PResult<AstroAttribute<'s>> {
-        let name = if self.chars.next_if(|(_, c)| *c == '{').is_some() {
-            None
-        } else {
-            let name = self.parse_attr_name()?;
-            self.skip_ws();
-            if self
-                .chars
-                .next_if(|(_, c)| *c == '=')
-                .map(|_| self.skip_ws())
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
-                .is_some()
-            {
-                Some(name)
+        let (name, start, first_char) =
+            if let Some((start, first_char)) = self.chars.next_if(|(_, c)| *c == '{') {
+                (None, start, first_char)
             } else {
-                return Err(self.emit_error(SyntaxErrorKind::ExpectAstroAttr));
-            }
-        };
+                let name = self.parse_attr_name()?;
+                self.skip_ws();
+                if let Some((start, first_char)) = self
+                    .chars
+                    .next_if(|(_, c)| *c == '=')
+                    .map(|_| self.skip_ws())
+                    .and_then(|_| self.chars.next_if(|(_, c)| matches!(c, '{' | '`')))
+                {
+                    (Some(name), start, first_char)
+                } else {
+                    return Err(self.emit_error(SyntaxErrorKind::ExpectAstroAttr));
+                }
+            };
 
-        self.parse_svelte_or_astro_expr()
-            .map(|expr| AstroAttribute { name, expr })
+        if first_char == '`' {
+            while self.chars.next_if(|(_, c)| *c != '`').is_some() {}
+            if let Some((end, _)) = self.chars.next_if(|(_, c)| *c == '`') {
+                Ok(AstroAttribute {
+                    name,
+                    expr: unsafe { (self.source.get_unchecked(start..end + 1), start) },
+                })
+            } else {
+                Err(self.emit_error(SyntaxErrorKind::ExpectAstroAttr))
+            }
+        } else {
+            self.parse_svelte_or_astro_expr()
+                .map(|expr| AstroAttribute { name, expr })
+        }
     }
 
     fn parse_astro_expr(&mut self) -> PResult<AstroExpr<'s>> {

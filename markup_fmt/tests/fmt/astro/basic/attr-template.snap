@@ -1,0 +1,4 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<p style={`color: ${color};`}></p>
