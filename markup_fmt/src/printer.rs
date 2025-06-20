@@ -291,7 +291,7 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
                     .split(PLACEHOLDER)
                     .map(|script| {
                         if script.contains('\n') {
-                            Doc::list(reflow_owned(script).collect())
+                            Doc::list(reflow_with_indent(script).collect())
                         } else {
                             Doc::text(script.to_string())
                         }
@@ -1996,18 +1996,7 @@ fn reflow_owned<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + 'i {
 }
 
 fn reflow_with_indent<'i, 'o: 'i>(s: &'i str) -> impl Iterator<Item = Doc<'o>> + 'i {
-    let indent = s
-        .lines()
-        .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| {
-            line.as_bytes()
-                .iter()
-                .take_while(|byte| byte.is_ascii_whitespace())
-                .count()
-        })
-        .min()
-        .unwrap_or_default();
+    let indent = helpers::detect_indent(s);
     let mut pair_stack = vec![];
     s.split('\n').enumerate().flat_map(move |(i, s)| {
         let s = s.strip_suffix('\r').unwrap_or(s);

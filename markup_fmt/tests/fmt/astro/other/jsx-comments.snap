@@ -7,11 +7,13 @@ source: markup_fmt/tests/fmt.rs
 
 {
   // Hey
-	// Hello
+  // Hello
 }
 
 {/*   Hello */}
 
-{/*
-	Hello
-*/}
+{
+  /*
+  	Hello
+  */
+}

@@ -173,3 +173,17 @@ pub(crate) fn parse_vento_tag(tag: &str) -> (&str, &str) {
 
 pub(crate) static UNESCAPING_AC: LazyLock<AhoCorasick> =
     LazyLock::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());
+
+pub(crate) fn detect_indent(s: &str) -> usize {
+    s.lines()
+        .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            line.as_bytes()
+                .iter()
+                .take_while(|byte| byte.is_ascii_whitespace())
+                .count()
+        })
+        .min()
+        .unwrap_or_default()
+}
