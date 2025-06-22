@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://plugins.dprint.dev/g-plane/markup_fmt/v0.21.0/schema.json",
+  "$id": "https://plugins.dprint.dev/g-plane/markup_fmt/v0.22.0/schema.json",
   "title": "Config",
   "description": "Configuration for dprint-plugin-markup.",
   "type": "object",
