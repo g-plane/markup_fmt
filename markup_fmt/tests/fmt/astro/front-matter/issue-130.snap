@@ -1,0 +1,8 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+---
+const regex = /width\s*=\s*["']?(\d+(?:\.\d+)?)/i;
+---
+
+<div></div>

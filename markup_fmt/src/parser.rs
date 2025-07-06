@@ -1212,7 +1212,7 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some((_, '\n')) => {
-                    if let Some('/') = pair_stack.last() {
+                    if let Some('/' | '\'' | '"') = pair_stack.last() {
                         pair_stack.pop();
                     }
                 }
