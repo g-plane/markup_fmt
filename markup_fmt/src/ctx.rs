@@ -177,23 +177,25 @@ where
                 .and_then(|s| s.strip_suffix("</>"))
                 .unwrap_or(formatted);
             // The condition below detects these cases:
-            // 1. There's a line break after `{`
+            // 1. Language is not Astro
+            // 2. There's a line break after `{`
             //    ```
             //    {
             //        /*
             //        */
             //    }
             //    ```
-            // 2. The indentation level of inner content is less than that of `{`
+            // 3. The indentation level of inner content is less than that of `{`
             //    ```
             //        {/*
             //    Hello
             //    */}
             //    ```
-            let formatted = if formatted
-                .trim_ascii_start()
-                .strip_prefix('{')
-                .is_some_and(|s| s.starts_with(['\n', '\r']))
+            let formatted = if self.language != Language::Astro
+                || formatted
+                    .trim_ascii_start()
+                    .strip_prefix('{')
+                    .is_some_and(|s| s.starts_with(['\n', '\r']))
                 || formatted
                     .trim_start_matches(['\n', '\r'])
                     .find('{')

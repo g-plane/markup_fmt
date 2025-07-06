@@ -43,3 +43,10 @@ function generateHtml(data:unknown) {
       });
     }}
 ></canvas>
+
+<ul>
+        {#each         [
+          [`Model Version`, model.model_version],
+          [`Model Type`, model.model_type],]}
+          {/each}
+          </ul>
