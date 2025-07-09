@@ -48,6 +48,8 @@ Or Biome:
 + dprint config add biome
 ```
 
+If you use Biome, you need to set [`"scriptFormatter"`](https://markup-fmt.netlify.app/config/script-formatter.html) to `"biome"` in markup_fmt's config.
+
 After adding the dprint plugins, update your `dprint.json` and add configuration:
 
 ```jsonc
