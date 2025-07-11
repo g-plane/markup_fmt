@@ -29,8 +29,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                 config_key: "markup".to_string(),
                 help_url: "https://github.com/g-plane/markup_fmt".to_string(),
                 config_schema_url: format!(
-                    "https://plugins.dprint.dev/g-plane/markup_fmt/v{}/schema.json",
-                    version
+                    "https://plugins.dprint.dev/g-plane/markup_fmt/v{version}/schema.json",
                 ),
                 update_url: Some(
                     "https://plugins.dprint.dev/g-plane/markup_fmt/latest.json".into(),

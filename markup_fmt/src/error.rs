@@ -85,7 +85,7 @@ impl fmt::Display for SyntaxErrorKind {
             SyntaxErrorKind::ExpectJinjaBlockEnd => "expected Jinja block end".into(),
             SyntaxErrorKind::ExpectJinjaTag => "expected Jinja tag".into(),
             SyntaxErrorKind::ExpectKeyword(keyword) => {
-                format!("expected keyword '{}'", keyword).into()
+                format!("expected keyword '{keyword}'").into()
             }
             SyntaxErrorKind::ExpectMustacheInterpolation => {
                 "expected mustache-like interpolation".into()
