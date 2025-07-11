@@ -26,6 +26,7 @@
   - [svelteAttrShorthand](./config/svelte-attr-shorthand.md)
   - [svelteDirectiveShorthand](./config/svelte-directive-shorthand.md)
   - [astroAttrShorthand](./config/astro-attr-shorthand.md)
+  - [angularNextControlFlowSameLine](./config/angular-next-control-flow-same-line.md)
   - [scriptFormatter](./config/script-formatter.md)
   - [ignoreCommentDirective](./config/ignore-comment-directive.md)
   - [ignoreFileCommentDirective](./config/ignore-file-comment-directive.md)

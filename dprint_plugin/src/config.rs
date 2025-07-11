@@ -348,6 +348,12 @@ pub(crate) fn resolve_config(
                 "svelteDirectiveShorthand",
                 &mut diagnostics,
             ),
+            angular_next_control_flow_same_line: get_value(
+                &mut config,
+                "angularNextControlFlowSameLine",
+                true,
+                &mut diagnostics,
+            ),
             astro_attr_shorthand: get_nullable_value(
                 &mut config,
                 "astroAttrShorthand",

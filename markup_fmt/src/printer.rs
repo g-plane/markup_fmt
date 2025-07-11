@@ -100,6 +100,12 @@ impl<'s> DocGen<'s> for AngularIf<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
+        let next_cf_ws = if ctx.options.angular_next_control_flow_same_line {
+            Doc::space()
+        } else {
+            Doc::hard_line()
+        };
+
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@if ("));
         docs.push(Doc::text(ctx.format_expr(
@@ -123,11 +129,12 @@ impl<'s> DocGen<'s> for AngularIf<'s> {
         docs.extend(
             self.else_if_blocks
                 .iter()
-                .flat_map(|block| [Doc::space(), block.doc(ctx, state)]),
+                .flat_map(|block| [next_cf_ws.clone(), block.doc(ctx, state)]),
         );
 
         if let Some(children) = &self.else_children {
-            docs.push(Doc::text(" @else {"));
+            docs.push(next_cf_ws);
+            docs.push(Doc::text("@else {"));
             docs.push(format_control_structure_block_children(
                 children, ctx, state,
             ));

@@ -347,6 +347,11 @@
       "type": ["boolean", "null"],
       "default": null
     },
+    "angularNextControlFlowSameLine": {
+      "description": "Control whether the next Angular control flow code should be on the same line with previous `}` or not.",
+      "type": "boolean",
+      "default": true
+    },
     "scriptFormatter": {
       "description": "Tell markup_fmt what script formatter you are using.",
       "type": ["string", "null"],

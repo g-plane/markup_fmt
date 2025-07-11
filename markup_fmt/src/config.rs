@@ -215,6 +215,12 @@ pub struct LanguageOptions {
     #[cfg_attr(feature = "config_serde", serde(alias = "astroAttrShorthand"))]
     pub astro_attr_shorthand: Option<bool>,
 
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(alias = "angularNextControlFlowSameLine")
+    )]
+    pub angular_next_control_flow_same_line: bool,
+
     #[cfg_attr(feature = "config_serde", serde(alias = "scriptFormatter"))]
     pub script_formatter: Option<ScriptFormatter>,
 
@@ -265,6 +271,7 @@ impl Default for LanguageOptions {
             svelte_attr_shorthand: None,
             svelte_directive_shorthand: None,
             astro_attr_shorthand: None,
+            angular_next_control_flow_same_line: true,
             script_formatter: None,
             ignore_comment_directive: "markup-fmt-ignore".into(),
             ignore_file_comment_directive: "markup-fmt-ignore-file".into(),

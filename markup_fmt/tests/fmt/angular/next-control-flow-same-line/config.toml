@@ -1,0 +1,5 @@
+[enabled]
+angularNextControlFlowSameLine = true
+
+[disabled]
+angularNextControlFlowSameLine = false
