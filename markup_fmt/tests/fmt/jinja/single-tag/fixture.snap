@@ -16,4 +16,4 @@ source: markup_fmt/tests/fmt.rs
 {% set ns = namespace(found=false) %}
 {% set ns.foo = 'bar' %}
 {% set pipe = joiner("|") %}
-{% set pipe = joiner("|") %}
+{% set pipe=joiner("|") %}

@@ -428,6 +428,30 @@ where
         )
     }
 
+    pub(crate) fn format_jinja<'a>(
+        &mut self,
+        code: &'a str,
+        start: usize,
+        ext: &'static str,
+        state: &State,
+    ) -> Cow<'a, str> {
+        self.format_with_external_formatter(
+            self.source
+                .get(0..start)
+                .unwrap_or_default()
+                .replace(|c: char| !c.is_ascii_whitespace(), " ")
+                + code,
+            Hints {
+                print_width: self
+                    .print_width
+                    .saturating_sub((state.indent_level as usize) * self.indent_width),
+                indent_level: state.indent_level,
+                attr: false,
+                ext,
+            },
+        )
+    }
+
     fn format_with_external_formatter<'a>(
         &mut self,
         code: String,

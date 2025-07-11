@@ -1366,6 +1366,7 @@ impl<'s> Parser<'s> {
 
         Ok(JinjaTag {
             content: unsafe { self.source.get_unchecked(start..end) },
+            start,
         })
     }
 
@@ -1596,7 +1597,7 @@ impl<'s> Parser<'s> {
                                     NodeKind::VueInterpolation(VueInterpolation { expr, start })
                                 }
                                 Language::Jinja => {
-                                    NodeKind::JinjaInterpolation(JinjaInterpolation { expr })
+                                    NodeKind::JinjaInterpolation(JinjaInterpolation { expr, start })
                                 }
                                 Language::Angular => {
                                     NodeKind::AngularInterpolation(AngularInterpolation {

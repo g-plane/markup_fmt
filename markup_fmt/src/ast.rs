@@ -178,6 +178,7 @@ pub struct JinjaComment<'s> {
 /// See https://jinja.palletsprojects.com/en/stable/templates/#expressions.
 pub struct JinjaInterpolation<'s> {
     pub expr: &'s str,
+    pub start: usize,
 }
 
 #[derive(Debug)]
@@ -186,6 +187,7 @@ pub struct JinjaInterpolation<'s> {
 /// See https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures.
 pub struct JinjaTag<'s> {
     pub content: &'s str,
+    pub start: usize,
 }
 
 #[derive(Debug)]
