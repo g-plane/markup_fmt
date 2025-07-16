@@ -885,13 +885,16 @@ impl<'s> DocGen<'s> for JinjaComment<'s> {
 }
 
 impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{{")
             .append(Doc::line_or_space())
-            .append(Doc::text(self.expr.trim()))
+            .concat(reflow_with_indent(
+                ctx.format_jinja(self.expr, self.start, "markup-fmt-jinja-expr", state)
+                    .trim(),
+            ))
             .nest(ctx.indent_width)
             .append(Doc::line_or_space())
             .append(Doc::text("}}"))
@@ -900,7 +903,7 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
 }
 
 impl<'s> DocGen<'s> for JinjaTag<'s> {
-    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
@@ -919,21 +922,21 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
             (content, "")
         };
 
-        let docs = Doc::text("{%")
-            .append(Doc::text(prefix))
-            .append(Doc::line_or_space());
-        let docs = if content.trim().starts_with("set") {
-            if let Some((left, right)) = content.split_once('=') {
-                docs.append(Doc::text(left.trim()))
-                    .append(Doc::text(" = "))
-                    .append(Doc::text(right.trim()))
-            } else {
-                docs.append(Doc::text(content.trim()))
-            }
-        } else {
-            docs.append(Doc::text(content.trim()))
-        };
-        docs.nest(ctx.indent_width)
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("{%"));
+        docs.push(Doc::text(prefix));
+        docs.push(Doc::line_or_space());
+        docs.extend(reflow_with_indent(
+            ctx.format_jinja(
+                content,
+                self.start + prefix.len(),
+                "markup-fmt-jinja-stmt",
+                state,
+            )
+            .trim(),
+        ));
+        Doc::list(docs)
+            .nest(ctx.indent_width)
             .append(Doc::line_or_space())
             .append(Doc::text(suffix))
             .append(Doc::text("%}"))

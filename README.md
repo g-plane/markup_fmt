@@ -50,6 +50,8 @@ Or Biome:
 
 If you use Biome, you need to set [`"scriptFormatter"`](https://markup-fmt.netlify.app/config/script-formatter.html) to `"biome"` in markup_fmt's config.
 
+If you want to format Jinja, it's recommended to add [Pretty Jinja](https://github.com/g-plane/pretty_jinja) dprint plugin as well.
+
 After adding the dprint plugins, update your `dprint.json` and add configuration:
 
 ```jsonc
