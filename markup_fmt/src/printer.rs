@@ -1100,7 +1100,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 let value = format!("{{{binding_name}}}");
                 name.append(Doc::text("="))
                     .append(if ctx.options.strict_svelte_attr {
-                        format_attr_value(value, &ctx.options.quotes, ctx)
+                        format_attr_value(value, &ctx.options.quotes)
                     } else {
                         Doc::text(value)
                     })
@@ -1248,7 +1248,6 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                         name.append(format_attr_value(
                             format!("{{{expr_code}}}"),
                             &ctx.options.quotes,
-                            ctx,
                         ))
                     } else {
                         name.append(expr)
@@ -1261,7 +1260,6 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                 name.append(format_attr_value(
                     format!("{{{expr_code}}}"),
                     &ctx.options.quotes,
-                    ctx,
                 ))
             } else {
                 name.append(expr)
@@ -1938,16 +1936,12 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
             {
                 docs.push(Doc::text("="));
-                docs.push(format_attr_value(value, &ctx.options.quotes, ctx));
+                docs.push(format_attr_value(value, &ctx.options.quotes));
             }
         } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false)) && is_v_bind {
             if let Some(arg_and_modifiers) = self.arg_and_modifiers {
                 docs.push(Doc::text("="));
-                docs.push(format_attr_value(
-                    arg_and_modifiers,
-                    &ctx.options.quotes,
-                    ctx,
-                ));
+                docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
             }
         }
 
@@ -2212,14 +2206,7 @@ fn has_two_more_non_text_children(children: &[Node], language: Language) -> bool
         > 1
 }
 
-fn format_attr_value<'s, E, F>(
-    value: impl AsRef<str>,
-    quotes: &Quotes,
-    ctx: &mut Ctx<'s, E, F>,
-) -> Doc<'s>
-where
-    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
-{
+fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'_> {
     let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::text("'")
@@ -2230,20 +2217,10 @@ where
     } else {
         Doc::text("'")
     };
-    if value.contains('\n') {
-        quote
-            .clone()
-            .append(Doc::hard_line())
-            .append(Doc::list(reflow_with_indent(value).collect()))
-            .nest(ctx.indent_width)
-            .append(Doc::hard_line())
-            .append(quote)
-    } else {
-        quote
-            .clone()
-            .append(Doc::list(reflow_with_indent(value).collect()))
-            .append(quote)
-    }
+    quote
+        .clone()
+        .concat(reflow_with_indent(value))
+        .append(quote)
 }
 
 fn format_children_with_inserting_linebreak<'s, E, F>(
