@@ -337,6 +337,23 @@ pub(crate) fn resolve_config(
                 "vBindSameNameShortHand",
                 &mut diagnostics,
             ),
+            vue_component_case: match &*get_value(
+                &mut config,
+                "vueComponentCase",
+                "ignore".to_string(),
+                &mut diagnostics,
+            ) {
+                "ignore" => VueComponentCase::Ignore,
+                "pascalCase" | "PascalCase" => VueComponentCase::PascalCase,
+                "kebabCase" | "kebab-case" => VueComponentCase::KebabCase,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "vueComponentCase".into(),
+                        message: "invalid value for config `vueComponentCase`".into(),
+                    });
+                    Default::default()
+                }
+            },
             strict_svelte_attr: get_value(&mut config, "strictSvelteAttr", false, &mut diagnostics),
             svelte_attr_shorthand: get_nullable_value(
                 &mut config,

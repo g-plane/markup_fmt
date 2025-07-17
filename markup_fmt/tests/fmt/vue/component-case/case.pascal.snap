@@ -1,0 +1,11 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<template>
+  <component></component>
+  <Component></Component>
+  <MyComponent></MyComponent>
+  <MyComponent></MyComponent>
+  <MyComponent></MyComponent>
+  <MyComponent></MyComponent>
+</template>

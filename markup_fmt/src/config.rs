@@ -204,6 +204,8 @@ pub struct LanguageOptions {
     pub named_v_slot_style: Option<VSlotStyle>,
     #[cfg_attr(feature = "config_serde", serde(alias = "vBindSameNameShortHand"))]
     pub v_bind_same_name_short_hand: Option<bool>,
+    #[cfg_attr(feature = "config_serde", serde(alias = "vueComponentCase"))]
+    pub vue_component_case: VueComponentCase,
 
     #[cfg_attr(feature = "config_serde", serde(alias = "strictSvelteAttr"))]
     pub strict_svelte_attr: bool,
@@ -267,6 +269,7 @@ impl Default for LanguageOptions {
             default_v_slot_style: None,
             named_v_slot_style: None,
             v_bind_same_name_short_hand: None,
+            vue_component_case: VueComponentCase::default(),
             strict_svelte_attr: false,
             svelte_attr_shorthand: None,
             svelte_directive_shorthand: None,
@@ -354,6 +357,21 @@ pub enum VSlotStyle {
     Long,
     #[cfg_attr(feature = "config_serde", serde(alias = "vSlot", alias = "vslot"))]
     VSlot,
+}
+
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "kebab-case"))]
+pub enum VueComponentCase {
+    #[default]
+    Ignore,
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(alias = "pascalCase", alias = "PascalCase")
+    )]
+    PascalCase,
+    #[cfg_attr(feature = "config_serde", serde(alias = "kebabCase"))]
+    KebabCase,
 }
 
 #[derive(Clone, Debug)]

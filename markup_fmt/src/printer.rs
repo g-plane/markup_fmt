@@ -1,6 +1,6 @@
 use crate::{
     ast::*,
-    config::{Quotes, ScriptFormatter, VSlotStyle, WhitespaceSensitivity},
+    config::{Quotes, ScriptFormatter, VSlotStyle, VueComponentCase, WhitespaceSensitivity},
     ctx::{Ctx, Hints},
     helpers,
     state::State,
@@ -408,16 +408,20 @@ impl<'s> DocGen<'s> for Element<'s> {
             .split_once(':')
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
-        let formatted_tag_name = if matches!(
-            ctx.language,
+        let formatted_tag_name = match ctx.language {
             Language::Html | Language::Jinja | Language::Vento | Language::Mustache
-        ) && css_dataset::tags::STANDARD_HTML_TAGS
-            .iter()
-            .any(|tag| tag.eq_ignore_ascii_case(self.tag_name))
-        {
-            Cow::from(self.tag_name.to_ascii_lowercase())
-        } else {
-            Cow::from(self.tag_name)
+                if css_dataset::tags::STANDARD_HTML_TAGS
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(self.tag_name)) =>
+            {
+                Cow::from(self.tag_name.to_ascii_lowercase())
+            }
+            Language::Vue => match ctx.options.vue_component_case {
+                VueComponentCase::Ignore => Cow::from(self.tag_name),
+                VueComponentCase::PascalCase => helpers::kebab2pascal(self.tag_name),
+                VueComponentCase::KebabCase => helpers::pascal2kebab(self.tag_name),
+            },
+            _ => Cow::from(self.tag_name),
         };
         let is_root = state.is_root;
         let mut state = State {

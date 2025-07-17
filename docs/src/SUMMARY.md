@@ -22,6 +22,7 @@
   - [vForDelimiterStyle](./config/v-for-delimiter-style.md)
   - [vSlotStyle](./config/v-slot-style.md)
   - [vBindSameNameShortHand](./config/v-bind-same-name-short-hand.md)
+  - [vueComponentCase](./config/vue-component-case.md)
   - [strictSvelteAttr](./config/strict-svelte-attr.md)
   - [svelteAttrShorthand](./config/svelte-attr-shorthand.md)
   - [svelteDirectiveShorthand](./config/svelte-directive-shorthand.md)

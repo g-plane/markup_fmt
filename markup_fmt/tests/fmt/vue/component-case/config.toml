@@ -1,0 +1,7 @@
+[default]
+
+[pascal]
+vueComponentCase = "pascalCase"
+
+[kebab]
+vueComponentCase = "kebabCase"

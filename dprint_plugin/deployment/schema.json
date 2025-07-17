@@ -327,6 +327,25 @@
       "type": ["boolean", "null"],
       "default": null
     },
+    "vueComponentCase": {
+      "description": "Control the component naming style in template.",
+      "type": "string",
+      "oneOf": [
+        {
+          "const": "ignore",
+          "description": "Component names will not be changed."
+        },
+        {
+          "const": "pascalCase",
+          "description": "Component names will be converted to PascalCase."
+        },
+        {
+          "const": "kebabCase",
+          "description": "Component names will be converted to kebab-case."
+        }
+      ],
+      "default": "ignore"
+    },
     "strictSvelteAttr": {
       "description": "Control whether Svelte attribute value should be in strict mode or not.",
       "type": "boolean",
