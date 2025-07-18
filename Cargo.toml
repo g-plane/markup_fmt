@@ -6,7 +6,7 @@ resolver = "2"
 anyhow = "1.0"
 insta = { version = "1.43", features = ["glob"] }
 similar-asserts = "1.7"
-toml = "0.8"
+toml = "0.9"
 
 [profile.release]
 lto = true
