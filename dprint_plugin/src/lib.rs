@@ -1,61 +1,34 @@
 use crate::config::resolve_config;
 use anyhow::Result;
-#[cfg(target_arch = "wasm32")]
-use dprint_core::generate_plugin_code;
 use dprint_core::{
-    configuration::{ConfigKeyMap, GlobalConfiguration, ResolveConfigurationResult},
-    plugins::{FileMatchingInfo, PluginInfo, SyncPluginHandler, SyncPluginInfo},
+    configuration::{ConfigKeyMap, GlobalConfiguration},
+    plugins::{
+        CheckConfigUpdatesMessage, ConfigChange, FormatResult, PluginInfo,
+        PluginResolveConfigurationResult, SyncFormatRequest, SyncHostFormatRequest,
+        SyncPluginHandler,
+    },
 };
 use markup_fmt::{
     config::{FormatOptions, Quotes, ScriptFormatter},
     detect_language, format_text, FormatError, Hints,
 };
-use std::path::Path;
 
 mod config;
-
-#[cfg(target_arch = "wasm32")]
-type Configuration = FormatOptions;
 
 pub struct MarkupFmtPluginHandler;
 
 impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
-    fn plugin_info(&mut self) -> SyncPluginInfo {
+    fn plugin_info(&mut self) -> PluginInfo {
         let version = env!("CARGO_PKG_VERSION").to_string();
-        SyncPluginInfo {
-            info: PluginInfo {
-                name: env!("CARGO_PKG_NAME").to_string(),
-                version: version.clone(),
-                config_key: "markup".to_string(),
-                help_url: "https://github.com/g-plane/markup_fmt".to_string(),
-                config_schema_url: format!(
-                    "https://plugins.dprint.dev/g-plane/markup_fmt/v{version}/schema.json",
-                ),
-                update_url: Some(
-                    "https://plugins.dprint.dev/g-plane/markup_fmt/latest.json".into(),
-                ),
-            },
-            file_matching: FileMatchingInfo {
-                file_extensions: [
-                    "html",
-                    "vue",
-                    "svelte",
-                    "astro",
-                    "jinja",
-                    "jinja2",
-                    "twig",
-                    "njk",
-                    "vto",
-                    "component.html",
-                    "mustache",
-                    "xml",
-                    "svg",
-                ]
-                .into_iter()
-                .map(String::from)
-                .collect(),
-                file_names: vec![],
-            },
+        PluginInfo {
+            name: env!("CARGO_PKG_NAME").to_string(),
+            version: version.clone(),
+            config_key: "markup".to_string(),
+            help_url: "https://github.com/g-plane/markup_fmt".to_string(),
+            config_schema_url: format!(
+                "https://plugins.dprint.dev/g-plane/markup_fmt/v{version}/schema.json",
+            ),
+            update_url: Some("https://plugins.dprint.dev/g-plane/markup_fmt/latest.json".into()),
         }
     }
 
@@ -67,34 +40,41 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         &mut self,
         config: ConfigKeyMap,
         global_config: &GlobalConfiguration,
-    ) -> ResolveConfigurationResult<FormatOptions> {
+    ) -> PluginResolveConfigurationResult<FormatOptions> {
         resolve_config(config, global_config)
+    }
+
+    fn check_config_updates(&self, _: CheckConfigUpdatesMessage) -> Result<Vec<ConfigChange>> {
+        Ok(Vec::new())
     }
 
     fn format(
         &mut self,
-        file_path: &Path,
-        file_text: Vec<u8>,
-        config: &FormatOptions,
-        mut format_with_host: impl FnMut(&Path, Vec<u8>, &ConfigKeyMap) -> Result<Option<Vec<u8>>>,
-    ) -> Result<Option<Vec<u8>>> {
+        request: SyncFormatRequest<FormatOptions>,
+        mut format_with_host: impl FnMut(SyncHostFormatRequest) -> FormatResult,
+    ) -> FormatResult {
         // falling back to HTML allows to format files with unknown extensions, such as .svg
-        let language = detect_language(file_path).unwrap_or(markup_fmt::Language::Html);
+        let language = detect_language(request.file_path).unwrap_or(markup_fmt::Language::Html);
 
         let format_result = format_text(
-            std::str::from_utf8(&file_text)?,
+            std::str::from_utf8(&request.file_bytes)?,
             language,
-            config,
+            request.config,
             |code, hints| {
-                let mut file_name = file_path.file_name().expect("missing file name").to_owned();
+                let mut file_name = request
+                    .file_path
+                    .file_name()
+                    .expect("missing file name")
+                    .to_owned();
                 file_name.push("#.");
                 file_name.push(hints.ext);
-                let additional_config = build_additional_config(hints, config);
-                format_with_host(
-                    &file_path.with_file_name(file_name),
-                    code.into(),
-                    &additional_config,
-                )
+                let additional_config = build_additional_config(hints, request.config);
+                format_with_host(SyncHostFormatRequest {
+                    file_path: &request.file_path.with_file_name(file_name),
+                    file_bytes: code.as_bytes(),
+                    range: None,
+                    override_config: &additional_config,
+                })
                 .and_then(|result| match result {
                     Some(code) => String::from_utf8(code)
                         .map(|s| s.into())
@@ -121,7 +101,11 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
 }
 
 #[cfg(target_arch = "wasm32")]
-generate_plugin_code!(MarkupFmtPluginHandler, MarkupFmtPluginHandler);
+dprint_core::generate_plugin_code!(
+    MarkupFmtPluginHandler,
+    MarkupFmtPluginHandler,
+    FormatOptions
+);
 
 #[doc(hidden)]
 pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKeyMap {

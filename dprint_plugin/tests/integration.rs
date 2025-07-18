@@ -56,14 +56,17 @@ fn integration_with_dprint_ts_snapshot() {
                     })
                 } else {
                     dprint_plugin_typescript::format_text(
-                        &Path::new("file").with_extension(ext),
-                        Some(ext),
-                        code.to_owned(),
-                        &dprint_plugin_typescript::configuration::resolve_config(
-                            additional_config,
-                            &Default::default(),
-                        )
-                        .config,
+                        dprint_plugin_typescript::FormatTextOptions {
+                            path: &Path::new("file").with_extension(ext),
+                            extension: Some(ext),
+                            text: code.to_owned(),
+                            config: &dprint_plugin_typescript::configuration::resolve_config(
+                                additional_config,
+                                &Default::default(),
+                            )
+                            .config,
+                            external_formatter: None,
+                        },
                     )
                     .map(|formatted| {
                         if let Some(formatted) = formatted {

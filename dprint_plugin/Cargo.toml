@@ -13,7 +13,7 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 anyhow.workspace = true
-dprint-core = { version = "0.66", default-features = false, features = [
+dprint-core = { version = "0.67", default-features = false, features = [
     "wasm",
 ] }
 markup_fmt = { path = "../markup_fmt", features = ["config_serde"] }
@@ -21,8 +21,8 @@ serde_json = "1.0"
 
 [dev-dependencies]
 dprint-plugin-biome = "0.0"
-dprint-plugin-json = { version = "0.19", features = ["wasm"] }
-dprint-plugin-typescript = { version = "0.93", features = ["wasm"] }
+dprint-plugin-json = { version = "0.20", features = ["wasm"] }
+dprint-plugin-typescript = { version = "0.95", features = ["wasm"] }
 insta.workspace = true
 malva = { version = "0.10", features = ["config_serde"] }
 similar-asserts.workspace = true
