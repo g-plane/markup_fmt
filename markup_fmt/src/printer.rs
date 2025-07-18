@@ -416,11 +416,17 @@ impl<'s> DocGen<'s> for Element<'s> {
             {
                 Cow::from(self.tag_name.to_ascii_lowercase())
             }
-            Language::Vue => match ctx.options.vue_component_case {
-                VueComponentCase::Ignore => Cow::from(self.tag_name),
-                VueComponentCase::PascalCase => helpers::kebab2pascal(self.tag_name),
-                VueComponentCase::KebabCase => helpers::pascal2kebab(self.tag_name),
-            },
+            Language::Vue
+                if !css_dataset::tags::SVG_TAGS
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(self.tag_name)) =>
+            {
+                match ctx.options.vue_component_case {
+                    VueComponentCase::Ignore => Cow::from(self.tag_name),
+                    VueComponentCase::PascalCase => helpers::kebab2pascal(self.tag_name),
+                    VueComponentCase::KebabCase => helpers::pascal2kebab(self.tag_name),
+                }
+            }
             _ => Cow::from(self.tag_name),
         };
         let is_root = state.is_root;
