@@ -18,7 +18,7 @@ Default value is `"ignore"`.
 
 Input:
 
-```vue
+```html
 <template>
   <component></component>
   <Component></Component>
@@ -31,7 +31,7 @@ Input:
 
 Output:
 
-```vue
+```html
 <template>
   <component></component>
   <Component></Component>
@@ -46,7 +46,7 @@ Output:
 
 Input:
 
-```vue
+```html
 <template>
   <component></component>
   <Component></Component>
@@ -59,7 +59,7 @@ Input:
 
 Output:
 
-```vue
+```html
 <template>
   <component></component>
   <Component></Component>
@@ -74,7 +74,7 @@ Output:
 
 Input:
 
-```vue
+```html
 <template>
   <component></component>
   <Component></Component>
@@ -87,7 +87,7 @@ Input:
 
 Output:
 
-```vue
+```html
 <template>
   <component></component>
   <Component></Component>
