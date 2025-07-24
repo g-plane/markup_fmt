@@ -425,6 +425,7 @@ pub(crate) fn resolve_config(
                 "astro",
                 "jinja",
                 "jinja2",
+                "j2",
                 "twig",
                 "njk",
                 "vto",
