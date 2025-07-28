@@ -5,3 +5,4 @@
 **/*.jinja linguist-detectable=false
 **/*.njk linguist-detectable=false
 **/*.vto linguist-detectable=false
+**/*.mustache linguist-detectable=false
