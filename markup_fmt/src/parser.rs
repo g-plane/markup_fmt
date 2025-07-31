@@ -1585,35 +1585,42 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, '{'))
-                        if matches!(
-                            self.language,
-                            Language::Vue | Language::Jinja | Language::Angular
-                        ) =>
-                    {
-                        self.parse_mustache_interpolation().map(|(expr, start)| {
-                            match self.language {
-                                Language::Vue => {
-                                    NodeKind::VueInterpolation(VueInterpolation { expr, start })
-                                }
-                                Language::Jinja => {
-                                    NodeKind::JinjaInterpolation(JinjaInterpolation { expr, start })
-                                }
-                                Language::Angular => {
-                                    NodeKind::AngularInterpolation(AngularInterpolation {
-                                        expr,
-                                        start,
-                                    })
-                                }
-                                _ => unreachable!(),
+                    Some((_, '{')) => {
+                        match self.language {
+                            Language::Html | Language::Xml => {
+                                self.parse_text_node().map(NodeKind::Text)
                             }
-                        })
-                    }
-                    Some((_, '{')) if matches!(self.language, Language::Vento) => {
-                        self.parse_vento_tag_or_block(None)
-                    }
-                    Some((_, '{')) if matches!(self.language, Language::Mustache) => {
-                        self.parse_mustache_block_or_interpolation()
+                            Language::Vue | Language::Jinja => self
+                                .parse_mustache_interpolation()
+                                .map(|(expr, start)| match self.language {
+                                    Language::Vue => {
+                                        NodeKind::VueInterpolation(VueInterpolation { expr, start })
+                                    }
+                                    Language::Jinja => {
+                                        NodeKind::JinjaInterpolation(JinjaInterpolation {
+                                            expr,
+                                            start,
+                                        })
+                                    }
+                                    _ => unreachable!(),
+                                }),
+                            Language::Svelte => self
+                                .parse_svelte_interpolation()
+                                .map(NodeKind::SvelteInterpolation),
+                            Language::Astro => self.parse_astro_expr().map(NodeKind::AstroExpr),
+                            Language::Angular => self
+                                .try_parse(|parser| {
+                                    parser.parse_mustache_interpolation().map(|(expr, start)| {
+                                        NodeKind::AngularInterpolation(AngularInterpolation {
+                                            expr,
+                                            start,
+                                        })
+                                    })
+                                })
+                                .or_else(|_| self.parse_text_node().map(NodeKind::Text)),
+                            Language::Vento => self.parse_vento_tag_or_block(None),
+                            Language::Mustache => self.parse_mustache_block_or_interpolation(),
+                        }
                     }
                     Some((_, '#')) if matches!(self.language, Language::Svelte) => {
                         match chars.next() {
@@ -2476,36 +2483,9 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_text_node(&mut self) -> PResult<TextNode<'s>> {
-        let Some((start, first_char)) = self.chars.next_if(|(_, c)| {
-            if matches!(
-                self.language,
-                Language::Vue
-                    | Language::Svelte
-                    | Language::Jinja
-                    | Language::Vento
-                    | Language::Mustache
-                    | Language::Angular
-            ) {
-                *c != '{'
-            } else {
-                true
-            }
-        }) else {
+        let Some((start, first_char)) = self.chars.next() else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
         };
-
-        if matches!(
-            self.language,
-            Language::Vue
-                | Language::Jinja
-                | Language::Vento
-                | Language::Angular
-                | Language::Mustache
-        ) && first_char == '{'
-            && matches!(self.chars.peek(), Some((_, '{')))
-        {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectTextNode));
-        }
 
         let mut line_breaks = if first_char == '\n' { 1 } else { 0 };
         let end;
