@@ -402,7 +402,6 @@ impl<'s> DocGen<'s> for Element<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
-        let parent_tag_name = state.current_tag_name;
         let tag_name = self
             .tag_name
             .split_once(':')

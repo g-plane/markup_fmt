@@ -188,7 +188,7 @@ pub(crate) fn detect_indent(s: &str) -> usize {
         .unwrap_or_default()
 }
 
-pub(crate) fn pascal2kebab(s: &str) -> Cow<str> {
+pub(crate) fn pascal2kebab(s: &'_ str) -> Cow<'_, str> {
     let uppers = s.chars().filter(char::is_ascii_uppercase).count();
     if uppers > 1
         || s.find(|c: char| c.is_ascii_uppercase())
@@ -208,7 +208,7 @@ pub(crate) fn pascal2kebab(s: &str) -> Cow<str> {
     }
 }
 
-pub(crate) fn kebab2pascal(s: &str) -> Cow<str> {
+pub(crate) fn kebab2pascal(s: &'_ str) -> Cow<'_, str> {
     if s.contains('-')
         || s.find(|c: char| c.is_ascii_uppercase())
             .is_some_and(|index| index > 0)
