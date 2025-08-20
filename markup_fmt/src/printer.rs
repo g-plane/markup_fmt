@@ -657,7 +657,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     let formatted = if is_json {
                         ctx.format_json(text_node.raw, text_node.start, &state)
                     } else {
-                        if is_script_indent && parent_tag_name.is_none() {
+                        if is_script_indent && is_root {
                             state.indent_level += 1;
                         }
                         ctx.format_script(
