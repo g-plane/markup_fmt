@@ -24,6 +24,6 @@ dprint-plugin-biome = "0.0"
 dprint-plugin-json = { version = "0.20", features = ["wasm"] }
 dprint-plugin-typescript = { version = "0.95", features = ["wasm"] }
 insta.workspace = true
-malva = { version = "0.13", features = ["config_serde"] }
+malva = { version = "0.14", features = ["config_serde"] }
 similar-asserts.workspace = true
 toml.workspace = true

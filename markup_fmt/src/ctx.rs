@@ -361,11 +361,14 @@ where
         state: &State,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
-            self.source
-                .get(0..start)
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + code,
+            "\n".repeat(
+                self.source
+                    .get(0..start)
+                    .unwrap_or_default()
+                    .lines()
+                    .count()
+                    .saturating_sub(1),
+            ) + code,
             Hints {
                 print_width: self
                     .print_width
