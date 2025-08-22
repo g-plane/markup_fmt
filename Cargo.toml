@@ -1,6 +1,6 @@
 [workspace]
 members = ["dprint_plugin", "markup_fmt"]
-resolver = "2"
+resolver = "3"
 
 [workspace.dependencies]
 anyhow = "1.0"
