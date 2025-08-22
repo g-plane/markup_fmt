@@ -25,10 +25,12 @@ jobs:
           files: |
             dprint_plugin/deployment/plugin.wasm
             dprint_plugin/deployment/schema.json
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: cratesio-auth
       - name: Publish crates
         run: cargo publish -p markup_fmt
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.cratesio-auth.outputs.token }}
       - uses: actions/setup-node@v4
         with:
           registry-url: "https://registry.npmjs.org"
@@ -36,6 +38,4 @@ jobs:
         run: |
           cp target/wasm32-unknown-unknown/release/dprint_plugin_markup.wasm dprint_plugin/deployment/npm/plugin.wasm
           cd dprint_plugin/deployment/npm
-          npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npx npm@latest publish
