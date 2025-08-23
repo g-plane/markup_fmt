@@ -658,7 +658,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     let formatted = if is_json {
                         ctx.format_json(text_node.raw, text_node.start, &state)
                     } else {
-                        if is_script_indent && is_root {
+                        if is_script_indent {
                             state.indent_level += 1;
                         }
                         ctx.format_script(
@@ -1202,9 +1202,7 @@ impl<'s> DocGen<'s> for Root<'s> {
             )
             || !is_whitespace_sensitive && has_two_more_non_text_children
         {
-            let mut state = state.clone();
-            state.indent_level += 1;
-            format_children_with_inserting_linebreak(&self.children, ctx, &state)
+            format_children_with_inserting_linebreak(&self.children, ctx, state)
                 .append(Doc::hard_line())
         } else {
             format_children_without_inserting_linebreak(&self.children, ctx, state)

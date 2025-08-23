@@ -1,0 +1,9 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<html lang="en">
+  <script>
+  console.log("1");
+  console.log("2");
+  </script>
+</html>
