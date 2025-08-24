@@ -1417,8 +1417,7 @@ impl<'s> Parser<'s> {
                     let next_tag_name = parse_jinja_tag_name(&next_tag);
                     if next_tag_name
                         .strip_prefix("end")
-                        .map(|name| name == tag_name)
-                        .unwrap_or_default()
+                        .is_some_and(|name| name == tag_name)
                     {
                         body.push(JinjaTagOrChildren::Tag(next_tag));
                         break;
@@ -2756,8 +2755,7 @@ impl<'s> Parser<'s> {
             || self
                 .chars
                 .peek()
-                .map(|(_, c)| is_attr_name_char(*c))
-                .unwrap_or_default()
+                .is_some_and(|(_, c)| is_attr_name_char(*c))
         {
             Some(self.parse_attr_name()?)
         } else {

@@ -642,14 +642,11 @@ impl<'s> DocGen<'s> for Element<'s> {
                     let is_json = self.attrs.iter().any(|attr| {
                         if let Attribute::Native(native_attr) = attr {
                             native_attr.name.eq_ignore_ascii_case("type")
-                                && native_attr
-                                    .value
-                                    .map(|(value, _)| {
-                                        value == "importmap"
-                                            || value == "application/json"
-                                            || value == "application/ld+json"
-                                    })
-                                    .unwrap_or_default()
+                                && native_attr.value.is_some_and(|(value, _)| {
+                                    value == "importmap"
+                                        || value == "application/json"
+                                        || value == "application/ld+json"
+                                })
                         } else {
                             false
                         }
@@ -1025,8 +1022,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 Language::Vue => {
                     if state
                         .current_tag_name
-                        .map(|name| name.eq_ignore_ascii_case("script"))
-                        .unwrap_or_default()
+                        .is_some_and(|name| name.eq_ignore_ascii_case("script"))
                         && self.name == "generic"
                     {
                         Cow::from(ctx.format_type_params(value, value_start, state))
@@ -1037,8 +1033,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 Language::Svelte
                     if state
                         .current_tag_name
-                        .map(|name| name.eq_ignore_ascii_case("script"))
-                        .unwrap_or_default()
+                        .is_some_and(|name| name.eq_ignore_ascii_case("script"))
                         && self.name == "generics" =>
                 {
                     Cow::from(ctx.format_type_params(value, value_start, state))
@@ -2435,8 +2430,7 @@ where
 {
     let option = if state
         .current_tag_name
-        .map(|name| name.eq_ignore_ascii_case("template"))
-        .unwrap_or_default()
+        .is_some_and(|name| name.eq_ignore_ascii_case("template"))
     {
         if slot == "default" {
             ctx.options.default_v_slot_style.clone()
