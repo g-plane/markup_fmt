@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="ts" generics="Item   extends{text :string}">
 export let msg:string=''
 
 function generateHtml(data:unknown) {

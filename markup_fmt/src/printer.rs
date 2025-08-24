@@ -1034,6 +1034,15 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         Cow::from(value)
                     }
                 }
+                Language::Svelte
+                    if state
+                        .current_tag_name
+                        .map(|name| name.eq_ignore_ascii_case("script"))
+                        .unwrap_or_default()
+                        && self.name == "generics" =>
+                {
+                    Cow::from(ctx.format_type_params(value, value_start, state))
+                }
                 Language::Svelte if !ctx.options.strict_svelte_attr => {
                     if let Some(expr) = value
                         .strip_prefix('{')
