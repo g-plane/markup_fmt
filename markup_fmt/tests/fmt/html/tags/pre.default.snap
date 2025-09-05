@@ -42,8 +42,7 @@ source: markup_fmt/tests/fmt.rs
 <pre>
      Foo     Bar
 </pre>
-<pre>
-Foo     Bar
+<pre>Foo     Bar
 </pre>
 <pre>
      Foo     Bar</pre>
@@ -92,8 +91,7 @@ ___________________________
 <pre><code #foo></code></pre>
 
 <details>
-  <pre>
-<!--Comments-->
+  <pre><!--Comments-->
   </pre>
 </details>
 

@@ -737,12 +737,6 @@ impl<'s> DocGen<'s> for Element<'s> {
                 ..
             }] = &self.children[..]
             {
-                if text_node.raw.contains('\n')
-                    && !text_node.raw.starts_with('\n')
-                    && !text_node.raw.starts_with("\r\n")
-                {
-                    docs.push(Doc::empty_line());
-                }
                 docs.extend(reflow_raw(text_node.raw));
             }
         } else if is_empty {
