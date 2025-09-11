@@ -5,3 +5,11 @@ source: dprint_plugin/tests/integration.rs
 
 <ul style="display: grid; grid-template-columns: 50% 50%; justify-items: stretch; padding: 0">
 </ul>
+
+<p style="margin: 0; font-size: 14px; display: flex; flex-direction: column-reverse">
+  aaaa
+</p>
+
+<p style="margin: 0; font-size: 14px; display: flex; flex-direction: column-reverse">
+  aaaa
+</p>
