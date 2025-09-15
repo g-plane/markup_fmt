@@ -1,7 +1,7 @@
 use dprint_core::{
     configuration::{
-        get_nullable_value, get_unknown_property_diagnostics, get_value, ConfigKeyMap,
-        ConfigurationDiagnostic, GlobalConfiguration, NewLineKind,
+        ConfigKeyMap, ConfigurationDiagnostic, GlobalConfiguration, NewLineKind,
+        get_nullable_value, get_unknown_property_diagnostics, get_value,
     },
     plugins::{FileMatchingInfo, PluginResolveConfigurationResult},
 };

@@ -1,5 +1,5 @@
-use insta::{assert_snapshot, glob, Settings};
-use markup_fmt::{config::FormatOptions, detect_language, format_text, Language};
+use insta::{Settings, assert_snapshot, glob};
+use markup_fmt::{Language, config::FormatOptions, detect_language, format_text};
 use std::{collections::HashMap, fs, path::Path};
 
 #[test]

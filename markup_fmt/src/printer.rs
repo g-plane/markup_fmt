@@ -1,10 +1,10 @@
 use crate::{
+    Language,
     ast::*,
     config::{Quotes, ScriptFormatter, VSlotStyle, VueComponentCase, WhitespaceSensitivity},
     ctx::{Ctx, Hints},
     helpers,
     state::State,
-    Language,
 };
 use itertools::Itertools;
 use std::borrow::Cow;
@@ -630,112 +630,116 @@ impl<'s> DocGen<'s> for Element<'s> {
             )
         };
 
-        if tag_name.eq_ignore_ascii_case("script") && ctx.language != Language::Xml {
-            if let [Node {
-                kind: NodeKind::Text(text_node),
-                ..
-            }] = &self.children[..]
-            {
-                if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                    docs.push(Doc::hard_line());
+        if tag_name.eq_ignore_ascii_case("script")
+            && let [
+                Node {
+                    kind: NodeKind::Text(text_node),
+                    ..
+                },
+            ] = &self.children[..]
+        {
+            if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                docs.push(Doc::hard_line());
+            } else {
+                let is_json = self.attrs.iter().any(|attr| {
+                    if let Attribute::Native(native_attr) = attr {
+                        native_attr.name.eq_ignore_ascii_case("type")
+                            && native_attr.value.is_some_and(|(value, _)| {
+                                value == "importmap"
+                                    || value == "application/json"
+                                    || value == "application/ld+json"
+                            })
+                    } else {
+                        false
+                    }
+                });
+                let is_script_indent = ctx.script_indent();
+                let formatted = if is_json {
+                    ctx.format_json(text_node.raw, text_node.start, &state)
                 } else {
-                    let is_json = self.attrs.iter().any(|attr| {
-                        if let Attribute::Native(native_attr) = attr {
-                            native_attr.name.eq_ignore_ascii_case("type")
-                                && native_attr.value.is_some_and(|(value, _)| {
-                                    value == "importmap"
-                                        || value == "application/json"
-                                        || value == "application/ld+json"
-                                })
-                        } else {
-                            false
-                        }
-                    });
-                    let is_script_indent = ctx.script_indent();
-                    let formatted = if is_json {
-                        ctx.format_json(text_node.raw, text_node.start, &state)
+                    if is_script_indent {
+                        state.indent_level += 1;
+                    }
+                    ctx.format_script(
+                        text_node.raw,
+                        self.attrs
+                            .iter()
+                            .find_map(|attr| match attr {
+                                Attribute::Native(native_attribute)
+                                    if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                                {
+                                    native_attribute.value.map(|(value, _)| value)
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                                "ts"
+                            } else {
+                                "js"
+                            }),
+                        text_node.start,
+                        &state,
+                    )
+                };
+                let doc = if !is_json
+                    && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
+                {
+                    Doc::hard_line().concat(reflow_owned(formatted.trim()))
+                } else {
+                    Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
+                };
+                docs.push(
+                    if is_script_indent {
+                        doc.nest(ctx.indent_width)
                     } else {
-                        if is_script_indent {
-                            state.indent_level += 1;
-                        }
-                        ctx.format_script(
-                            text_node.raw,
-                            self.attrs
-                                .iter()
-                                .find_map(|attr| match attr {
-                                    Attribute::Native(native_attribute)
-                                        if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                                    {
-                                        native_attribute.value.map(|(value, _)| value)
-                                    }
-                                    _ => None,
-                                })
-                                .unwrap_or(if matches!(ctx.language, Language::Astro) {
-                                    "ts"
-                                } else {
-                                    "js"
-                                }),
-                            text_node.start,
-                            &state,
-                        )
-                    };
-                    let doc = if !is_json
-                        && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
-                    {
-                        Doc::hard_line().concat(reflow_owned(formatted.trim()))
-                    } else {
-                        Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
-                    };
-                    docs.push(
-                        if is_script_indent {
-                            doc.nest(ctx.indent_width)
-                        } else {
-                            doc
-                        }
-                        .append(Doc::hard_line()),
-                    );
-                }
+                        doc
+                    }
+                    .append(Doc::hard_line()),
+                );
             }
-        } else if tag_name.eq_ignore_ascii_case("style") && ctx.language != Language::Xml {
-            if let [Node {
-                kind: NodeKind::Text(text_node),
-                ..
-            }] = &self.children[..]
-            {
-                if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                    docs.push(Doc::hard_line());
-                } else {
-                    let lang = self
-                        .attrs
-                        .iter()
-                        .find_map(|attr| match attr {
-                            Attribute::Native(native_attribute)
-                                if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                            {
-                                native_attribute.value.map(|(value, _)| value)
-                            }
-                            _ => None,
-                        })
-                        .unwrap_or("css");
-                    let formatted = ctx.format_style(text_node.raw, lang, text_node.start, &state);
-                    let doc = Doc::hard_line()
-                        .concat(reflow_with_indent(formatted.trim(), lang != "sass"));
-                    docs.push(
-                        if ctx.style_indent() {
-                            doc.nest(ctx.indent_width)
-                        } else {
-                            doc
+        } else if tag_name.eq_ignore_ascii_case("style")
+            && let [
+                Node {
+                    kind: NodeKind::Text(text_node),
+                    ..
+                },
+            ] = &self.children[..]
+        {
+            if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                docs.push(Doc::hard_line());
+            } else {
+                let lang = self
+                    .attrs
+                    .iter()
+                    .find_map(|attr| match attr {
+                        Attribute::Native(native_attribute)
+                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                        {
+                            native_attribute.value.map(|(value, _)| value)
                         }
-                        .append(Doc::hard_line()),
-                    );
-                }
+                        _ => None,
+                    })
+                    .unwrap_or("css");
+                let formatted = ctx.format_style(text_node.raw, lang, text_node.start, &state);
+                let doc =
+                    Doc::hard_line().concat(reflow_with_indent(formatted.trim(), lang != "sass"));
+                docs.push(
+                    if ctx.style_indent() {
+                        doc.nest(ctx.indent_width)
+                    } else {
+                        doc
+                    }
+                    .append(Doc::hard_line()),
+                );
             }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {
-            if let [Node {
-                kind: NodeKind::Text(text_node),
-                ..
-            }] = &self.children[..]
+            if let [
+                Node {
+                    kind: NodeKind::Text(text_node),
+                    ..
+                },
+            ] = &self.children[..]
             {
                 docs.extend(reflow_raw(text_node.raw));
             }
@@ -1958,11 +1962,12 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 docs.push(Doc::text("="));
                 docs.push(format_attr_value(value, &ctx.options.quotes));
             }
-        } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false)) && is_v_bind {
-            if let Some(arg_and_modifiers) = self.arg_and_modifiers {
-                docs.push(Doc::text("="));
-                docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
-            }
+        } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false))
+            && is_v_bind
+            && let Some(arg_and_modifiers) = self.arg_and_modifiers
+        {
+            docs.push(Doc::text("="));
+            docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
         }
 
         Doc::list(docs)
@@ -2101,10 +2106,12 @@ fn reflow_with_indent<'i, 'o: 'i>(
 fn is_empty_element(children: &[Node], is_whitespace_sensitive: bool) -> bool {
     match &children {
         [] => true,
-        [Node {
-            kind: NodeKind::Text(text_node),
-            ..
-        }] => {
+        [
+            Node {
+                kind: NodeKind::Text(text_node),
+                ..
+            },
+        ] => {
             !is_whitespace_sensitive
                 && text_node
                     .raw
@@ -2531,10 +2538,12 @@ where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
     match children {
-        [Node {
-            kind: NodeKind::Text(text_node),
-            ..
-        }] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
+        [
+            Node {
+                kind: NodeKind::Text(text_node),
+                ..
+            },
+        ] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
         _ => format_ws_sensitive_leading_ws(children)
             .append(format_children_without_inserting_linebreak(
                 children, ctx, state,

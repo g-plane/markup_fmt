@@ -1,8 +1,9 @@
 use anyhow::Error;
-use insta::{assert_snapshot, glob, Settings};
+use insta::{Settings, assert_snapshot, glob};
 use markup_fmt::{
+    FormatError,
     config::{FormatOptions, ScriptFormatter},
-    detect_language, format_text, FormatError,
+    detect_language, format_text,
 };
 use std::{borrow::Cow, fs, io, path::Path};
 

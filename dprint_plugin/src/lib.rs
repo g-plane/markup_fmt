@@ -9,8 +9,9 @@ use dprint_core::{
     },
 };
 use markup_fmt::{
+    FormatError, Hints,
     config::{FormatOptions, Quotes, ScriptFormatter},
-    detect_language, format_text, FormatError, Hints,
+    detect_language, format_text,
 };
 
 mod config;

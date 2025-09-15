@@ -194,11 +194,10 @@ impl<'s> Parser<'s> {
                 .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
                 .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
                 .is_some()
+                && let Some((start, _)) = self.chars.peek()
             {
-                if let Some((start, _)) = self.chars.peek() {
-                    let start = *start;
-                    aliases.push(self.parse_angular_inline_script(start)?);
-                }
+                let start = *start;
+                aliases.push(self.parse_angular_inline_script(start)?);
             }
         }
 
@@ -1259,13 +1258,11 @@ impl<'s> Parser<'s> {
 
     /// This will consume the open and close char.
     fn parse_inside(&mut self, open: char, close: char, inclusive: bool) -> PResult<&'s str> {
-        let Some(start) = self.chars.next_if(|(_, c)| *c == open).map(|(i, c)| {
-            if inclusive {
-                i
-            } else {
-                i + c.len_utf8()
-            }
-        }) else {
+        let Some(start) = self
+            .chars
+            .next_if(|(_, c)| *c == open)
+            .map(|(i, c)| if inclusive { i } else { i + c.len_utf8() })
+        else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar(open)));
         };
         let mut end = start;
@@ -1434,11 +1431,12 @@ impl<'s> Parser<'s> {
                             .map(|(kind, raw)| T::build(kind, raw))?,
                         );
                     } else {
-                        body.push(JinjaTagOrChildren::Children(vec![self
-                            .with_taken(|parser| {
+                        body.push(JinjaTagOrChildren::Children(vec![
+                            self.with_taken(|parser| {
                                 parser.parse_jinja_tag_or_block(Some(next_tag), children_parser)
                             })
-                            .map(|(kind, raw)| T::build(kind, raw))?]));
+                            .map(|(kind, raw)| T::build(kind, raw))?,
+                        ]));
                     }
                 } else {
                     break;
