@@ -630,7 +630,7 @@ impl<'s> DocGen<'s> for Element<'s> {
             )
         };
 
-        if tag_name.eq_ignore_ascii_case("script") {
+        if tag_name.eq_ignore_ascii_case("script") && ctx.language != Language::Xml {
             if let [Node {
                 kind: NodeKind::Text(text_node),
                 ..
@@ -696,7 +696,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     );
                 }
             }
-        } else if tag_name.eq_ignore_ascii_case("style") {
+        } else if tag_name.eq_ignore_ascii_case("style") && ctx.language != Language::Xml {
             if let [Node {
                 kind: NodeKind::Text(text_node),
                 ..
