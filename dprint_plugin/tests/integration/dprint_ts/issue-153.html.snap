@@ -1,0 +1,7 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<script>
+  const s =
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+</script>

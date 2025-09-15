@@ -340,12 +340,7 @@ where
             Hints {
                 print_width: self
                     .print_width
-                    .saturating_sub((state.indent_level as usize) * self.indent_width)
-                    .saturating_sub(if self.script_indent() {
-                        self.indent_width
-                    } else {
-                        0
-                    }),
+                    .saturating_sub((state.indent_level as usize) * self.indent_width),
                 indent_level: state.indent_level,
                 attr: false,
                 ext: lang,
