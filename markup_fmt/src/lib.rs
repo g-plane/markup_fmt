@@ -138,3 +138,69 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::convert::Infallible;
+
+    #[test]
+    fn mjs() {
+        let mut ext = None;
+        let _ = format_text(
+            "<script type=module>;</script>",
+            Language::Html,
+            &Default::default(),
+            |code, hints| {
+                ext = Some(hints.ext.to_owned());
+                Ok::<_, Infallible>(Cow::from(code))
+            },
+        );
+        assert_eq!(ext.as_deref(), Some("mjs"));
+    }
+
+    #[test]
+    fn mts() {
+        let mut ext = None;
+        let _ = format_text(
+            "<script type=\"module\" lang='ts'>;</script>",
+            Language::Html,
+            &Default::default(),
+            |code, hints| {
+                ext = Some(hints.ext.to_owned());
+                Ok::<_, Infallible>(Cow::from(code))
+            },
+        );
+        assert_eq!(ext.as_deref(), Some("mts"));
+    }
+
+    #[test]
+    fn jsx_with_module() {
+        let mut ext = None;
+        let _ = format_text(
+            "<script type=module lang=jsx>;</script>",
+            Language::Html,
+            &Default::default(),
+            |code, hints| {
+                ext = Some(hints.ext.to_owned());
+                Ok::<_, Infallible>(Cow::from(code))
+            },
+        );
+        assert_eq!(ext.as_deref(), Some("jsx"));
+    }
+
+    #[test]
+    fn tsx_with_module() {
+        let mut ext = None;
+        let _ = format_text(
+            "<script type=\"module\" lang='tsx'>;</script>",
+            Language::Html,
+            &Default::default(),
+            |code, hints| {
+                ext = Some(hints.ext.to_owned());
+                Ok::<_, Infallible>(Cow::from(code))
+            },
+        );
+        assert_eq!(ext.as_deref(), Some("tsx"));
+    }
+}

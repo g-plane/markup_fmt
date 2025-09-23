@@ -660,26 +660,37 @@ impl<'s> DocGen<'s> for Element<'s> {
                     if is_script_indent {
                         state.indent_level += 1;
                     }
-                    ctx.format_script(
-                        text_node.raw,
-                        self.attrs
-                            .iter()
-                            .find_map(|attr| match attr {
-                                Attribute::Native(native_attribute)
-                                    if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                                {
-                                    native_attribute.value.map(|(value, _)| value)
-                                }
-                                _ => None,
-                            })
-                            .unwrap_or(if matches!(ctx.language, Language::Astro) {
-                                "ts"
-                            } else {
-                                "js"
-                            }),
-                        text_node.start,
-                        &state,
-                    )
+                    let lang = self
+                        .attrs
+                        .iter()
+                        .find_map(|attr| match attr {
+                            Attribute::Native(native)
+                                if native.name.eq_ignore_ascii_case("lang") =>
+                            {
+                                native.value.map(|(value, _)| value)
+                            }
+                            _ => None,
+                        })
+                        .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                            "ts"
+                        } else {
+                            "js"
+                        });
+                    let lang = if self.attrs.iter().any(|attr| match attr {
+                        Attribute::Native(native) if native.name.eq_ignore_ascii_case("type") => {
+                            native.value.is_some_and(|(value, _)| value == "module")
+                        }
+                        _ => false,
+                    }) {
+                        match lang {
+                            "ts" => "mts",
+                            "js" => "mjs",
+                            lang => lang,
+                        }
+                    } else {
+                        lang
+                    };
+                    ctx.format_script(text_node.raw, lang, text_node.start, &state)
                 };
                 let doc = if !is_json
                     && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
