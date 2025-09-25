@@ -1,4 +1,5 @@
 use anyhow::Error;
+use dprint_core::configuration::GlobalConfiguration;
 use insta::{Settings, assert_snapshot, glob};
 use markup_fmt::{
     FormatError,
@@ -29,6 +30,12 @@ fn integration_with_dprint_ts_snapshot() {
                 let ext = hints.ext;
                 let additional_config =
                     dprint_plugin_markup::build_additional_config(hints, &options);
+                let global_config = GlobalConfiguration {
+                    line_width: Some(options.layout.print_width as u32),
+                    use_tabs: Some(options.layout.use_tabs),
+                    indent_width: Some(options.layout.indent_width as u8),
+                    ..Default::default()
+                };
                 if let Some(syntax) = malva::detect_syntax(&Path::new("file").with_extension(ext)) {
                     malva::format_text(
                         code,
@@ -44,7 +51,7 @@ fn integration_with_dprint_ts_snapshot() {
                         code,
                         &dprint_plugin_json::configuration::resolve_config(
                             additional_config,
-                            &Default::default(),
+                            &global_config,
                         )
                         .config,
                     )
@@ -63,7 +70,7 @@ fn integration_with_dprint_ts_snapshot() {
                             text: code.to_owned(),
                             config: &dprint_plugin_typescript::configuration::resolve_config(
                                 additional_config,
-                                &Default::default(),
+                                &global_config,
                             )
                             .config,
                             external_formatter: None,

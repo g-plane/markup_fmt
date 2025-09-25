@@ -7,8 +7,6 @@ use crate::{
 use memchr::memchr;
 use std::borrow::Cow;
 
-const TYPE_PARAMS_INDENT: usize = "<script setup lang=\"ts\" generic=\"\">".len();
-
 const QUOTES: [&str; 3] = ["\"", "\"", "'"];
 
 pub(crate) struct Ctx<'b, E, F>
@@ -162,10 +160,7 @@ where
             let formatted = self.try_format_with_external_formatter(
                 wrapped,
                 Hints {
-                    print_width: self
-                        .print_width
-                        .saturating_sub((state.indent_level as usize) * self.indent_width)
-                        .saturating_sub(2), // this is technically wrong, just workaround
+                    print_width: self.print_width,
                     indent_level: state.indent_level,
                     attr,
                     ext: "tsx",
@@ -239,10 +234,7 @@ where
             let formatted = self.format_with_external_formatter(
                 wrapped,
                 Hints {
-                    print_width: self
-                        .print_width
-                        .saturating_sub((state.indent_level as usize) * self.indent_width)
-                        .saturating_sub(2), // this is technically wrong, just workaround
+                    print_width: self.print_width,
                     indent_level: state.indent_level,
                     attr: false,
                     ext: "ts",
@@ -272,10 +264,7 @@ where
             let formatted = self.format_with_external_formatter(
                 wrapped,
                 Hints {
-                    print_width: self
-                        .print_width
-                        .saturating_sub((state.indent_level as usize) * self.indent_width)
-                        .saturating_sub(TYPE_PARAMS_INDENT), // this is technically wrong, just workaround
+                    print_width: self.print_width,
                     indent_level: state.indent_level,
                     attr: true,
                     ext: "ts",
@@ -303,10 +292,7 @@ where
             let formatted = self.format_with_external_formatter(
                 wrapped,
                 Hints {
-                    print_width: self
-                        .print_width
-                        .saturating_sub((state.indent_level as usize) * self.indent_width)
-                        .saturating_sub(keyword.len() + 1), // this is technically wrong, just workaround
+                    print_width: self.print_width,
                     indent_level: state.indent_level,
                     attr: false,
                     ext: "js",
@@ -338,9 +324,7 @@ where
                 .replace(|c: char| !c.is_ascii_whitespace(), " ")
                 + code,
             Hints {
-                print_width: self
-                    .print_width
-                    .saturating_sub((state.indent_level as usize) * self.indent_width),
+                print_width: self.print_width,
                 indent_level: state.indent_level,
                 attr: false,
                 ext: lang,
