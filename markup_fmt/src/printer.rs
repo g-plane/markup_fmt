@@ -1595,7 +1595,7 @@ impl<'s> DocGen<'s> for TextNode<'s> {
             if self.raw.chars().all(|c| c.is_ascii_whitespace()) {
                 Doc::nil()
             } else {
-                Doc::list(reflow_raw(self.raw).collect())
+                Doc::list(reflow_raw(self.raw.trim_ascii()).collect())
             }
         } else {
             // for #16

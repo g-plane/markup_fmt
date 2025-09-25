@@ -1,0 +1,9 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<?xml version="1.0" encoding="utf-8"?>
+<p>
+  The     partner
+  <t t-out="object.name" />
+  has been submitted.
+</p>
