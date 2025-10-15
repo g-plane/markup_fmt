@@ -1,0 +1,14 @@
+<template>
+  <div>{{ $t('hello') }}</div>
+</template>
+
+<script setup lang="ts">
+const props = defineProps<{ name: string }>()
+</script>
+
+<i18n lang="json">
+{
+"en":    {"hello":   "Hello"},
+  "de": {"hello":"Hallo"   }
+}
+</i18n>

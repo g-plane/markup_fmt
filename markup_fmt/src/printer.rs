@@ -743,6 +743,51 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .append(Doc::hard_line()),
                 );
             }
+        } else if tag_name.eq_ignore_ascii_case("i18n")
+            && let [
+                Node {
+                    kind: NodeKind::Text(text_node),
+                    ..
+                },
+            ] = &self.children[..]
+        {
+            if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                docs.push(Doc::hard_line());
+            } else {
+                let lang = self
+                    .attrs
+                    .iter()
+                    .find_map(|attr| match attr {
+                        Attribute::Native(native_attribute)
+                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                        {
+                            native_attribute.value.map(|(value, _)| value)
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or("json");
+                let is_script_indent = ctx.script_indent();
+                let formatted = if lang == "json" {
+                    ctx.format_json(text_node.raw, text_node.start, &state)
+                } else {
+                    ctx.format_script(text_node.raw, lang, text_node.start, &state)
+                };
+                let doc = if lang == "json"
+                    && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
+                {
+                    Doc::hard_line().concat(reflow_owned(formatted.trim()))
+                } else {
+                    Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
+                };
+                docs.push(
+                    if is_script_indent {
+                        doc.nest(ctx.indent_width)
+                    } else {
+                        doc
+                    }
+                    .append(Doc::hard_line()),
+                );
+            }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {
             if let [
