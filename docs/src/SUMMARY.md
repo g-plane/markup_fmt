@@ -23,6 +23,7 @@
   - [vSlotStyle](./config/v-slot-style.md)
   - [vBindSameNameShortHand](./config/v-bind-same-name-short-hand.md)
   - [vueComponentCase](./config/vue-component-case.md)
+  - [vue.customBlock](./config/vue-custom-block.md)
   - [strictSvelteAttr](./config/strict-svelte-attr.md)
   - [svelteAttrShorthand](./config/svelte-attr-shorthand.md)
   - [svelteDirectiveShorthand](./config/svelte-directive-shorthand.md)
