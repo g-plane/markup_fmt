@@ -1,7 +1,7 @@
 use crate::{
     Language,
     ast::*,
-    config::{Quotes, ScriptFormatter, VSlotStyle, VueComponentCase, WhitespaceSensitivity},
+    config::{Quotes, ScriptFormatter, VSlotStyle, VueComponentCase, VueCustomBlock, WhitespaceSensitivity},
     ctx::{Ctx, Hints},
     helpers,
     state::State,
@@ -743,7 +743,11 @@ impl<'s> DocGen<'s> for Element<'s> {
                     .append(Doc::hard_line()),
                 );
             }
-        } else if tag_name.eq_ignore_ascii_case("i18n")
+        } else if matches!(ctx.language, Language::Vue)
+            && state.is_root
+            && !tag_name.eq_ignore_ascii_case("template")
+            && !tag_name.eq_ignore_ascii_case("script")
+            && !tag_name.eq_ignore_ascii_case("style")
             && let [
                 Node {
                     kind: NodeKind::Text(text_node),
@@ -751,42 +755,66 @@ impl<'s> DocGen<'s> for Element<'s> {
                 },
             ] = &self.children[..]
         {
-            if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                docs.push(Doc::hard_line());
-            } else {
-                let lang = self
-                    .attrs
-                    .iter()
-                    .find_map(|attr| match attr {
-                        Attribute::Native(native_attribute)
-                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                        {
-                            native_attribute.value.map(|(value, _)| value)
-                        }
-                        _ => None,
-                    })
-                    .unwrap_or("json");
-                let is_script_indent = ctx.script_indent();
-                let formatted = if lang == "json" {
-                    ctx.format_json(text_node.raw, text_node.start, &state)
-                } else {
-                    ctx.format_script(text_node.raw, lang, text_node.start, &state)
-                };
-                let doc = if lang == "json"
-                    && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
-                {
-                    Doc::hard_line().concat(reflow_owned(formatted.trim()))
-                } else {
-                    Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
-                };
-                docs.push(
-                    if is_script_indent {
-                        doc.nest(ctx.indent_width)
-                    } else {
-                        doc
+            // Handle Vue custom blocks (like <i18n>, <docs>, etc.)
+            match ctx.options.vue_custom_block {
+                VueCustomBlock::None => {
+                    // Don't format, preserve raw content (like <pre>)
+                    docs.extend(reflow_raw(text_node.raw));
+                }
+                VueCustomBlock::Squash => {
+                    // Current behaviour - format as regular content (squash whitespace)
+                    for child in &self.children {
+                        docs.push(child.kind.doc(ctx, &state));
                     }
-                    .append(Doc::hard_line()),
-                );
+                }
+                VueCustomBlock::LangAttribute => {
+                    // Use lang attribute to determine formatting
+                    if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                        docs.push(Doc::hard_line());
+                    } else {
+                        let lang_opt = self
+                            .attrs
+                            .iter()
+                            .find_map(|attr| match attr {
+                                Attribute::Native(native_attribute)
+                                    if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                                {
+                                    native_attribute.value.map(|(value, _)| value)
+                                }
+                                _ => None,
+                            });
+
+                        if let Some(lang) = lang_opt {
+                            // Format according to the lang attribute
+                            let is_script_indent = ctx.script_indent();
+                            let formatted = if lang == "json" {
+                                ctx.format_json(text_node.raw, text_node.start, &state)
+                            } else {
+                                ctx.format_script(text_node.raw, lang, text_node.start, &state)
+                            };
+                            let doc = if lang == "json"
+                                && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
+                            {
+                                Doc::hard_line().concat(reflow_owned(formatted.trim()))
+                            } else {
+                                Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
+                            };
+                            docs.push(
+                                if is_script_indent {
+                                    doc.nest(ctx.indent_width)
+                                } else {
+                                    doc
+                                }
+                                .append(Doc::hard_line()),
+                            );
+                        } else {
+                            // No lang attribute, don't format
+                            for child in &self.children {
+                                docs.push(child.kind.doc(ctx, &state));
+                            }
+                        }
+                    }
+                }
             }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {

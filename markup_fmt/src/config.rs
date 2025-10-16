@@ -231,6 +231,12 @@ pub struct LanguageOptions {
 
     #[cfg_attr(feature = "config_serde", serde(alias = "ignoreFileCommentDirective"))]
     pub ignore_file_comment_directive: String,
+
+    #[cfg_attr(
+        feature = "config_serde",
+        serde(rename = "vue.custom_block", alias = "vue.customBlock", alias = "vueCustomBlock")
+    )]
+    pub vue_custom_block: VueCustomBlock,
 }
 
 impl Default for LanguageOptions {
@@ -278,6 +284,7 @@ impl Default for LanguageOptions {
             script_formatter: None,
             ignore_comment_directive: "markup-fmt-ignore".into(),
             ignore_file_comment_directive: "markup-fmt-ignore-file".into(),
+            vue_custom_block: VueCustomBlock::default(),
         }
     }
 }
@@ -380,4 +387,19 @@ pub enum VueComponentCase {
 pub enum ScriptFormatter {
     Dprint,
     Biome,
+}
+
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "kebab-case"))]
+/// Configuration for Vue custom blocks (like `<i18n>`).
+pub enum VueCustomBlock {
+    /// Use the lang attribute like `<i18n lang="json">` to specify how this block should be formatted.
+    /// Not setting the lang attribute would result in the block not being formatted.
+    #[default]
+    LangAttribute,
+    /// Current behaviour. Remove new-lines and insert new-lines to fit line-width.
+    Squash,
+    /// Do not format custom blocks. Same behaviour as adding `<!-- markup-fmt-ignore -->` in front of the block.
+    None,
 }

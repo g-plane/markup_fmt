@@ -409,6 +409,23 @@ pub(crate) fn resolve_config(
                 "dprint-ignore-file".into(),
                 &mut diagnostics,
             ),
+            vue_custom_block: match &*get_value(
+                &mut config,
+                "vue.customBlock",
+                "lang-attribute".to_string(),
+                &mut diagnostics,
+            ) {
+                "lang-attribute" | "langAttribute" => VueCustomBlock::LangAttribute,
+                "squash" => VueCustomBlock::Squash,
+                "none" => VueCustomBlock::None,
+                _ => {
+                    diagnostics.push(ConfigurationDiagnostic {
+                        property_name: "vue.customBlock".into(),
+                        message: "invalid value for config `vue.customBlock`".into(),
+                    });
+                    Default::default()
+                }
+            },
         },
     };
 

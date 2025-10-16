@@ -1,5 +1,6 @@
 ---
 source: markup_fmt/tests/fmt.rs
+assertion_line: 30
 ---
 <template>
   <div>
