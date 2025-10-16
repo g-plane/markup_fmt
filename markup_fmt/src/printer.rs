@@ -753,22 +753,22 @@ impl<'s> DocGen<'s> for Element<'s> {
             match ctx.options.vue_custom_block {
                 VueCustomBlock::None => {
                     // Don't format, preserve raw content (like <pre>)
-                    // Find the non-whitespace text node
-                    let content_node = self.children.iter().find_map(|child| {
+                    // Process all children to preserve everything (text, comments, etc.)
+                    let mut has_content = false;
+                    for child in &self.children {
                         if let Node { kind: NodeKind::Text(text_node), .. } = child {
                             if !text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                                Some(text_node)
-                            } else {
-                                None
+                                docs.extend(reflow_raw(text_node.raw));
+                                has_content = true;
                             }
                         } else {
-                            None
+                            // Preserve other nodes like comments
+                            docs.push(child.kind.doc(ctx, &state));
+                            has_content = true;
                         }
-                    });
+                    }
 
-                    if let Some(text_node) = content_node {
-                        docs.extend(reflow_raw(text_node.raw));
-                    } else {
+                    if !has_content {
                         // Only whitespace - add a line break
                         docs.push(Doc::hard_line());
                     }
@@ -781,33 +781,33 @@ impl<'s> DocGen<'s> for Element<'s> {
                 }
                 VueCustomBlock::LangAttribute => {
                     // Use lang attribute to determine formatting
-                    // Find the non-whitespace text node
-                    let content_node = self.children.iter().find_map(|child| {
-                        if let Node { kind: NodeKind::Text(text_node), .. } = child {
-                            if !text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                                Some(text_node)
+                    let lang_opt = self
+                        .attrs
+                        .iter()
+                        .find_map(|attr| match attr {
+                            Attribute::Native(native_attribute)
+                                if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                            {
+                                native_attribute.value.map(|(value, _)| value)
+                            }
+                            _ => None,
+                        });
+
+                    if let Some(lang) = lang_opt {
+                        // Has lang attribute - find the first non-whitespace text node to format
+                        let content_node = self.children.iter().find_map(|child| {
+                            if let Node { kind: NodeKind::Text(text_node), .. } = child {
+                                if !text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                                    Some(text_node)
+                                } else {
+                                    None
+                                }
                             } else {
                                 None
                             }
-                        } else {
-                            None
-                        }
-                    });
+                        });
 
-                    if let Some(text_node) = content_node {
-                        let lang_opt = self
-                            .attrs
-                            .iter()
-                            .find_map(|attr| match attr {
-                                Attribute::Native(native_attribute)
-                                    if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                                {
-                                    native_attribute.value.map(|(value, _)| value)
-                                }
-                                _ => None,
-                            });
-
-                        if let Some(lang) = lang_opt {
+                        if let Some(text_node) = content_node {
                             // Format according to the lang attribute
                             let is_script_indent = ctx.script_indent();
                             let formatted = if lang == "json" {
@@ -831,12 +831,29 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 .append(Doc::hard_line()),
                             );
                         } else {
-                            // No lang attribute, don't format (preserve raw content)
-                            docs.extend(reflow_raw(text_node.raw));
+                            // Only whitespace
+                            docs.push(Doc::hard_line());
                         }
                     } else {
-                        // Only whitespace or no content
-                        docs.push(Doc::hard_line());
+                        // No lang attribute - preserve all content (text, comments, etc.)
+                        let mut has_content = false;
+                        for child in &self.children {
+                            if let Node { kind: NodeKind::Text(text_node), .. } = child {
+                                if !text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                                    docs.extend(reflow_raw(text_node.raw));
+                                    has_content = true;
+                                }
+                            } else {
+                                // Preserve other nodes like comments
+                                docs.push(child.kind.doc(ctx, &state));
+                                has_content = true;
+                            }
+                        }
+
+                        if !has_content {
+                            // Only whitespace
+                            docs.push(Doc::hard_line());
+                        }
                     }
                 }
             }

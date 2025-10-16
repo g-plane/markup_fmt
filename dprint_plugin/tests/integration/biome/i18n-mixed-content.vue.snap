@@ -1,0 +1,16 @@
+---
+source: dprint_plugin/tests/integration.rs
+assertion_line: 218
+---
+<template>
+  <div>{{ $t("hello") }}</div>
+</template>
+
+<docs
+>
+Some documentation text.
+
+More documentation on another line.
+
+Final paragraph.
+</docs>
