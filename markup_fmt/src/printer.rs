@@ -744,22 +744,34 @@ impl<'s> DocGen<'s> for Element<'s> {
                 );
             }
         } else if matches!(ctx.language, Language::Vue)
-            && state.is_root
+            && state.indent_level == 0
             && !tag_name.eq_ignore_ascii_case("template")
             && !tag_name.eq_ignore_ascii_case("script")
             && !tag_name.eq_ignore_ascii_case("style")
-            && let [
-                Node {
-                    kind: NodeKind::Text(text_node),
-                    ..
-                },
-            ] = &self.children[..]
         {
             // Handle Vue custom blocks (like <i18n>, <docs>, etc.)
             match ctx.options.vue_custom_block {
                 VueCustomBlock::None => {
                     // Don't format, preserve raw content (like <pre>)
-                    docs.extend(reflow_raw(text_node.raw));
+                    // Find the non-whitespace text node
+                    let content_node = self.children.iter().find_map(|child| {
+                        if let Node { kind: NodeKind::Text(text_node), .. } = child {
+                            if !text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                                Some(text_node)
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    });
+
+                    if let Some(text_node) = content_node {
+                        docs.extend(reflow_raw(text_node.raw));
+                    } else {
+                        // Only whitespace - add a line break
+                        docs.push(Doc::hard_line());
+                    }
                 }
                 VueCustomBlock::Squash => {
                     // Current behaviour - format as regular content (squash whitespace)
@@ -769,9 +781,20 @@ impl<'s> DocGen<'s> for Element<'s> {
                 }
                 VueCustomBlock::LangAttribute => {
                     // Use lang attribute to determine formatting
-                    if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                        docs.push(Doc::hard_line());
-                    } else {
+                    // Find the non-whitespace text node
+                    let content_node = self.children.iter().find_map(|child| {
+                        if let Node { kind: NodeKind::Text(text_node), .. } = child {
+                            if !text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                                Some(text_node)
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    });
+
+                    if let Some(text_node) = content_node {
                         let lang_opt = self
                             .attrs
                             .iter()
@@ -813,6 +836,9 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 docs.push(child.kind.doc(ctx, &state));
                             }
                         }
+                    } else {
+                        // Only whitespace or no content
+                        docs.push(Doc::hard_line());
                     }
                 }
             }

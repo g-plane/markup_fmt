@@ -10,5 +10,8 @@ const props = defineProps<{ name: string }>();
 </script>
 
 <i18n lang="json">
-  { "en": {"hello": "Hello"}, "de": {"hello":"Hallo" } }
+{
+  "en": { "hello": "Hello" },
+  "de": { "hello": "Hallo" }
+}
 </i18n>
