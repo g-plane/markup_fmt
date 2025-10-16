@@ -1,5 +1,6 @@
 ---
 source: markup_fmt/tests/fmt.rs
+assertion_line: 23
 ---
 <script setup lang="ts">
 console.log("hello")
@@ -14,7 +15,8 @@ p {
 <unknown-block
   foo bar="bar"
   baz long_long_long_long_attribute
-></unknown-block>
+>
+</unknown-block>
 
 <script lang="ts" src="./long_long_long_long_long_long_file_path.ts">
 </script>

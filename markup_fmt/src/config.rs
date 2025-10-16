@@ -392,14 +392,44 @@ pub enum ScriptFormatter {
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "config_serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "config_serde", serde(rename_all = "kebab-case"))]
-/// Configuration for Vue custom blocks (like `<i18n>`).
+/// Configuration for Vue custom blocks (like `<i18n>`, `<docs>`, etc.).
+///
+/// Vue Single File Components (SFC) can contain custom blocks in addition to
+/// `<template>`, `<script>`, and `<style>`. These custom blocks are top-level
+/// elements used for various purposes like internationalization or documentation.
+///
+/// # Examples
+///
+/// **LangAttribute mode (default):**
+/// - `<i18n lang="json">...</i18n>` → Content formatted as JSON
+/// - `<i18n>...</i18n>` → Raw content preserved (not formatted)
+///
+/// **Squash mode:**
+/// - `<i18n>...</i18n>` → Content formatted as HTML (whitespace collapsed)
+///
+/// **None mode:**
+/// - `<i18n lang="json">...</i18n>` → Raw content preserved (even with lang attribute)
 pub enum VueCustomBlock {
-    /// Use the lang attribute like `<i18n lang="json">` to specify how this block should be formatted.
-    /// Not setting the lang attribute would result in the block not being formatted.
+    /// Use the `lang` attribute to determine formatting.
+    ///
+    /// When a custom block has a `lang` attribute (e.g., `<i18n lang="json">`),
+    /// the content will be formatted according to that language using the configured
+    /// external formatter.
+    ///
+    /// When no `lang` attribute is present, the content is preserved as-is without
+    /// any formatting, maintaining the original whitespace and indentation.
     #[default]
     LangAttribute,
-    /// Current behaviour. Remove new-lines and insert new-lines to fit line-width.
+    /// Format content as HTML, collapsing whitespace.
+    ///
+    /// This is the legacy behavior. Content is treated as regular HTML content,
+    /// with whitespace collapsed and line breaks inserted to fit within the
+    /// configured print width. The `lang` attribute is ignored.
     Squash,
-    /// Do not format custom blocks. Same behaviour as adding `<!-- markup-fmt-ignore -->` in front of the block.
+    /// Never format custom block content.
+    ///
+    /// All custom block content is preserved exactly as written, regardless of
+    /// the presence of a `lang` attribute. This is equivalent to adding
+    /// `<!-- markup-fmt-ignore -->` before each custom block.
     None,
 }

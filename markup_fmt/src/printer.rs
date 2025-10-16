@@ -831,10 +831,8 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 .append(Doc::hard_line()),
                             );
                         } else {
-                            // No lang attribute, don't format
-                            for child in &self.children {
-                                docs.push(child.kind.doc(ctx, &state));
-                            }
+                            // No lang attribute, don't format (preserve raw content)
+                            docs.extend(reflow_raw(text_node.raw));
                         }
                     } else {
                         // Only whitespace or no content
