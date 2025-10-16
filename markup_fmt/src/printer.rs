@@ -792,7 +792,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                             } else {
                                 ctx.format_script(text_node.raw, lang, text_node.start, &state)
                             };
-                            let doc = if lang == "json"
+                            let doc = if lang != "json"
                                 && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
                             {
                                 Doc::hard_line().concat(reflow_owned(formatted.trim()))

@@ -1,5 +1,6 @@
 ---
 source: dprint_plugin/tests/integration.rs
+assertion_line: 218
 ---
 <div style="width: 1px; height: 1px"></div>
 

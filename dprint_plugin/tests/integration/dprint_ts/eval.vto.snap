@@ -1,4 +1,5 @@
 ---
 source: dprint_plugin/tests/integration.rs
+assertion_line: 123
 ---
 {{> console.log("Hello, world!") }}

@@ -1,5 +1,6 @@
 ---
 source: dprint_plugin/tests/integration.rs
+assertion_line: 218
 ---
 <script setup lang="ts" generic="T extends string">
 const props = defineProps<{ name: T }>();
