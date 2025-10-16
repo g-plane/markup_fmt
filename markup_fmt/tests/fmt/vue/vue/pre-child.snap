@@ -1,6 +1,5 @@
 ---
 source: markup_fmt/tests/fmt.rs
-assertion_line: 30
 ---
 <template>
   <!-- copied from https://github.com/gitlabhq/gitlabhq/blob/master/app/assets/javascripts/ide/components/jobs/detail.vue -->

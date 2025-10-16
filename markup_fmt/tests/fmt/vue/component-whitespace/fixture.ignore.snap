@@ -1,6 +1,5 @@
 ---
 source: markup_fmt/tests/fmt.rs
-assertion_line: 23
 ---
 <template>
   <p><ExternalLink href="https://www.buymeacoffee.com">buy</ExternalLink>!</p>
