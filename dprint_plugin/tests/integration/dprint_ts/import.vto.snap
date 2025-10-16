@@ -1,6 +1,5 @@
 ---
 source: dprint_plugin/tests/integration.rs
-assertion_line: 123
 ---
 {{ import { message } from "./vars.vto" }}
 {{ import fns from "./functions.vto" }}

@@ -1,6 +1,5 @@
 ---
 source: dprint_plugin/tests/integration.rs
-assertion_line: 218
 ---
 <Component>
   <h1>Astro</h1>

@@ -1,6 +1,5 @@
 ---
 source: dprint_plugin/tests/integration.rs
-assertion_line: 123
 ---
 ---
 // Test 1: we can use the word return in a comment without problems
