@@ -433,6 +433,10 @@ pub(crate) fn resolve_config(
                 "mustache",
                 "xml",
                 "svg",
+                "wsdl",
+                "xsd",
+                "xslt",
+                "xsl",
             ]
             .into_iter()
             .map(String::from)
