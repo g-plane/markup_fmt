@@ -1,4 +1,12 @@
-<script setup lang=ts generic='T    extends    string'>
+<script setup lang=ts generic='
+  T extends z.ZodObject<
+        {
+            [key: string]:
+                | z.ZodString
+                | z.ZodOptional<z.ZodString>;
+        }
+    >
+'>
 const props=defineProps<{name:T}
 >()
 

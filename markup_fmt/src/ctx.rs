@@ -274,6 +274,8 @@ where
             formatted
                 .strip_prefix("type T<")
                 .and_then(|s| s.strip_suffix("> = 0"))
+                .map(|s| s.trim())
+                .map(|s| s.strip_suffix(',').unwrap_or(s))
                 .unwrap_or(formatted)
                 .to_owned()
         }
