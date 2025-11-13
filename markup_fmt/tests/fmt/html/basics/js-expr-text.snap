@@ -1,0 +1,4 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<p>This is not a js expression ${foo}</p>
