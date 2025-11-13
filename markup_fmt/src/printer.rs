@@ -410,7 +410,11 @@ impl<'s> DocGen<'s> for Element<'s> {
             .and_then(|(namespace, name)| namespace.eq_ignore_ascii_case("html").then_some(name))
             .unwrap_or(self.tag_name);
         let formatted_tag_name = match ctx.language {
-            Language::Html | Language::Jinja | Language::Vento | Language::Mustache
+            Language::Html
+            | Language::HtmlJs
+            | Language::Jinja
+            | Language::Vento
+            | Language::Mustache
                 if css_dataset::tags::STANDARD_HTML_TAGS
                     .iter()
                     .any(|tag| tag.eq_ignore_ascii_case(self.tag_name)) =>

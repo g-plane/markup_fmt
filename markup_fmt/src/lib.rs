@@ -124,6 +124,11 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
                 .is_some_and(|file_stem| file_stem.to_string_lossy().ends_with(".component"))
             {
                 Some(Language::Angular)
+            } else if path
+                .file_stem()
+                .is_some_and(|file_stem| file_stem.to_string_lossy().ends_with(".js"))
+            {
+                Some(Language::HtmlJs)
             } else {
                 Some(Language::Html)
             }

@@ -18,6 +18,7 @@ use std::{cmp::Ordering, iter::Peekable, ops::ControlFlow, str::CharIndices};
 /// Supported languages.
 pub enum Language {
     Html,
+    HtmlJs,
     Vue,
     Svelte,
     Astro,
@@ -688,9 +689,11 @@ impl<'s> Parser<'s> {
 
     fn parse_attr(&mut self) -> PResult<Attribute<'s>> {
         match self.language {
-            Language::Html | Language::Angular | Language::Mustache | Language::Xml => {
-                self.parse_native_attr().map(Attribute::Native)
-            }
+            Language::Html
+            | Language::HtmlJs
+            | Language::Angular
+            | Language::Mustache
+            | Language::Xml => self.parse_native_attr().map(Attribute::Native),
             Language::Vue => self
                 .try_parse(Parser::parse_vue_directive)
                 .map(Attribute::VueDirective)
@@ -1553,6 +1556,7 @@ impl<'s> Parser<'s> {
                         if matches!(
                             self.language,
                             Language::Html
+                                | Language::HtmlJs
                                 | Language::Astro
                                 | Language::Jinja
                                 | Language::Vento
@@ -1578,7 +1582,7 @@ impl<'s> Parser<'s> {
                     _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
-            Some((_, '$')) if self.language == Language::Html => {
+            Some((_, '$')) if self.language == Language::HtmlJs => {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if chars.next_if(|(_, c)| *c == '{').is_some() {
@@ -1593,7 +1597,7 @@ impl<'s> Parser<'s> {
                 match chars.next() {
                     Some((_, '{')) => {
                         match self.language {
-                            Language::Html | Language::Xml => {
+                            Language::Html | Language::HtmlJs | Language::Xml => {
                                 self.parse_text_node().map(NodeKind::Text)
                             }
                             Language::Vue | Language::Jinja => self
@@ -2583,7 +2587,7 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((i, '{')) => match self.language {
-                    Language::Html | Language::Xml => {
+                    Language::Html | Language::HtmlJs | Language::Xml => {
                         self.chars.next();
                     }
                     Language::Vue | Language::Vento | Language::Angular | Language::Mustache => {
@@ -2614,7 +2618,7 @@ impl<'s> Parser<'s> {
                         self.chars.next();
                     }
                 },
-                Some((i, '$')) if self.language == Language::Html => {
+                Some((i, '$')) if self.language == Language::HtmlJs => {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
