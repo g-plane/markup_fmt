@@ -918,6 +918,21 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for JsExpr<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        Doc::text("${")
+            .concat(reflow_with_indent(
+                &ctx.format_expr(self.expr, false, self.start, state),
+                true,
+            ))
+            .append(Doc::text("}"))
+            .group()
+    }
+}
+
 impl<'s> DocGen<'s> for JinjaTag<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -1162,6 +1177,7 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
                 jinja_interpolation.doc(ctx, state)
             }
             NodeKind::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
+            NodeKind::JsExpr(js_expr) => js_expr.doc(ctx, state),
             NodeKind::MustacheBlock(mustache_block) => mustache_block.doc(ctx, state),
             NodeKind::MustacheInterpolation(mustache_interpolation) => {
                 mustache_interpolation.doc(ctx, state)
@@ -2353,6 +2369,7 @@ fn is_text_like(node: &Node, language: Language) -> bool {
         | NodeKind::SvelteInterpolation(..)
         | NodeKind::AstroExpr(..)
         | NodeKind::JinjaInterpolation(..)
+        | NodeKind::JsExpr(..)
         | NodeKind::VentoInterpolation(..) => true,
         _ => false,
     }
