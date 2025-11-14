@@ -31,3 +31,4 @@
   - [scriptFormatter](./config/script-formatter.md)
   - [ignoreCommentDirective](./config/ignore-comment-directive.md)
   - [ignoreFileCommentDirective](./config/ignore-file-comment-directive.md)
+  - [htmlParseJsExpressions](./config/html-parse-js-expressions.md)
