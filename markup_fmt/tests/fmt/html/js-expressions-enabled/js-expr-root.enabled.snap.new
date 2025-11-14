@@ -1,9 +1,0 @@
----
-source: markup_fmt/tests/fmt.rs
-assertion_line: 23
----
-<ul>
-  ${foo(name)}
-  ${foo(age)}
-</ul>
-${bar(city)}
