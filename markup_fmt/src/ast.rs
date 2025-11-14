@@ -182,6 +182,13 @@ pub struct JinjaInterpolation<'s> {
 }
 
 #[derive(Debug)]
+/// JavaScript expression in template literals: `${...}`.
+pub struct JsExpr<'s> {
+    pub expr: &'s str,
+    pub start: usize,
+}
+
+#[derive(Debug)]
 /// Jinja tag: `{% ... %}`.
 ///
 /// See https://jinja.palletsprojects.com/en/stable/templates/#list-of-control-structures.
@@ -247,6 +254,7 @@ pub enum NodeKind<'s> {
     JinjaComment(JinjaComment<'s>),
     JinjaInterpolation(JinjaInterpolation<'s>),
     JinjaTag(JinjaTag<'s>),
+    JsExpr(JsExpr<'s>),
     MustacheBlock(MustacheBlock<'s>),
     MustacheInterpolation(MustacheInterpolation<'s>),
     SvelteAtTag(SvelteAtTag<'s>),

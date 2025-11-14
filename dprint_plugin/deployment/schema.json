@@ -385,6 +385,11 @@
       "description": "Text directive for ignoring formatting a whole file.",
       "type": "string",
       "default": "dprint-ignore-file"
+    },
+    "htmlParseJsExpressions": {
+      "description": "Enable parsing of JavaScript expressions in HTML using ${...} syntax.",
+      "type": "boolean",
+      "default": false
     }
   }
 }

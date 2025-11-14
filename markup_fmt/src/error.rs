@@ -33,6 +33,7 @@ pub enum SyntaxErrorKind {
     ExpectIdentifier,
     ExpectJinjaBlockEnd,
     ExpectJinjaTag,
+    ExpectJsExpr,
     ExpectKeyword(&'static str),
     ExpectMustacheInterpolation,
     ExpectSelfCloseTag,
@@ -84,6 +85,7 @@ impl fmt::Display for SyntaxErrorKind {
             SyntaxErrorKind::ExpectIdentifier => "expected identifier".into(),
             SyntaxErrorKind::ExpectJinjaBlockEnd => "expected Jinja block end".into(),
             SyntaxErrorKind::ExpectJinjaTag => "expected Jinja tag".into(),
+            SyntaxErrorKind::ExpectJsExpr => "expected JavaScript expression".into(),
             SyntaxErrorKind::ExpectKeyword(keyword) => {
                 format!("expected keyword '{keyword}'").into()
             }

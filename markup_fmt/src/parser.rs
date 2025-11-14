@@ -9,6 +9,7 @@
 
 use crate::{
     ast::*,
+    config::LanguageOptions,
     error::{SyntaxError, SyntaxErrorKind},
     helpers,
 };
@@ -33,6 +34,7 @@ pub struct Parser<'s> {
     language: Language,
     chars: Peekable<CharIndices<'s>>,
     state: ParserState,
+    options: &'s LanguageOptions,
 }
 
 #[derive(Default)]
@@ -41,12 +43,13 @@ struct ParserState {
 }
 
 impl<'s> Parser<'s> {
-    pub fn new(source: &'s str, language: Language) -> Self {
+    pub fn new(source: &'s str, language: Language, options: &'s LanguageOptions) -> Self {
         Self {
             source,
             language,
             chars: source.char_indices().peekable(),
             state: Default::default(),
+            options,
         }
     }
 
@@ -1578,6 +1581,17 @@ impl<'s> Parser<'s> {
                     _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
+            Some((_, '$'))
+                if self.language == Language::Html && self.options.html_parse_js_expressions =>
+            {
+                let mut chars = self.chars.clone();
+                chars.next();
+                if chars.next_if(|(_, c)| *c == '{').is_some() {
+                    self.parse_js_expr().map(NodeKind::JsExpr)
+                } else {
+                    self.parse_text_node().map(NodeKind::Text)
+                }
+            }
             Some((_, '{')) => {
                 let mut chars = self.chars.clone();
                 chars.next();
@@ -2331,6 +2345,91 @@ impl<'s> Parser<'s> {
         }
     }
 
+    fn parse_js_expr(&mut self) -> PResult<JsExpr<'s>> {
+        let Some((start, _)) = self
+            .chars
+            .next_if(|(_, c)| *c == '$')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
+        else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectJsExpr));
+        };
+        let start = start + 1;
+
+        self.skip_ws();
+
+        let mut braces_stack = 0u8;
+        let mut chars_stack = vec![];
+        let mut end = start;
+        loop {
+            match self.chars.next() {
+                Some((_, c @ '\'' | c @ '"' | c @ '`')) => {
+                    let last = chars_stack.last();
+                    if last.is_some_and(|last| *last == c) {
+                        chars_stack.pop();
+                    } else if matches!(last, Some('$' | '{') | None) {
+                        chars_stack.push(c);
+                    }
+                }
+                Some((_, '$')) if matches!(chars_stack.last(), Some('`')) => {
+                    if self.chars.next_if(|(_, c)| *c == '{').is_some() {
+                        chars_stack.push('$');
+                    }
+                }
+                Some((_, '{')) => {
+                    if chars_stack.is_empty() {
+                        braces_stack += 1;
+                    }
+                }
+                Some((i, '}')) => {
+                    if chars_stack.is_empty() {
+                        if braces_stack == 0 {
+                            end = i;
+                            break;
+                        } else {
+                            braces_stack -= 1;
+                        }
+                    } else if chars_stack.last().is_some_and(|last| *last == '$') {
+                        chars_stack.pop();
+                    }
+                }
+                Some((_, '/')) if chars_stack.is_empty() => {
+                    let mut chars = self.chars.clone();
+                    if let Some((_, '/')) = chars.next() {
+                        self.chars = chars;
+                        while let Some((_, c)) = self.chars.next() {
+                            if c == '\n' {
+                                break;
+                            }
+                        }
+                    } else if let Some((_, '*')) = chars.next() {
+                        self.chars = chars;
+                        loop {
+                            match self.chars.next() {
+                                Some((_, '*')) => {
+                                    if self.chars.next_if(|(_, c)| *c == '/').is_some() {
+                                        break;
+                                    }
+                                }
+                                Some(..) => continue,
+                                None => break,
+                            }
+                        }
+                    }
+                }
+                Some((_, '\\')) if matches!(chars_stack.last(), Some('\'' | '"' | '`')) => {
+                    self.chars.next();
+                }
+                Some(..) => continue,
+                None => break,
+            }
+        }
+
+        Ok(JsExpr {
+            expr: unsafe { self.source.get_unchecked(start..end) },
+            start,
+        })
+    }
+
     fn parse_svelte_key_block(&mut self) -> PResult<SvelteKeyBlock<'s>> {
         if self
             .chars
@@ -2520,6 +2619,19 @@ impl<'s> Parser<'s> {
                         self.chars.next();
                     }
                 },
+                Some((i, '$'))
+                    if self.language == Language::Html
+                        && self.options.html_parse_js_expressions =>
+                {
+                    let i = *i;
+                    let mut chars = self.chars.clone();
+                    chars.next();
+                    if chars.next_if(|(_, c)| *c == '{').is_some() {
+                        end = i;
+                        break;
+                    }
+                    self.chars.next();
+                }
                 Some((i, '<')) => {
                     let i = *i;
                     let mut chars = self.chars.clone();

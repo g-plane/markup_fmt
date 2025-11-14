@@ -409,6 +409,12 @@ pub(crate) fn resolve_config(
                 "dprint-ignore-file".into(),
                 &mut diagnostics,
             ),
+            html_parse_js_expressions: get_value(
+                &mut config,
+                "htmlParseJsExpressions",
+                false,
+                &mut diagnostics,
+            ),
         },
     };
 
