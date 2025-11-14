@@ -1,0 +1,8 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<ul>
+  ${foo(name)}
+  ${foo(age)}
+</ul>
+${bar(city)}
