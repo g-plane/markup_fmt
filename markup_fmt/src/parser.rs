@@ -9,6 +9,7 @@
 
 use crate::{
     ast::*,
+    config::LanguageOptions,
     error::{SyntaxError, SyntaxErrorKind},
     helpers,
 };
@@ -33,6 +34,7 @@ pub struct Parser<'s> {
     language: Language,
     chars: Peekable<CharIndices<'s>>,
     state: ParserState,
+    options: &'s LanguageOptions,
 }
 
 #[derive(Default)]
@@ -41,12 +43,13 @@ struct ParserState {
 }
 
 impl<'s> Parser<'s> {
-    pub fn new(source: &'s str, language: Language) -> Self {
+    pub fn new(source: &'s str, language: Language, options: &'s LanguageOptions) -> Self {
         Self {
             source,
             language,
             chars: source.char_indices().peekable(),
             state: Default::default(),
+            options,
         }
     }
 
@@ -1578,8 +1581,9 @@ impl<'s> Parser<'s> {
                     _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
-            // todo(isAdrisal): scope to templ
-            Some((_, '$')) if self.language == Language::Html => {
+            Some((_, '$'))
+                if self.language == Language::Html && self.options.html_parse_js_expressions =>
+            {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if chars.next_if(|(_, c)| *c == '{').is_some() {
@@ -2615,8 +2619,10 @@ impl<'s> Parser<'s> {
                         self.chars.next();
                     }
                 },
-                // todo(isAdrisal): scope to templ
-                Some((i, '$')) if self.language == Language::Html => {
+                Some((i, '$'))
+                    if self.language == Language::Html
+                        && self.options.html_parse_js_expressions =>
+                {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
