@@ -2,17 +2,13 @@
 source: dprint_plugin/tests/integration.rs
 ---
 <div class="projects">
-  {
-    projects.map((project, projectIdx) => (
-      <div class="project">
-        {
-          project.gallery.map((_slide, slideIdx) => {
-            const x = null;
+  {projects.map((project, projectIdx) => (
+    <div class="project">
+      {project.gallery.map((_slide, slideIdx) => {
+        const x = null;
 
-            return <div class="slide"></div>;
-          })
-        }
-      </div>
-    ))
-  }
+        return <div class="slide"></div>;
+      })}
+    </div>
+  ))}
 </div>

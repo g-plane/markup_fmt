@@ -7,10 +7,8 @@ source: markup_fmt/tests/fmt.rs
 
 {[].map((value) => <div>{value}</div><h1>{value}</h1>)}
 
-{
-  [].map((value) => {
-  console.log(value);
+{[].map((value) => {
+	console.log(value);
 
-  return <div></div><h1></h1>
-  })
-}
+	return <div></div><h1></h1>
+})}
