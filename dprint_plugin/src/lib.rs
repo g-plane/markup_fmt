@@ -122,7 +122,7 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
                     config.language.script_formatter,
                     Some(ScriptFormatter::Biome)
                 ) {
-                    additional_config.insert("quoteStyle".into(), "single".into());
+                    additional_config.insert("javascriptQuoteStyle".into(), "single".into());
                 } else {
                     additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
                 }
@@ -132,7 +132,7 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
                     config.language.script_formatter,
                     Some(ScriptFormatter::Biome)
                 ) {
-                    additional_config.insert("quoteStyle".into(), "double".into());
+                    additional_config.insert("javascriptQuoteStyle".into(), "double".into());
                 } else {
                     additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
                 }

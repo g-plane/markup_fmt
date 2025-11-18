@@ -1,9 +1,0 @@
----
-source: dprint_plugin/tests/integration.rs
----
-<script>
-const a = "a",
-b = "b";
-</script>
-
-<button class={`${a} ${b}`} on:click={() => {}}></button>

@@ -1,7 +1,0 @@
----
-source: dprint_plugin/tests/integration.rs
----
-<div style="width: 1px; height: 1px"></div>
-
-<ul style="display: grid; grid-template-columns: 50% 50%; justify-items: stretch; padding: 0">
-</ul>
