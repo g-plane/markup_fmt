@@ -806,7 +806,7 @@ impl<'s> Parser<'s> {
         if let Some((start, quote)) = quote {
             let can_interpolate = matches!(
                 self.language,
-                Language::Jinja | Language::Vento | Language::Mustache
+                Language::Svelte | Language::Jinja | Language::Vento | Language::Mustache
             );
             let start = start + 1;
             let mut end = start;

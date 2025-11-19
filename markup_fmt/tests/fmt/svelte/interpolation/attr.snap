@@ -1,0 +1,4 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<div style='background-color: {color || "blueviolet"};'></div>
