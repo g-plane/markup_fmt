@@ -6,7 +6,7 @@ use crate::{
     helpers,
     state::State,
 };
-use itertools::Itertools;
+use itertools::{EitherOrBoth, Itertools};
 use std::borrow::Cow;
 use tiny_pretty::Doc;
 
@@ -234,6 +234,8 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
+        let indent_width = ctx.indent_width;
+
         const PLACEHOLDER: &str = "$AstroTpl$";
         let script = self
             .children
@@ -250,42 +252,58 @@ impl<'s> DocGen<'s> for AstroExpr<'s> {
 
         let templates = self.children.iter().filter_map(|child| {
             if let AstroExprChild::Template(nodes) = child {
-                Some(
-                    Doc::flat_or_break(Doc::nil(), Doc::text("("))
-                        .append(Doc::line_or_nil())
-                        .append(format_children_without_inserting_linebreak(
-                            nodes, ctx, state,
-                        ))
-                        .nest(ctx.indent_width)
-                        .append(Doc::line_or_nil())
-                        .append(Doc::flat_or_break(Doc::nil(), Doc::text(")")))
-                        .group(),
-                )
+                Some(format_children_without_inserting_linebreak(
+                    nodes, ctx, state,
+                ))
             } else {
                 None
             }
         });
 
-        Doc::text("{")
-            .concat(
-                formatted_script
-                    .split(PLACEHOLDER)
-                    .map(|script| {
-                        if script.contains('\n') {
-                            Doc::list(reflow_with_indent(script, false).collect())
-                        } else {
-                            Doc::text(script.to_string())
-                        }
-                    })
-                    .interleave(templates),
-            )
-            .append(if self.has_line_comment {
-                Doc::hard_line()
-            } else {
-                Doc::nil()
-            })
-            .append(Doc::text("}"))
-            .group()
+        let mut docs = Vec::with_capacity(self.children.len() + 3);
+        docs.push(Doc::text("{"));
+        formatted_script
+            .split(PLACEHOLDER)
+            .zip_longest(templates)
+            .for_each(|either| match either {
+                EitherOrBoth::Both(script, template) => {
+                    let extra_indent = script.split('\n').next_back().map_or(0, |line| {
+                        line.chars().take_while(|c| c.is_ascii_whitespace()).count()
+                    });
+                    if script.contains('\n') {
+                        docs.extend(reflow_with_indent(script, false));
+                    } else {
+                        docs.push(Doc::text(script.to_string()));
+                    }
+                    if script.trim_end().ends_with('(') {
+                        docs.push(template.nest(extra_indent));
+                    } else {
+                        docs.push(
+                            Doc::flat_or_break(Doc::nil(), Doc::text("("))
+                                .append(Doc::line_or_nil())
+                                .append(template)
+                                .nest(indent_width)
+                                .append(Doc::line_or_nil())
+                                .append(Doc::flat_or_break(Doc::nil(), Doc::text(")")))
+                                .group()
+                                .nest(extra_indent),
+                        );
+                    }
+                }
+                EitherOrBoth::Left(script) => {
+                    if script.contains('\n') {
+                        docs.extend(reflow_with_indent(script, false));
+                    } else {
+                        docs.push(Doc::text(script.to_string()));
+                    }
+                }
+                EitherOrBoth::Right(..) => {}
+            });
+        if self.has_line_comment {
+            docs.push(Doc::hard_line());
+        }
+        docs.push(Doc::text("}"));
+        Doc::list(docs)
     }
 }
 
