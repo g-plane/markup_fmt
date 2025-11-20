@@ -50,3 +50,5 @@ function generateHtml(data:unknown) {
           [`Model Type`, model.model_type],]}
           {/each}
           </ul>
+
+<div style="background-color :{"w"+"h"+`${"i"+"t"}`}e;"></div>

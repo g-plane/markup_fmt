@@ -4,6 +4,7 @@ use crate::{
     config::{Quotes, ScriptFormatter, VSlotStyle, VueComponentCase, WhitespaceSensitivity},
     ctx::{Ctx, Hints},
     helpers,
+    parser::parse_as_interpolated,
     state::State,
 };
 use itertools::{EitherOrBoth, Itertools};
@@ -713,9 +714,31 @@ impl<'s> DocGen<'s> for Element<'s> {
                         _ => None,
                     })
                     .unwrap_or("css");
-                let formatted = ctx.format_style(text_node.raw, lang, text_node.start, &state);
-                let doc =
-                    Doc::hard_line().concat(reflow_with_indent(formatted.trim(), lang != "sass"));
+                let (statics, dynamics) =
+                    parse_as_interpolated(text_node.raw, text_node.start, ctx.language, false);
+                const PLACEHOLDER: &str = "_saya0909_";
+                let masked = statics.join(PLACEHOLDER);
+                let formatted = ctx.format_style(&masked, lang, text_node.start, &state);
+                let doc = Doc::hard_line().concat(reflow_with_indent(
+                    formatted
+                        .split(PLACEHOLDER)
+                        .map(Cow::from)
+                        .interleave(dynamics.iter().map(|(expr, start)| match ctx.language {
+                            Language::Jinja => Cow::from(format!(
+                                "{{{{ {} }}}}",
+                                ctx.format_jinja(expr, *start, true, &state),
+                            )),
+                            Language::Vento => Cow::from(format!(
+                                "{{{{ {} }}}}",
+                                ctx.format_expr(expr, false, *start),
+                            )),
+                            Language::Mustache => Cow::from(format!("{{{{ {expr} }}}}")),
+                            _ => unreachable!(),
+                        }))
+                        .collect::<String>()
+                        .trim(),
+                    lang != "sass",
+                ));
                 docs.push(
                     if ctx.style_indent() {
                         doc.nest(ctx.indent_width)
@@ -889,8 +912,7 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
         Doc::text("{{")
             .append(Doc::line_or_space())
             .concat(reflow_with_indent(
-                ctx.format_jinja(self.expr, self.start, "markup-fmt-jinja-expr", state)
-                    .trim(),
+                ctx.format_jinja(self.expr, self.start, true, state).trim(),
                 true,
             ))
             .nest(ctx.indent_width)
@@ -925,13 +947,8 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
         docs.push(Doc::text(prefix));
         docs.push(Doc::line_or_space());
         docs.extend(reflow_with_indent(
-            ctx.format_jinja(
-                content,
-                self.start + prefix.len(),
-                "markup-fmt-jinja-stmt",
-                state,
-            )
-            .trim(),
+            ctx.format_jinja(content, self.start + prefix.len(), false, state)
+                .trim(),
             true,
         ));
         Doc::list(docs)
@@ -1066,12 +1083,12 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 }
                 _ => Cow::from(value),
             };
-            let quote = compute_attr_value_quote(&value, self.quote, ctx);
+            let quote;
             let mut docs = Vec::with_capacity(5);
             docs.push(name);
             docs.push(Doc::text("="));
-            docs.push(quote.clone());
             if self.name.eq_ignore_ascii_case("class") {
+                quote = compute_attr_value_quote(&value, self.quote, ctx);
                 let value = value.trim();
                 let maybe_line_break = if value.contains('\n') {
                     Doc::hard_line()
@@ -1093,10 +1110,38 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 );
                 docs.push(maybe_line_break);
             } else if self.name.eq_ignore_ascii_case("style") {
-                docs.push(Doc::text(ctx.format_style_attr(&value, value_start, state)));
+                let (statics, dynamics) =
+                    parse_as_interpolated(&value, value_start, ctx.language, true);
+                const PLACEHOLDER: &str = "_mnk0430_";
+                let formatted =
+                    ctx.format_style_attr(&statics.join(PLACEHOLDER), value_start, state);
+                quote = compute_attr_value_quote(&formatted, self.quote, ctx);
+                docs.push(Doc::text(
+                    formatted
+                        .split(PLACEHOLDER)
+                        .map(Cow::from)
+                        .interleave(dynamics.iter().map(|(expr, start)| match ctx.language {
+                            Language::Svelte => {
+                                Cow::from(format!("{{{}}}", ctx.format_expr(expr, true, *start),))
+                            }
+                            Language::Jinja => Cow::from(format!(
+                                "{{{{ {} }}}}",
+                                ctx.format_jinja(expr, *start, true, state),
+                            )),
+                            Language::Vento => Cow::from(format!(
+                                "{{{{ {} }}}}",
+                                ctx.format_expr(expr, true, *start),
+                            )),
+                            Language::Mustache => Cow::from(format!("{{{{ {expr} }}}}")),
+                            _ => unreachable!(),
+                        }))
+                        .collect::<String>(),
+                ));
             } else {
+                quote = compute_attr_value_quote(&value, self.quote, ctx);
                 docs.extend(reflow_owned(&value));
             }
+            docs.insert(2, quote.clone());
             docs.push(quote);
             Doc::list(docs)
         } else if matches!(ctx.language, Language::Svelte)

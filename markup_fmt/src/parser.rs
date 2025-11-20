@@ -2907,3 +2907,71 @@ impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
         Attribute::JinjaBlock(block)
     }
 }
+
+pub fn parse_as_interpolated(
+    text: &'_ str,
+    base_start: usize,
+    language: Language,
+    attr: bool,
+) -> (Vec<&'_ str>, Vec<(&'_ str, usize)>) {
+    let mut statics = Vec::with_capacity(1);
+    let mut dynamics = Vec::new();
+    let mut chars = text.char_indices().peekable();
+    let mut pos = 0;
+    let mut brace_stack = 0u8;
+    while let Some((i, c)) = chars.next() {
+        match c {
+            '{' => {
+                if brace_stack > 0 {
+                    brace_stack += 1;
+                    continue;
+                }
+                match language {
+                    Language::Svelte if attr => {
+                        statics.push(unsafe { text.get_unchecked(pos..i) });
+                        pos = i;
+                        brace_stack += 1;
+                    }
+                    Language::Jinja | Language::Vento | Language::Mustache => {
+                        if chars.next_if(|(_, c)| *c == '{').is_some() {
+                            statics.push(unsafe { text.get_unchecked(pos..i) });
+                            pos = i;
+                            brace_stack += 1;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            '}' => {
+                if brace_stack > 1 {
+                    brace_stack -= 1;
+                    continue;
+                }
+                match language {
+                    Language::Svelte if attr => {
+                        dynamics.push((
+                            unsafe { text.get_unchecked(pos + 1..i) },
+                            base_start + pos + 1,
+                        ));
+                        pos = i + 1;
+                        brace_stack = 0;
+                    }
+                    Language::Jinja | Language::Vento | Language::Mustache => {
+                        if chars.next_if(|(_, c)| *c == '}').is_some() {
+                            dynamics.push((
+                                unsafe { text.get_unchecked(pos + 2..i) },
+                                base_start + pos + 2,
+                            ));
+                            pos = i + 2;
+                            brace_stack = 0;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+    statics.push(unsafe { text.get_unchecked(pos..) });
+    (statics, dynamics)
+}

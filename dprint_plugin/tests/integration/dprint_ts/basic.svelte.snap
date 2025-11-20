@@ -53,3 +53,5 @@ function generateHtml(data: unknown) {
   ]}
   {/each}
 </ul>
+
+<div style="background-color: {'w' + 'h' + `${'i' + 't'}`}e"></div>

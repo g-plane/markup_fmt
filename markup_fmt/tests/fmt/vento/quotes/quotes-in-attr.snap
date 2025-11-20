@@ -2,5 +2,5 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <a
-  style='--bg-color:{{ link.hex || `#${i?.hex || "fff" }` }}; --text-color:{{ link.textColor || textColor(i?.hex || "fff") }}'
+  style="--bg-color:{{ link.hex || `#${i?.hex || "fff" }` }}; --text-color:{{ link.textColor || textColor(i?.hex || "fff") }}"
 >link</a>

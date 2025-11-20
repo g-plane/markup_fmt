@@ -62,7 +62,7 @@ fn integration_with_dprint_ts_snapshot() {
                             Cow::from(code)
                         }
                     })
-                } else {
+                } else if matches!(ext, "tsx" | "ts" | "mts" | "jsx" | "js" | "mjs") {
                     dprint_plugin_typescript::format_text(
                         dprint_plugin_typescript::FormatTextOptions {
                             path: &Path::new("file").with_extension(ext),
@@ -83,6 +83,8 @@ fn integration_with_dprint_ts_snapshot() {
                             Cow::from(code)
                         }
                     })
+                } else {
+                    Ok(Cow::from(code))
                 }
             },
         )

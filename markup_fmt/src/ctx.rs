@@ -381,9 +381,9 @@ where
         &mut self,
         code: &'a str,
         start: usize,
-        ext: &'static str,
+        expr: bool,
         state: &State,
-    ) -> Cow<'a, str> {
+    ) -> String {
         self.format_with_external_formatter(
             self.source
                 .get(0..start)
@@ -396,9 +396,15 @@ where
                     .saturating_sub((state.indent_level as usize) * self.indent_width),
                 indent_level: state.indent_level,
                 attr: false,
-                ext,
+                ext: if expr {
+                    "markup-fmt-jinja-expr"
+                } else {
+                    "markup-fmt-jinja-stmt"
+                },
             },
         )
+        .trim_ascii()
+        .to_owned()
     }
 
     fn format_with_external_formatter<'a>(

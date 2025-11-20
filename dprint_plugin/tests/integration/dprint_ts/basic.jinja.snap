@@ -1,0 +1,4 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<div style="background-color: {{ color || "blueviolet" || "{{}}" }}"></div>
