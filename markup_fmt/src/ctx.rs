@@ -377,9 +377,9 @@ where
         )
     }
 
-    pub(crate) fn format_jinja<'a>(
+    pub(crate) fn format_jinja(
         &mut self,
-        code: &'a str,
+        code: &str,
         start: usize,
         expr: bool,
         state: &State,
