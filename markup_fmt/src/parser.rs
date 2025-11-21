@@ -2492,7 +2492,7 @@ impl<'s> Parser<'s> {
                     Language::Html | Language::Xml => {
                         self.chars.next();
                     }
-                    Language::Vue | Language::Vento | Language::Angular | Language::Mustache => {
+                    Language::Vue | Language::Vento | Language::Mustache => {
                         let i = *i;
                         let mut chars = self.chars.clone();
                         chars.next();
@@ -2513,6 +2513,20 @@ impl<'s> Parser<'s> {
                         if chars
                             .next_if(|(_, c)| *c == '%' || *c == '{' || *c == '#')
                             .is_some()
+                        {
+                            end = i;
+                            break;
+                        }
+                        self.chars.next();
+                    }
+                    Language::Angular => {
+                        let i = *i;
+                        let mut chars = self.chars.clone();
+                        chars.next();
+                        // there can be interpolation inside ICU expression, so there will be three `{`,
+                        // and the first one is for ICU expression, while the second one and third one are for interpolation.
+                        if chars.next_if(|(_, c)| *c == '{').is_some()
+                            && chars.next_if(|(_, c)| *c == '{').is_none()
                         {
                             end = i;
                             break;
