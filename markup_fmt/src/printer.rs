@@ -732,7 +732,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                                 "{{{{ {} }}}}",
                                 ctx.format_expr(expr, false, *start),
                             )),
-                            Language::Mustache => Cow::from(format!("{{{{ {expr} }}}}")),
+                            Language::Mustache => Cow::from(format!("{{{{{expr}}}}}")),
                             _ => unreachable!(),
                         }))
                         .collect::<String>()
@@ -1132,7 +1132,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                                 "{{{{ {} }}}}",
                                 ctx.format_expr(expr, true, *start),
                             )),
-                            Language::Mustache => Cow::from(format!("{{{{ {expr} }}}}")),
+                            Language::Mustache => Cow::from(format!("{{{{{expr}}}}}")),
                             _ => unreachable!(),
                         }))
                         .collect::<String>(),
