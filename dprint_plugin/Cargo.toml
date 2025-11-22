@@ -1,6 +1,6 @@
 [package]
 name = "dprint_plugin_markup"
-version = "0.24.1"
+version = "0.25.0"
 edition = "2024"
 authors = ["Pig Fang <g-plane@hotmail.com>"]
 description = "markup_fmt as dprint plugin."
