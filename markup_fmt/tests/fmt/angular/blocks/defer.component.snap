@@ -1,0 +1,24 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<div aria-live="polite" aria-atomic="true">
+  @defer (on timer(2000)) {
+    <user-profile [user]="currentUser" />
+  } @placeholder {
+    Loading user profile...
+  } @loading {
+    Please wait...
+  } @error {
+    Failed to load profile
+  }
+</div>
+
+@defer (on timer(2000)) {
+  <user-profile [user]="currentUser" />
+} @error (error) {
+  Failed to load profile
+} @loading (after 100ms; minimum 1s) {
+  Please wait...
+} @placeholder (minimum 500ms) {
+  Loading user profile...
+}

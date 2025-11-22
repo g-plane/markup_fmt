@@ -85,6 +85,49 @@ impl<'s> DocGen<'s> for AngularFor<'s> {
     }
 }
 
+impl<'s> DocGen<'s> for AngularGenericBlock<'s> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("@"));
+        docs.push(Doc::text(self.keyword));
+        if let Some(header) = self.header {
+            docs.push(Doc::space());
+            docs.push(Doc::text(header));
+        }
+        docs.push(Doc::text(" {"));
+        docs.push(format_control_structure_block_children(
+            &self.children,
+            ctx,
+            state,
+        ));
+        docs.push(Doc::text("}"));
+        Doc::list(docs)
+    }
+}
+
+impl<'s> DocGen<'s> for Vec<AngularGenericBlock<'s>> {
+    fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        let next_block_ws = if ctx.options.angular_next_control_flow_same_line {
+            Doc::space()
+        } else {
+            Doc::hard_line()
+        };
+        Doc::list(
+            itertools::intersperse(
+                self.iter().map(|block| block.doc(ctx, state)),
+                next_block_ws,
+            )
+            .collect(),
+        )
+    }
+}
+
 impl<'s> DocGen<'s> for AngularIf<'s> {
     fn doc<E, F>(&self, ctx: &mut Ctx<'s, E, F>, state: &State<'s>) -> Doc<'s>
     where
@@ -1178,6 +1221,7 @@ impl<'s> DocGen<'s> for NodeKind<'s> {
     {
         match self {
             NodeKind::AngularFor(angular_for) => angular_for.doc(ctx, state),
+            NodeKind::AngularGenericBlocks(blocks) => blocks.doc(ctx, state),
             NodeKind::AngularIf(angular_if) => angular_if.doc(ctx, state),
             NodeKind::AngularInterpolation(angular_interpolation) => {
                 angular_interpolation.doc(ctx, state)

@@ -34,6 +34,13 @@ pub struct AngularElseIf<'s> {
 }
 
 #[derive(Debug)]
+pub struct AngularGenericBlock<'s> {
+    pub keyword: &'s str,
+    pub header: Option<&'s str>,
+    pub children: Vec<Node<'s>>,
+}
+
+#[derive(Debug)]
 /// Angular interpolation: `{{ expression }}`.
 ///
 /// See https://angular.dev/guide/templates/binding#render-dynamic-text-with-text-interpolation.
@@ -241,6 +248,7 @@ pub struct Node<'s> {
 #[derive(Debug)]
 pub enum NodeKind<'s> {
     AngularFor(AngularFor<'s>),
+    AngularGenericBlocks(Vec<AngularGenericBlock<'s>>),
     AngularIf(AngularIf<'s>),
     AngularInterpolation(AngularInterpolation<'s>),
     AngularLet(AngularLet<'s>),

@@ -138,6 +138,38 @@ impl<'s> Parser<'s> {
         Ok(children)
     }
 
+    fn parse_angular_defer(&mut self) -> PResult<Vec<AngularGenericBlock<'s>>> {
+        if self
+            .chars
+            .next_if(|(_, c)| *c == '@')
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'd'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
+            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
+            .is_none()
+        {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("defer")));
+        }
+        self.skip_ws();
+        let mut blocks = vec![self.parse_angular_generic_block("defer")?];
+
+        loop {
+            let chars = self.chars.clone();
+            self.skip_ws();
+            if self.chars.next_if(|(_, c)| *c == '@').is_some()
+                && let Ok(name) = self.parse_identifier()
+                && matches!(name, "loading" | "error" | "placeholder")
+            {
+                self.skip_ws();
+                blocks.push(self.parse_angular_generic_block(name)?);
+            } else {
+                self.chars = chars;
+                return Ok(blocks);
+            }
+        }
+    }
+
     fn parse_angular_for(&mut self) -> PResult<AngularFor<'s>> {
         if self
             .chars
@@ -147,7 +179,7 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
             .is_none()
         {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularFor));
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("for")));
         }
         self.skip_ws();
 
@@ -236,6 +268,37 @@ impl<'s> Parser<'s> {
         })
     }
 
+    fn parse_angular_generic_block(
+        &mut self,
+        keyword: &'s str,
+    ) -> PResult<AngularGenericBlock<'s>> {
+        let header = if let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') {
+            let mut paren_stack = 0u8;
+            loop {
+                match self.chars.next() {
+                    Some((_, '(')) => paren_stack += 1,
+                    Some((i, ')')) => {
+                        if paren_stack == 0 {
+                            break Some(unsafe { self.source.get_unchecked(start..i + 1) });
+                        } else {
+                            paren_stack -= 1;
+                        }
+                    }
+                    Some(..) => {}
+                    None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')'))),
+                }
+            }
+        } else {
+            None
+        };
+        self.skip_ws();
+        Ok(AngularGenericBlock {
+            keyword,
+            header,
+            children: self.parse_angular_control_flow_children()?,
+        })
+    }
+
     fn parse_angular_if(&mut self) -> PResult<AngularIf<'s>> {
         if self
             .chars
@@ -244,7 +307,7 @@ impl<'s> Parser<'s> {
             .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
             .is_none()
         {
-            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularIf));
+            return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("if")));
         }
         self.skip_ws();
 
@@ -1719,6 +1782,9 @@ impl<'s> Parser<'s> {
                     Some((_, 'f')) => self.parse_angular_for().map(NodeKind::AngularFor),
                     Some((_, 's')) => self.parse_angular_switch().map(NodeKind::AngularSwitch),
                     Some((_, 'l')) => self.parse_angular_let().map(NodeKind::AngularLet),
+                    Some((_, 'd')) => self
+                        .parse_angular_defer()
+                        .map(NodeKind::AngularGenericBlocks),
                     _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
