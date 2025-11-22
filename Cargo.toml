@@ -4,7 +4,7 @@ resolver = "3"
 
 [workspace.dependencies]
 anyhow = "1.0"
-insta = { version = "1.43", features = ["glob"] }
+insta = { version = "1.44", features = ["glob"] }
 similar-asserts = "1.7"
 toml = "0.9"
 
