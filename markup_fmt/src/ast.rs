@@ -201,9 +201,17 @@ pub enum JinjaTagOrChildren<'s, T> {
 ///
 /// See https://mustache.github.io/mustache.5.html
 pub struct MustacheBlock<'s> {
+    pub controls: Vec<MustacheBlockControl<'s>>,
+    pub children: Vec<Vec<Node<'s>>>,
+}
+
+#[derive(Debug)]
+pub struct MustacheBlockControl<'s> {
+    pub name: &'s str,
     pub prefix: &'s str,
-    pub content: &'s str,
-    pub children: Vec<Node<'s>>,
+    pub content: Option<&'s str>,
+    pub wc_before: bool,
+    pub wc_after: bool,
 }
 
 #[derive(Debug)]

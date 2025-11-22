@@ -965,27 +965,34 @@ impl<'s> DocGen<'s> for MustacheBlock<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
-        let content = self.content.trim_ascii();
-        Doc::text("{{")
-            .append(Doc::text(self.prefix))
-            .concat(reflow_raw(content))
-            .nest(ctx.indent_width)
-            .append(Doc::line_or_nil())
-            .append(Doc::text("}}"))
-            .group()
-            .append(format_control_structure_block_children(
-                &self.children,
-                ctx,
-                state,
-            ))
-            .group()
-            .append(
-                Doc::text("{{/")
-                    .concat(reflow_raw(content))
-                    .append(Doc::line_or_nil())
-                    .append(Doc::text("}}"))
-                    .group(),
-            )
+        Doc::list(
+            self.controls
+                .iter()
+                .map(|control| {
+                    let mut docs = Vec::with_capacity(3);
+                    docs.push(Doc::text("{{"));
+                    if control.wc_before {
+                        docs.push(Doc::text("~"));
+                    }
+                    docs.push(Doc::text(control.prefix));
+                    docs.push(Doc::text(control.name));
+                    if let Some(content) = control.content {
+                        docs.push(Doc::space());
+                        docs.extend(reflow_raw(content.trim_ascii()));
+                    }
+                    if control.wc_after {
+                        docs.push(Doc::text("~"));
+                    }
+                    docs.push(Doc::text("}}"));
+                    Doc::list(docs)
+                })
+                .interleave(
+                    self.children
+                        .iter()
+                        .map(|nodes| format_control_structure_block_children(nodes, ctx, state)),
+                )
+                .collect(),
+        )
     }
 }
 

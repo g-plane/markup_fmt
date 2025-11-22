@@ -1,0 +1,9 @@
+{{#with person}}
+{{firstname}} {{lastname}}
+{{/with}}
+
+<ul class="people_list">
+  {{#each people}}
+    <li>{{this}}</li>
+  {{/each}}
+</ul>

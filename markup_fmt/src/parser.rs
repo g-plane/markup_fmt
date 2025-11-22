@@ -1449,35 +1449,77 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_mustache_block_or_interpolation(&mut self) -> PResult<NodeKind<'s>> {
-        let (content, _) = self.parse_mustache_interpolation()?;
+        let mut controls = vec![];
+        let (raw, _) = self.parse_mustache_interpolation()?;
+        let (content, wc_before, wc_after) = strip_hbs_whitespace_control(raw);
         if let Some((prefix, rest)) = content
             .split_at_checked(1)
             .filter(|(c, _)| matches!(*c, "#" | "^" | "$" | "<"))
         {
+            let (prefix, rest) = if rest.strip_prefix(['>', '*']).is_some() {
+                content.split_at(2)
+            } else {
+                (prefix, rest)
+            };
             let trimmed_rest = rest.trim_ascii();
-            let mut children = vec![];
+            let (block_name, rest) = if let Some((name, rest)) =
+                trimmed_rest.split_once(|c: char| c.is_ascii_whitespace())
+            {
+                (name, Some(rest))
+            } else {
+                (trimmed_rest, None)
+            };
+            controls.push(MustacheBlockControl {
+                name: block_name,
+                prefix,
+                content: rest,
+                wc_before,
+                wc_after,
+            });
+            let mut children = vec![vec![]];
             loop {
                 let chars = self.chars.clone();
-                if self
-                    .parse_mustache_interpolation()
-                    .ok()
-                    .and_then(|(content, _)| content.strip_prefix('/'))
-                    .is_some_and(|s| s.trim_ascii() == trimmed_rest)
+                if let Some((content, _)) = self.parse_mustache_interpolation().ok()
+                    && let (content, wc_before, wc_after) = strip_hbs_whitespace_control(content)
+                    && content
+                        .strip_prefix('/')
+                        .is_some_and(|s| s.trim_ascii() == block_name)
                 {
+                    controls.push(MustacheBlockControl {
+                        name: block_name,
+                        prefix: "/",
+                        content: None,
+                        wc_before,
+                        wc_after,
+                    });
                     break;
                 } else {
                     self.chars = chars;
                 }
-                children.push(self.parse_node()?);
+                let node = self.parse_node()?;
+                if let NodeKind::MustacheInterpolation(interpolation) = &node.kind
+                    && let ("else", wc_before, wc_after) =
+                        strip_hbs_whitespace_control(interpolation.content)
+                {
+                    controls.push(MustacheBlockControl {
+                        name: "else",
+                        prefix: "",
+                        content: None,
+                        wc_before,
+                        wc_after,
+                    });
+                    children.push(vec![]);
+                } else if let Some(nodes) = children.last_mut() {
+                    nodes.push(node);
+                }
             }
             Ok(NodeKind::MustacheBlock(MustacheBlock {
-                prefix,
-                content: rest,
+                controls,
                 children,
             }))
         } else {
             Ok(NodeKind::MustacheInterpolation(MustacheInterpolation {
-                content,
+                content: raw,
             }))
         }
     }
@@ -2874,6 +2916,20 @@ fn is_vento_interpolation(tag_name: &str) -> bool {
             | "import"
             | "export"
     )
+}
+
+fn strip_hbs_whitespace_control(text: &str) -> (&str, bool, bool) {
+    let (text, before) = if let Some(stripped) = text.strip_prefix('~') {
+        (stripped, true)
+    } else {
+        (text, false)
+    };
+    let (text, after) = if let Some(stripped) = text.strip_suffix('~') {
+        (stripped, true)
+    } else {
+        (text, false)
+    };
+    (text, before, after)
 }
 
 pub type PResult<T> = Result<T, SyntaxError>;

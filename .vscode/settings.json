@@ -1,6 +1,6 @@
 {
   "rust-analyzer.cargo.features": ["config_serde"],
-  "[html][vue][svelte][markdown]": {
+  "[html][vue][svelte][markdown][handlebars]": {
     "editor.formatOnSave": false
   }
 }

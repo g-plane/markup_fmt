@@ -6,3 +6,4 @@
 **/*.njk linguist-detectable=false
 **/*.vto linguist-detectable=false
 **/*.mustache linguist-detectable=false
+**/*.hbs linguist-detectable=false

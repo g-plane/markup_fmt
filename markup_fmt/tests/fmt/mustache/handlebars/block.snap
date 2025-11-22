@@ -1,0 +1,16 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{#unless license}}
+  <h3 class="warning">WARNING: This entry does not have a license!</h3>
+{{/unless}}
+
+{{#each nav~}}
+  <a href="{{url}}">
+    {{~#if test}}
+      {{~title}}
+    {{~else~}}
+      Empty
+    {{~/if~}}
+  </a>
+{{~/each}}

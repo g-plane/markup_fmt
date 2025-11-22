@@ -1,0 +1,11 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{#>layout}}
+  {{#*inline "nav"}}
+    My Nav
+  {{/inline}}
+  {{#*inline "content"}}
+    My Content
+  {{/inline}}
+{{/layout}}
