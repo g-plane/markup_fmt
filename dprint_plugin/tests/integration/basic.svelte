@@ -52,3 +52,5 @@ function generateHtml(data:unknown) {
           </ul>
 
 <div style="background-color :{"w"+"h"+`${"i"+"t"}`}e;"></div>
+
+<div {...props}></div>
