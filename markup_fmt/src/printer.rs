@@ -1131,7 +1131,16 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 {
                     Cow::from(ctx.format_expr(value, false, value_start))
                 }
-                _ => Cow::from(value),
+                _ => {
+                    if !matches!(ctx.language, Language::Angular | Language::Xml)
+                        && self.name.starts_with("on")
+                    {
+                        ctx.try_format_expr(value, true, value_start)
+                            .map_or_else(|_| Cow::from(value), Cow::from)
+                    } else {
+                        Cow::from(value)
+                    }
+                }
             };
             let quote;
             let mut docs = Vec::with_capacity(5);

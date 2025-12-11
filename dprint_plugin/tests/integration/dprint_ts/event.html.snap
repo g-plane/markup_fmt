@@ -1,0 +1,5 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<button onclick="window.open(url)"></button>
+<button on9="not an event handler"></button>
