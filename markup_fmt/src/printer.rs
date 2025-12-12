@@ -258,12 +258,14 @@ impl<'s> DocGen<'s> for AstroAttribute<'s> {
             .concat(reflow_with_indent(&expr_code, true))
             .append(Doc::text("}"));
         if let Some(name) = self.name {
-            if (matches!(ctx.options.astro_attr_shorthand, Some(true))) && name == expr_code {
+            if matches!(ctx.options.astro_attr_shorthand, Some(true)) && name == expr_code {
                 expr
             } else {
                 Doc::text(name).append(Doc::text("=")).append(expr)
             }
-        } else if matches!(ctx.options.astro_attr_shorthand, Some(false)) {
+        } else if matches!(ctx.options.astro_attr_shorthand, Some(false))
+            && !expr_code.starts_with("...")
+        {
             Doc::text(expr_code.clone())
                 .append(Doc::text("="))
                 .append(expr)
