@@ -2576,9 +2576,7 @@ where
     // Add parentheses around tuple unpacking (e.g., `a, i` → `(a, i)`),
     // but not around destructuring patterns that are already wrapped
     // with brackets `[...]` or braces `{...}` or parentheses `(...)`.
-    let needs_parens = left.contains(',')
-        && !left_trimmed.starts_with(['(', '[', '{']);
-    if needs_parens {
+    if left.contains(',') && !left_trimmed.starts_with(['(', '[', '{']) {
         format!("({left}) {delimiter} {right}")
     } else {
         format!("{left} {delimiter} {right}")
