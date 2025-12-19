@@ -4,4 +4,12 @@ source: markup_fmt/tests/fmt.rs
 <template>
   <div v-for="a in b"></div>
   <div v-for="a in b"></div>
+  <div v-for="(a, i) in b"></div>
+  <div v-for="(a, i) in b"></div>
+  <div v-for="[key, value] in Object.entries(obj)"></div>
+  <div v-for="[key, value] in Object.entries(obj)"></div>
+  <div v-for="([key, value], i) in Object.entries(obj)"></div>
+  <div v-for="([key, value], i) in Object.entries(obj)"></div>
+  <div v-for="{ foo, bar } in items"></div>
+  <div v-for="{ foo, bar } in items"></div>
 </template>
