@@ -2577,9 +2577,7 @@ where
     // but not around destructuring patterns that are already wrapped
     // with brackets `[...]` or braces `{...}` or parentheses `(...)`.
     let needs_parens = left.contains(',')
-        && !left_trimmed.starts_with('(')
-        && !left_trimmed.starts_with('[')
-        && !left_trimmed.starts_with('{');
+        && !left_trimmed.starts_with(['(', '[', '{']);
     if needs_parens {
         format!("({left}) {delimiter} {right}")
     } else {
