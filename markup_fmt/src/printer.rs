@@ -2572,11 +2572,10 @@ where
 {
     let left = ctx.format_expr(left, false, start);
     let right = ctx.format_expr(right, false, start + 4);
-    let left_trimmed = left.trim_start();
     // Add parentheses around tuple unpacking (e.g., `a, i` → `(a, i)`),
     // but not around destructuring patterns that are already wrapped
     // with brackets `[...]` or braces `{...}` or parentheses `(...)`.
-    if left.contains(',') && !left_trimmed.starts_with(['(', '[', '{']) {
+    if left.contains(',') && !left.trim_start().starts_with(['(', '[', '{']) {
         format!("({left}) {delimiter} {right}")
     } else {
         format!("{left} {delimiter} {right}")
