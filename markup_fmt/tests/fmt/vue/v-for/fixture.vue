@@ -1,4 +1,12 @@
 <template>
   <div v-for="a in b"></div>
   <div v-for="a of b"></div>
+  <div v-for="(a, i) in b"></div>
+  <div v-for="(a, i) of b"></div>
+  <div v-for="[key, value] in Object.entries(obj)"></div>
+  <div v-for="[key, value] of Object.entries(obj)"></div>
+  <div v-for="([key, value], i) in Object.entries(obj)"></div>
+  <div v-for="([key, value], i) of Object.entries(obj)"></div>
+  <div v-for="{ foo, bar } in items"></div>
+  <div v-for="{ foo, bar } of items"></div>
 </template>
