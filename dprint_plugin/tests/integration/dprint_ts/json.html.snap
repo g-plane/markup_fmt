@@ -11,6 +11,17 @@ source: dprint_plugin/tests/integration.rs
       }
     }
     </script>
+    <script type="speculationrules">
+    {
+      "prefetch": [
+        {
+          "urls": ["next.html", "next2.html"],
+          "requires": ["anonymous-client-ip-when-cross-origin"],
+          "referrer_policy": "no-referrer"
+        }
+      ]
+    }
+    </script>
     <script type="application/json">
     { "ssrData": { "items": [1, 2, 3] } }
     </script>
