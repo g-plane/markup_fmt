@@ -3,6 +3,9 @@
     <script type=importmap>
       {"imports": { "square": "./module/shapes/square.js", "circle": "https://example.com/shapes/circle.js" }}
     </script>
+    <script type="speculationrules">
+      {"prefetch": [{"urls": ["next.html", "next2.html"],"requires": ["anonymous-client-ip-when-cross-origin"],"referrer_policy": "no-referrer"}]}
+    </script>
     <script type="application/json">
     {"ssrData":{"items":[1,2,3]}}
     </script>

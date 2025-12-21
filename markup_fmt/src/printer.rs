@@ -673,9 +673,13 @@ impl<'s> DocGen<'s> for Element<'s> {
                     if let Attribute::Native(native_attr) = attr {
                         native_attr.name.eq_ignore_ascii_case("type")
                             && native_attr.value.is_some_and(|(value, _)| {
-                                value == "importmap"
-                                    || value == "application/json"
-                                    || value == "application/ld+json"
+                                matches!(
+                                    value,
+                                    "importmap"
+                                        | "application/json"
+                                        | "application/ld+json"
+                                        | "speculationrules"
+                                )
                             })
                     } else {
                         false
