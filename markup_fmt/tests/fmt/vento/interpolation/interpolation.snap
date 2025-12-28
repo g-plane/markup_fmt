@@ -1,0 +1,6 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{- example }}
+{{ example -}}
+{{- example -}}

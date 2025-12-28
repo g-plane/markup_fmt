@@ -437,6 +437,8 @@ pub struct VentoEval<'s> {
 pub struct VentoInterpolation<'s> {
     pub expr: &'s str,
     pub start: usize,
+    pub trim_prev: bool,
+    pub trim_next: bool,
 }
 
 #[derive(Debug)]

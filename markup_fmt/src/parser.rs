@@ -2834,6 +2834,8 @@ impl<'s> Parser<'s> {
             Ok(NodeKind::VentoInterpolation(VentoInterpolation {
                 expr: first_tag,
                 start: first_tag_start,
+                trim_prev,
+                trim_next,
             }))
         } else {
             Ok(NodeKind::VentoTag(VentoTag {

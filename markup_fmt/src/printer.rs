@@ -1732,6 +1732,11 @@ impl<'s> DocGen<'s> for VentoInterpolation<'s> {
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{{")
+            .append(if self.trim_prev {
+                Doc::text("-")
+            } else {
+                Doc::nil()
+            })
             .append(Doc::line_or_space())
             .concat(itertools::intersperse(
                 self.expr.split("|>").map(|expr| {
@@ -1746,6 +1751,11 @@ impl<'s> DocGen<'s> for VentoInterpolation<'s> {
             ))
             .nest(ctx.indent_width)
             .append(Doc::line_or_space())
+            .append(if self.trim_next {
+                Doc::text("-")
+            } else {
+                Doc::nil()
+            })
             .append(Doc::text("}}"))
             .group()
     }
