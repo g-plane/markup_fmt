@@ -669,76 +669,96 @@ impl<'s> DocGen<'s> for Element<'s> {
             if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
                 docs.push(Doc::hard_line());
             } else {
-                let is_json = self.attrs.iter().any(|attr| {
-                    if let Attribute::Native(native_attr) = attr {
-                        native_attr.name.eq_ignore_ascii_case("type")
-                            && native_attr.value.is_some_and(|(value, _)| {
-                                matches!(
-                                    value,
-                                    "importmap"
-                                        | "application/json"
-                                        | "application/ld+json"
-                                        | "speculationrules"
-                                )
-                            })
-                    } else {
-                        false
+                let type_attr = self.attrs.iter().find_map(|attr| match attr {
+                    Attribute::Native(native) if native.name.eq_ignore_ascii_case("type") => {
+                        native.value.map(|(value, _)| value.to_ascii_lowercase())
                     }
+                    _ => None,
                 });
-                let is_script_indent = ctx.script_indent();
-                let formatted = if is_json {
-                    ctx.format_json(text_node.raw, text_node.start, &state)
-                } else {
-                    if is_script_indent {
-                        state.indent_level += 1;
-                    }
-                    let lang = self
-                        .attrs
-                        .iter()
-                        .find_map(|attr| match attr {
+                match type_attr.as_deref() {
+                    Some(
+                        "module"
+                        | "application/javascript"
+                        | "text/javascript"
+                        | "application/ecmascript"
+                        | "text/ecmascript"
+                        | "application/x-javascript"
+                        | "application/x-ecmascript"
+                        | "text/x-javascript"
+                        | "text/x-ecmascript"
+                        | "text/jsx"
+                        | "text/babel",
+                    )
+                    | None => {
+                        let is_script_indent = ctx.script_indent();
+                        if is_script_indent {
+                            state.indent_level += 1;
+                        }
+                        let lang = self
+                            .attrs
+                            .iter()
+                            .find_map(|attr| match attr {
+                                Attribute::Native(native)
+                                    if native.name.eq_ignore_ascii_case("lang") =>
+                                {
+                                    native.value.map(|(value, _)| value)
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                                "ts"
+                            } else {
+                                "js"
+                            });
+                        let lang = if self.attrs.iter().any(|attr| match attr {
                             Attribute::Native(native)
-                                if native.name.eq_ignore_ascii_case("lang") =>
+                                if native.name.eq_ignore_ascii_case("type") =>
                             {
-                                native.value.map(|(value, _)| value)
+                                native.value.is_some_and(|(value, _)| value == "module")
                             }
-                            _ => None,
-                        })
-                        .unwrap_or(if matches!(ctx.language, Language::Astro) {
-                            "ts"
+                            _ => false,
+                        }) {
+                            match lang {
+                                "ts" => "mts",
+                                "js" => "mjs",
+                                lang => lang,
+                            }
                         } else {
-                            "js"
-                        });
-                    let lang = if self.attrs.iter().any(|attr| match attr {
-                        Attribute::Native(native) if native.name.eq_ignore_ascii_case("type") => {
-                            native.value.is_some_and(|(value, _)| value == "module")
+                            lang
+                        };
+                        let formatted =
+                            ctx.format_script(text_node.raw, lang, text_node.start, &state);
+                        let doc = if matches!(
+                            ctx.options.script_formatter,
+                            Some(ScriptFormatter::Dprint)
+                        ) {
+                            Doc::hard_line().concat(reflow_owned(formatted.trim()))
+                        } else {
+                            Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
+                        };
+                        if is_script_indent {
+                            docs.push(doc.nest(ctx.indent_width));
+                        } else {
+                            docs.push(doc);
                         }
-                        _ => false,
-                    }) {
-                        match lang {
-                            "ts" => "mts",
-                            "js" => "mjs",
-                            lang => lang,
-                        }
-                    } else {
-                        lang
-                    };
-                    ctx.format_script(text_node.raw, lang, text_node.start, &state)
-                };
-                let doc = if !is_json
-                    && matches!(ctx.options.script_formatter, Some(ScriptFormatter::Dprint))
-                {
-                    Doc::hard_line().concat(reflow_owned(formatted.trim()))
-                } else {
-                    Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
-                };
-                docs.push(
-                    if is_script_indent {
-                        doc.nest(ctx.indent_width)
-                    } else {
-                        doc
                     }
-                    .append(Doc::hard_line()),
-                );
+                    Some(
+                        "importmap"
+                        | "application/json"
+                        | "application/ld+json"
+                        | "speculationrules",
+                    ) => {
+                        let formatted = ctx.format_json(text_node.raw, text_node.start, &state);
+                        docs.push(
+                            Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true)),
+                        );
+                    }
+                    Some(..) => {
+                        docs.push(Doc::hard_line());
+                        docs.extend(reflow_raw(text_node.raw.trim_matches('\n')));
+                    }
+                }
+                docs.push(Doc::hard_line());
             }
         } else if tag_name.eq_ignore_ascii_case("style")
             && let [
