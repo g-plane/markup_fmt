@@ -143,7 +143,9 @@ where
             // This makes sure the code will be trimmed
             // though external formatter isn't available.
             let preprocessed = code.trim_start();
-            let wrapped = if preprocessed.starts_with('{') || preprocessed.starts_with("...") {
+            let will_add_brackets =
+                preprocessed.starts_with('{') || preprocessed.starts_with("...");
+            let wrapped = if will_add_brackets {
                 self.source
                     .get(0..start.saturating_sub(1))
                     .unwrap_or_default()
@@ -171,6 +173,9 @@ where
                 formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted = trim_delim(preprocessed, formatted, '[', ']');
             formatted = trim_delim(preprocessed, formatted, '(', ')');
+            if will_add_brackets {
+                formatted = formatted.trim_ascii_end().trim_end_matches(',');
+            }
             Ok(formatted.trim_ascii().to_owned())
         }
     }
