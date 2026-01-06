@@ -1379,7 +1379,7 @@ impl<'s> Parser<'s> {
         };
         let start = start + 1;
 
-        let mut end = start;
+        let end;
         loop {
             match self.chars.next() {
                 Some((i, '#')) => {
@@ -1391,7 +1391,10 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => break,
+                None => {
+                    end = self.source.len();
+                    break;
+                }
             }
         }
 
@@ -1598,7 +1601,7 @@ impl<'s> Parser<'s> {
         let start = start + 1;
 
         let mut braces_stack = 0usize;
-        let mut end = start;
+        let end;
         loop {
             match self.chars.next() {
                 Some((_, '{')) => braces_stack += 1,
@@ -1613,7 +1616,10 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => break,
+                None => {
+                    end = self.source.len();
+                    break;
+                }
             }
         }
 
