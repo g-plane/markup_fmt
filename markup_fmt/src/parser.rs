@@ -62,12 +62,16 @@ impl<'s> Parser<'s> {
         result
     }
 
-    fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
-        let pos = self
-            .chars
+    #[inline]
+    fn peek_pos(&mut self) -> usize {
+        self.chars
             .peek()
-            .map(|(pos, _)| *pos)
-            .unwrap_or(self.source.len());
+            .map(|(i, _)| *i)
+            .unwrap_or(self.source.len())
+    }
+
+    fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
+        let pos = self.peek_pos();
         self.emit_error_with_pos(kind, pos)
     }
 
@@ -107,17 +111,9 @@ impl<'s> Parser<'s> {
     where
         F: FnOnce(&mut Self) -> PResult<T>,
     {
-        let start = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
+        let start = self.peek_pos();
         let parsed = parser(self)?;
-        let end = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
+        let end = self.peek_pos();
         Ok((parsed, unsafe { self.source.get_unchecked(start..end) }))
     }
 
@@ -464,11 +460,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('=')));
         }
         self.skip_ws();
-        let start = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
+        let start = self.peek_pos();
         let expr = self.parse_angular_inline_script(start)?;
         if self.chars.next_if(|(_, c)| *c == ';').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar(';')));
@@ -616,11 +608,7 @@ impl<'s> Parser<'s> {
         let mut children = Vec::with_capacity(1);
         let mut has_line_comment = false;
         let mut pair_stack = vec![];
-        let mut pos = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
+        let mut pos = self.peek_pos();
         while let Some((i, c)) = self.chars.peek() {
             match c {
                 '{' => {
@@ -678,11 +666,7 @@ impl<'s> Parser<'s> {
                             ));
                             children.push(AstroExprChild::Template(vec![node]));
                         }
-                        pos = self
-                            .chars
-                            .peek()
-                            .map(|(i, _)| *i)
-                            .unwrap_or(self.source.len());
+                        pos = self.peek_pos();
                     } else {
                         self.chars.next();
                     }
@@ -1814,11 +1798,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_raw_text_node(&mut self, tag_name: &str) -> PResult<TextNode<'s>> {
-        let start = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
+        let start = self.peek_pos();
 
         let allow_nested = tag_name.eq_ignore_ascii_case("pre");
         let mut nested = 0u16;
@@ -1962,11 +1942,7 @@ impl<'s> Parser<'s> {
         self.skip_ws();
 
         let expr = {
-            let start = self
-                .chars
-                .peek()
-                .map(|(i, _)| *i)
-                .unwrap_or(self.source.len());
+            let start = self.peek_pos();
             let mut end = start;
             let mut braces_stack = 0u8;
             loop {
@@ -2221,11 +2197,7 @@ impl<'s> Parser<'s> {
 
         let mut binding = None;
         let expr = {
-            let start = self
-                .chars
-                .peek()
-                .map(|(i, _)| *i)
-                .unwrap_or(self.source.len());
+            let start = self.peek_pos();
             let mut end = start;
             let mut pair_stack = vec![];
             loop {
@@ -2498,11 +2470,7 @@ impl<'s> Parser<'s> {
     fn parse_svelte_or_astro_expr(&mut self) -> PResult<(&'s str, usize)> {
         self.skip_ws();
 
-        let start = self
-            .chars
-            .peek()
-            .map(|(i, _)| *i)
-            .unwrap_or(self.source.len());
+        let start = self.peek_pos();
         let mut end = start;
         let mut braces_stack = 0u8;
         loop {
