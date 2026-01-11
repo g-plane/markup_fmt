@@ -49,3 +49,7 @@ source: markup_fmt/tests/fmt.rs
 <{{ tag_name }}>
   very-very-very-very-very-very-very-very-very-long-title
 </{{ tag_name }}>
+
+{{- example }}
+{{ example -}}
+{{- example -}}

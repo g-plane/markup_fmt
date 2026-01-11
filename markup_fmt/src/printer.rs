@@ -979,6 +979,11 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
     {
         Doc::text("{{")
+            .append(if self.trim_prev {
+                Doc::text("-")
+            } else {
+                Doc::nil()
+            })
             .append(Doc::line_or_space())
             .concat(reflow_with_indent(
                 ctx.format_jinja(self.expr, self.start, true, state).trim(),
@@ -986,6 +991,11 @@ impl<'s> DocGen<'s> for JinjaInterpolation<'s> {
             ))
             .nest(ctx.indent_width)
             .append(Doc::line_or_space())
+            .append(if self.trim_next {
+                Doc::text("-")
+            } else {
+                Doc::nil()
+            })
             .append(Doc::text("}}"))
             .group()
     }

@@ -1705,9 +1705,23 @@ impl<'s> Parser<'s> {
                                         NodeKind::VueInterpolation(VueInterpolation { expr, start })
                                     }
                                     Language::Jinja => {
+                                        let (trim_prev, expr) =
+                                            if let Some(rest) = expr.strip_prefix('-') {
+                                                (true, rest)
+                                            } else {
+                                                (false, expr)
+                                            };
+                                        let (trim_next, expr) =
+                                            if let Some(rest) = expr.strip_suffix('-') {
+                                                (true, rest)
+                                            } else {
+                                                (false, expr)
+                                            };
                                         NodeKind::JinjaInterpolation(JinjaInterpolation {
                                             expr,
-                                            start,
+                                            start: if trim_prev { start + 1 } else { start },
+                                            trim_prev,
+                                            trim_next,
                                         })
                                     }
                                     _ => unreachable!(),
