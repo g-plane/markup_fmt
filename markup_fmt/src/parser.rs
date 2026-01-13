@@ -107,6 +107,43 @@ impl<'s> Parser<'s> {
         {}
     }
 
+    /// Tries to consume the exact string.
+    /// If it fails halfway, the iterator is not advanced.
+    fn try_consume_str(&mut self, s: &str) -> Option<(usize, char)> {
+        let mut chars = self.chars.clone();
+        let mut last = None;
+
+        for expected_char in s.chars() {
+            match chars.next() {
+                Some((idx, c)) if c == expected_char => {
+                    last = Some((idx, c));
+                }
+                _ => return None,
+            }
+        }
+
+        self.chars = chars;
+        last
+    }
+    /// Tries to consume the string ignoring case.
+    /// If it fails halfway, the iterator is not advanced.
+    fn try_consume_str_ignore_case(&mut self, s: &str) -> Option<(usize, char)> {
+        let mut chars = self.chars.clone();
+        let mut last = None;
+
+        for expected in s.chars() {
+            match chars.next() {
+                Some((idx, c)) if c.eq_ignore_ascii_case(&expected) => {
+                    last = Some((idx, c));
+                }
+                _ => return None,
+            }
+        }
+
+        self.chars = chars;
+        last
+    }
+
     fn with_taken<T, F>(&mut self, parser: F) -> PResult<(T, &'s str)>
     where
         F: FnOnce(&mut Self) -> PResult<T>,
@@ -135,16 +172,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_angular_defer(&mut self) -> PResult<Vec<AngularGenericBlock<'s>>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'd'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
-            .is_none()
-        {
+        if self.try_consume_str("@defer").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("defer")));
         }
         self.skip_ws();
@@ -167,14 +195,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_angular_for(&mut self) -> PResult<AngularFor<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'o'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
-            .is_none()
-        {
+        if self.try_consume_str("@for").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("for")));
         }
         self.skip_ws();
@@ -196,15 +217,7 @@ impl<'s> Parser<'s> {
         let mut track = None;
         if self.chars.next_if(|(_, c)| *c == ';').is_some() {
             self.skip_ws();
-            if self
-                .chars
-                .next_if(|(_, c)| *c == 't')
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'r'))
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
-                .is_some()
-            {
+            if self.try_consume_str("track").is_some() {
                 self.skip_ws();
                 if let Some((start, _)) = self.chars.peek() {
                     let start = *start;
@@ -296,13 +309,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_angular_if(&mut self) -> PResult<AngularIf<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
-            .is_none()
-        {
+        if self.try_consume_str("@if").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("if")));
         }
         self.skip_ws();
@@ -337,12 +344,7 @@ impl<'s> Parser<'s> {
             }
             self.skip_ws();
 
-            if self
-                .chars
-                .next_if(|(_, c)| *c == 'i')
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
-                .is_some()
-            {
+            if self.try_consume_str("if").is_some() {
                 self.skip_ws();
                 let (expr, reference) = self.parse_angular_if_cond()?;
                 self.skip_ws();
@@ -377,12 +379,7 @@ impl<'s> Parser<'s> {
         let mut reference = None;
         if self.chars.next_if(|(_, c)| *c == ';').is_some() {
             self.skip_ws();
-            if self
-                .chars
-                .next_if(|(_, c)| *c == 'a')
-                .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-                .is_none()
-            {
+            if self.try_consume_str("as").is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("as")));
             }
             self.skip_ws();
@@ -442,14 +439,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_angular_let(&mut self) -> PResult<AngularLet<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .is_none()
-        {
+        if self.try_consume_str("@let").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularLet));
         }
         self.skip_ws();
@@ -470,17 +460,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_angular_switch(&mut self) -> PResult<AngularSwitch<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
-            .is_none()
-        {
+        if self.try_consume_str("@switch").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularSwitch));
         }
         self.skip_ws();
@@ -504,14 +484,7 @@ impl<'s> Parser<'s> {
             self.chars.next();
             match self.chars.peek() {
                 Some((_, 'c')) => {
-                    if self
-                        .chars
-                        .next_if(|(_, c)| *c == 'c')
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-                        .is_none()
-                    {
+                    if self.try_consume_str("case").is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case")));
                     }
                     self.skip_ws();
@@ -532,17 +505,7 @@ impl<'s> Parser<'s> {
                     self.skip_ws();
                 }
                 Some((_, 'd')) => {
-                    if self
-                        .chars
-                        .next_if(|(_, c)| *c == 'd')
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'u'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-                        .is_none()
-                    {
+                    if self.try_consume_str("default").is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("default")));
                     }
                     self.skip_ws();
@@ -945,18 +908,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_cdata(&mut self) -> PResult<Cdata<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '<')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '!'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '['))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'C'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'D'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'A'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'T'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'A'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '['))
-        else {
+        let Some((start, _)) = self.try_consume_str("<![CDATA[") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectCdata));
         };
         let start = start + 1;
@@ -990,9 +942,7 @@ impl<'s> Parser<'s> {
         let Some((start, _)) = self
             .chars
             .next_if(|(_, c)| *c == '<')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '!'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
+            .and_then(|_| self.try_consume_str("!--"))
         else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectComment));
         };
@@ -1024,25 +974,13 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_doctype(&mut self) -> PResult<Doctype<'s>> {
-        let keyword_start = if let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '<')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '!'))
-        {
+        let keyword_start = if let Some((start, _)) = self.try_consume_str("<!") {
             start + 1
         } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
         };
-        let keyword = if let Some((end, _)) = self
-            .chars
-            .next_if(|(_, c)| c.eq_ignore_ascii_case(&'d'))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'o')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'c')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'t')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'y')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'p')))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.eq_ignore_ascii_case(&'e')))
-        {
+
+        let keyword = if let Some((end, _)) = self.try_consume_str_ignore_case("doctype") {
             unsafe { self.source.get_unchecked(keyword_start..end + 1) }
         } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
@@ -1205,12 +1143,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_front_matter(&mut self) -> PResult<FrontMatter<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '-')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '-'))
-        else {
+        let Some((start, _)) = self.try_consume_str("---") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectFrontMatter));
         };
         let start = start + 1;
@@ -1354,11 +1287,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_jinja_comment(&mut self) -> PResult<JinjaComment<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-        else {
+        let Some((start, _)) = self.try_consume_str("{#") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectComment));
         };
         let start = start + 1;
@@ -1388,11 +1317,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_jinja_tag(&mut self) -> PResult<JinjaTag<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '%'))
-        else {
+        let Some((start, _)) = self.try_consume_str("{%") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectJinjaTag));
         };
         let start = start + 1;
@@ -1575,11 +1500,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_mustache_interpolation(&mut self) -> PResult<(&'s str, usize)> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
-        else {
+        let Some((start, _)) = self.try_consume_str("{{") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectMustacheInterpolation));
         };
         let start = start + 1;
@@ -1866,12 +1787,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_at_tag(&mut self) -> PResult<SvelteAtTag<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '@'))
-            .is_none()
-        {
+        if self.try_consume_str("{@").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAtTag));
         };
         let name = self.parse_identifier()?;
@@ -1885,13 +1801,7 @@ impl<'s> Parser<'s> {
             .chars
             .next_if(|(_, c)| *c == '{')
             .map(|_| self.skip_ws())
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '@'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .and_then(|_| self.try_consume_str("@attach"))
             .is_some()
         {
             self.parse_svelte_or_astro_expr()
@@ -1925,18 +1835,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_await_block(&mut self) -> PResult<Box<SvelteAwaitBlock<'s>>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
-            .is_none()
-        {
+        if self.try_consume_str("{#await ").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
         self.skip_ws();
@@ -2002,14 +1901,7 @@ impl<'s> Parser<'s> {
         };
 
         self.skip_ws();
-        let then_binding = if self
-            .chars
-            .next_if(|(_, c)| *c == 't')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
-            .is_some()
-        {
+        let then_binding = if self.try_consume_str("then").is_some() {
             self.skip_ws();
             Some(match self.chars.peek() {
                 Some((_, '}')) => None,
@@ -2020,15 +1912,7 @@ impl<'s> Parser<'s> {
         };
 
         self.skip_ws();
-        let catch_binding = if self
-            .chars
-            .next_if(|(_, c)| *c == 'c')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
-            .is_some()
-        {
+        let catch_binding = if self.try_consume_str("catch").is_some() {
             self.skip_ws();
             Some(match self.chars.peek() {
                 Some((_, '}')) => None,
@@ -2050,11 +1934,7 @@ impl<'s> Parser<'s> {
                 parser
                     .chars
                     .next_if(|(_, c)| *c == '{')
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == ':'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 't'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'h'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'n'))
+                    .and_then(|_| parser.try_consume_str(":then"))
                     .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteThenBlock))
             })
             .is_ok()
@@ -2082,12 +1962,7 @@ impl<'s> Parser<'s> {
                 parser
                     .chars
                     .next_if(|(_, c)| *c == '{')
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == ':'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'c'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'a'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 't'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'c'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'h'))
+                    .and_then(|_| parser.try_consume_str(":catch"))
                     .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteCatchBlock))
             })
             .is_ok()
@@ -2114,12 +1989,7 @@ impl<'s> Parser<'s> {
             .chars
             .next_if(|(_, c)| *c == '{')
             .map(|_| self.skip_ws())
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'w'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.try_consume_str("/await"))
             .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
@@ -2180,17 +2050,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_each_block(&mut self) -> PResult<SvelteEachBlock<'s>> {
-        if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
-            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
-            .is_none()
-        {
+        if self.try_consume_str("{#each ").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
         self.skip_ws();
@@ -2299,13 +2159,7 @@ impl<'s> Parser<'s> {
         let else_children = if self
             .try_parse(|parser| {
                 parser
-                    .chars
-                    .next_if(|(_, c)| *c == '{')
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == ':'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'l'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 's'))
-                    .and_then(|_| parser.chars.next_if(|(_, c)| *c == 'e'))
+                    .try_consume_str("{:else")
                     .and_then(|_| {
                         parser.skip_ws();
                         parser.chars.next_if(|(_, c)| *c == '}')
@@ -2323,11 +2177,7 @@ impl<'s> Parser<'s> {
             .chars
             .next_if(|(_, c)| *c == '{')
             .map(|_| self.skip_ws())
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'a'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'c'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'h'))
+            .and_then(|_| self.try_consume_str("/each"))
             .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
@@ -2347,11 +2197,7 @@ impl<'s> Parser<'s> {
 
     fn parse_svelte_if_block(&mut self) -> PResult<SvelteIfBlock<'s>> {
         if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .try_consume_str("{#if")
             .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
             .is_none()
         {
@@ -2370,14 +2216,7 @@ impl<'s> Parser<'s> {
             self.skip_ws();
             match self.chars.next() {
                 Some((_, ':')) => {
-                    if self
-                        .chars
-                        .next_if(|(_, c)| *c == 'e')
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-                        .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-                        .is_none()
-                    {
+                    if self.try_consume_str("else").is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock));
                     }
                     self.skip_ws();
@@ -2433,12 +2272,7 @@ impl<'s> Parser<'s> {
 
     fn parse_svelte_key_block(&mut self) -> PResult<SvelteKeyBlock<'s>> {
         if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'y'))
+            .try_consume_str("{#key")
             .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
             .is_none()
         {
@@ -2452,10 +2286,7 @@ impl<'s> Parser<'s> {
             .chars
             .next_if(|(_, c)| *c == '{')
             .map(|_| self.skip_ws())
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'k'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'y'))
+            .and_then(|_| self.try_consume_str("/key"))
             .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
@@ -2494,16 +2325,7 @@ impl<'s> Parser<'s> {
 
     fn parse_svelte_snippet_block(&mut self) -> PResult<SvelteSnippetBlock<'s>> {
         if self
-            .chars
-            .next_if(|(_, c)| *c == '{')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '#'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .try_consume_str("{#snippet")
             .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
             .is_none()
         {
@@ -2517,14 +2339,7 @@ impl<'s> Parser<'s> {
             .chars
             .next_if(|(_, c)| *c == '{')
             .map(|_| self.skip_ws())
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '/'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 's'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'n'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'i'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 't'))
+            .and_then(|_| self.try_consume_str("/snippet"))
             .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
@@ -2889,12 +2704,7 @@ impl<'s> Parser<'s> {
 
     fn parse_xml_decl(&mut self) -> PResult<XmlDecl<'s>> {
         if self
-            .chars
-            .next_if(|(_, c)| *c == '<')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == '?'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'x'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'm'))
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'l'))
+            .try_consume_str("<?xml")
             .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
             .is_none()
         {
