@@ -29,3 +29,43 @@
 
 <input type="file" accept="image/gif  image/jpeg">
 <div type="file" name="poster" accept="      image/png,    image/jpeg    " ></div>
+
+<!-- Wildcard types from MDN -->
+<input type="file" id="soundFile" accept="audio/*">
+<input type="file" id="videoFile" accept="video/*">
+<input type="file" id="imageFile" accept="image/*">
+
+<!-- MS Word document types from MDN -->
+<input
+  type="file"
+  id="docpicker"
+  accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+
+<!-- Mixed extensions and MIME types -->
+<input type="file" accept="image/*,.pdf">
+<input type="file" accept=".jpg, .jpeg, .png">
+
+<!-- Edge cases -->
+<input type="file" accept="">
+<input type="file" accept="   ">
+<input type="file" accept=",,,">
+
+<!-- Multiple lines -->
+<input type="file" accept=".jpg,
+                           .png,
+                           .gif">
+<input
+    type="file"
+    id="file-upload"
+    multiple
+    accept="
+    .pdf,
+    .doc,
+    .docx,
+    .xml,
+    image/png,
+    image/jpeg
+  "
+>
+<!-- With spaces -->
+<input type="file" accept=".jpg, .png, .gif">

@@ -13,7 +13,7 @@ aho-corasick = "1.1"
 css_dataset = { version = "0.4", default-features = false, features = ["tags"] }
 itertools = "0.14"
 memchr = "2.7"
-serde = { version = "1.0", optional = true }
+serde = { version = "1.0", optional = true, features = ["derive"] }
 tiny_pretty = { version = "0.2", features = ["unicode-width"] }
 
 [dev-dependencies]

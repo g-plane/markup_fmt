@@ -228,3 +228,14 @@ pub(crate) fn kebab2pascal(s: &'_ str) -> Cow<'_, str> {
         Cow::from(s)
     }
 }
+
+pub(crate) fn has_template_interpolation(s: &str, language: Language) -> bool {
+    match language {
+        Language::Jinja | Language::Vento | Language::Mustache => {
+            s.contains("{{") || s.contains("{%")
+        }
+        Language::Vue | Language::Angular => s.contains("{{"),
+        Language::Svelte | Language::Astro => s.contains('{'),
+        Language::Html | Language::Xml => false,
+    }
+}
