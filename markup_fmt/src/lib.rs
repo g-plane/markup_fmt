@@ -107,7 +107,7 @@ where
             } else {
                 IndentKind::Space
             },
-            line_break: options.layout.line_break.clone().into(),
+            line_break: options.layout.line_break.into(),
             width: options.layout.print_width,
             tab_size: options.layout.indent_width,
         },

@@ -1,8 +1,8 @@
 use crate::{
-    Language,
     config::{LanguageOptions, Quotes, WhitespaceSensitivity},
     helpers,
     state::State,
+    Language,
 };
 use memchr::memchr;
 use std::borrow::Cow;
@@ -86,8 +86,7 @@ where
                 matches!(
                     self.options
                         .component_whitespace_sensitivity
-                        .clone()
-                        .unwrap_or(self.options.whitespace_sensitivity.clone()),
+                        .unwrap_or(self.options.whitespace_sensitivity),
                     WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict
                 )
             }

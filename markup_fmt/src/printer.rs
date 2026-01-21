@@ -2529,14 +2529,14 @@ where
         .is_some_and(|name| name.eq_ignore_ascii_case("template"))
     {
         if slot == "default" {
-            ctx.options.default_v_slot_style.clone()
+            ctx.options.default_v_slot_style
         } else {
-            ctx.options.named_v_slot_style.clone()
+            ctx.options.named_v_slot_style
         }
     } else {
-        ctx.options.component_v_slot_style.clone()
+        ctx.options.component_v_slot_style
     };
-    option.or(ctx.options.v_slot_style.clone())
+    option.or(ctx.options.v_slot_style)
 }
 
 fn format_v_slot(style: VSlotStyle, slot: &str) -> Doc<'_> {
