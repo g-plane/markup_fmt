@@ -17,7 +17,7 @@ fn fmt_snapshot() {
 
         if let Some(options) = options {
             options.into_iter().for_each(|(option_name, options)| {
-                let output = run_format_test(path, &input, &options, language.clone());
+                let output = run_format_test(path, &input, &options, language);
                 build_settings(path).bind(|| {
                     let name = path.file_stem().unwrap().to_str().unwrap();
                     assert_snapshot!(format!("{name}.{option_name}"), output);
@@ -39,7 +39,7 @@ fn run_format_test(
     options: &FormatOptions,
     language: Language,
 ) -> String {
-    let output = format_text(&input, language.clone(), &options, |code, _| {
+    let output = format_text(&input, language, &options, |code, _| {
         Ok::<_, ()>(code.into())
     })
     .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))

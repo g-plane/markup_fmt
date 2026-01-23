@@ -86,8 +86,7 @@ where
                 matches!(
                     self.options
                         .component_whitespace_sensitivity
-                        .clone()
-                        .unwrap_or(self.options.whitespace_sensitivity.clone()),
+                        .unwrap_or(self.options.whitespace_sensitivity),
                     WhitespaceSensitivity::Css | WhitespaceSensitivity::Strict
                 )
             }
