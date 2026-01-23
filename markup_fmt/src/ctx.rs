@@ -1,8 +1,8 @@
 use crate::{
+    Language,
     config::{LanguageOptions, Quotes, WhitespaceSensitivity},
     helpers,
     state::State,
-    Language,
 };
 use memchr::memchr;
 use std::borrow::Cow;
