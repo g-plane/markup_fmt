@@ -2679,7 +2679,6 @@ fn compute_attr_value_quote<'s, E, F>(
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
-    let is_jinja = matches!(ctx.language, Language::Jinja);
     let has_single = attr_value.contains('\'');
     let has_double = attr_value.contains('"');
     if has_double && has_single {
@@ -2690,9 +2689,9 @@ where
         } else {
             Doc::text("'")
         }
-    } else if has_double && !is_jinja {
+    } else if has_double {
         Doc::text("'")
-    } else if has_single && !is_jinja {
+    } else if has_single {
         Doc::text("\"")
     } else if let Quotes::Double = ctx.options.quotes {
         Doc::text("\"")

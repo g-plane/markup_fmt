@@ -1,11 +1,11 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-<form class="form-control" action="{% url "my_app:subscribe" %}" method="post">
+<form class="form-control" action='{% url "my_app:subscribe" %}' method="post">
   {{ whatever }}
 </form>
 <a
-  href="https://{{ request.get_host }}{% url "newsletter_verify" uuid=subscription.verification_token %}"
+  href='https://{{ request.get_host }}{% url "newsletter_verify" uuid=subscription.verification_token %}'
 >Subscribe to the newsletter!</a>
 <div
   class="first-class {% block extra_classes %}{% endblock %} modal fade"

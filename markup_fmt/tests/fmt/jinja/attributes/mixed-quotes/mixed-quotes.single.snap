@@ -5,7 +5,7 @@ source: markup_fmt/tests/fmt.rs
 <div data-content='{% if status == 'active' %}I"d like it{% endif %}'></div>
 
 <div data-content='{% if status == "active" %}Id like it{% endif %}'></div>
-<div data-content='{% if status == 'active' %}Id like it{% endif %}'></div>
+<div data-content="{% if status == 'active' %}Id like it{% endif %}"></div>
 
 <!-- Unchanged (attr value contains both single and double quotes) -->
 
@@ -25,10 +25,10 @@ source: markup_fmt/tests/fmt.rs
 
 <!-- Should keep '' if quotes = "single" -->
 
-<div data-content='{% if status == 'active' %}Yay{% endif %}'></div>
-<input value='{{ initial|default('True') }}' />
-<input value='{{ field.value|default('', true) }}' />
-<button class='{{ ['btn_class', 'btn-expand']|join(' ') }}'></button>
+<div data-content="{% if status == 'active' %}Yay{% endif %}"></div>
+<input value="{{ initial|default('True') }}" />
+<input value="{{ field.value|default('', true) }}" />
+<button class="{{ ['btn_class', 'btn-expand']|join(' ') }}"></button>
 {% for row in [1,2] %}
-  <li class='{{ loop.cycle('odd', 'even') }}'>{{ row }}</li>
+  <li class="{{ loop.cycle('odd', 'even') }}">{{ row }}</li>
 {% endfor %}

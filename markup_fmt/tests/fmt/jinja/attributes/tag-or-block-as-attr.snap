@@ -76,7 +76,7 @@ source: markup_fmt/tests/fmt.rs
   {% else %}
     data-start="08:30:00"
     data-end="20:30:00"
-    data-start_day="{% now "Y-m-d" %}"
+    data-start_day='{% now "Y-m-d" %}'
     data-saturday_start="08:30:00"
     data-saturday_end="20:30:00"
   {% endif %}

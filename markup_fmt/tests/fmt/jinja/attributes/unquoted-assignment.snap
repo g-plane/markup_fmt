@@ -12,6 +12,6 @@ source: markup_fmt/tests/fmt.rs
 
 <html alt="{% url ... %}"></html>
 
-<a id="{% include "url.html" %}">{% include 'url.html' %}</a>
+<a id='{% include "url.html" %}'>{% include 'url.html' %}</a>
 
 <input value="{% if initial_value %}{{ initial_value }}{% else %}''{% endif %}">
