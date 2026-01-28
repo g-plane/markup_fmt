@@ -1233,6 +1233,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         .collect::<String>(),
                 ));
             } else if self.name.eq_ignore_ascii_case("accept")
+                && !matches!(ctx.language, Language::Xml)
                 && state
                     .current_tag_name
                     .map(|name| name.eq_ignore_ascii_case("input"))
