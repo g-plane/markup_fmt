@@ -1236,8 +1236,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 && !matches!(ctx.language, Language::Xml)
                 && state
                     .current_tag_name
-                    .map(|name| name.eq_ignore_ascii_case("input"))
-                    .unwrap_or_default()
+                    .is_some_and(|name| name.eq_ignore_ascii_case("input"))
             {
                 quote = compute_attr_value_quote(&value, self.quote, ctx);
                 if helpers::has_template_interpolation(&value, ctx.language) {
