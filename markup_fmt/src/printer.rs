@@ -745,6 +745,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                     Some(
                         "importmap"
                         | "application/json"
+                        | "text/json"
                         | "application/ld+json"
                         | "speculationrules",
                     ) => {
