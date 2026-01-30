@@ -1233,6 +1233,24 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                         }))
                         .collect::<String>(),
                 ));
+            } else if self.name.eq_ignore_ascii_case("accept")
+                && !matches!(ctx.language, Language::Xml)
+                && state
+                    .current_tag_name
+                    .is_some_and(|name| name.eq_ignore_ascii_case("input"))
+            {
+                quote = compute_attr_value_quote(&value, self.quote, ctx);
+                if helpers::has_template_interpolation(&value, ctx.language) {
+                    docs.extend(reflow_owned(&value));
+                } else {
+                    docs.push(Doc::text(
+                        value
+                            .split(',')
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty())
+                            .join(", "),
+                    ));
+                }
             } else {
                 quote = compute_attr_value_quote(&value, self.quote, ctx);
                 docs.extend(reflow_owned(&value));

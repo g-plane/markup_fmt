@@ -1,0 +1,16 @@
+<!-- accept with jinja interpolation - should preserve interpolation -->
+<input type="file" accept="{{ allowed_types }}">
+<input type="file" accept="image/*,{{ extra_types }}">
+<input type="file" accept="{{ type1 }},{{ type2 }}">
+<input type="file" accept="  {{ type1 }}  ,  {{ type2 }}  ">
+
+<!-- mixed static and dynamic -->
+<input type="file" accept=".jpg,.png,{{ dynamic_type }},.gif">
+<input type="file" accept="{{ prefix }}/*,application/pdf">
+
+<!-- jinja blocks in accept -->
+<input type="file" accept="{% if images %}image/*{% else %}*/*{% endif %}">
+<input type="file" accept="image/*{% if allow_pdf %},application/pdf{% endif %}">
+
+<!-- standard formatting should still work -->
+<input type="file" accept="  image/png  ,   image/jpeg  ">
