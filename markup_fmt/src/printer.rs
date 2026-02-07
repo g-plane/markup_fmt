@@ -658,165 +658,167 @@ impl<'s> DocGen<'s> for Element<'s> {
             )
         };
 
-        if tag_name.eq_ignore_ascii_case("script")
-            && let [
+        if tag_name.eq_ignore_ascii_case("script") && ctx.language != Language::Xml {
+            if let [
                 Node {
                     kind: NodeKind::Text(text_node),
                     ..
                 },
-            ] = &self.children[..]
-        {
-            if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                docs.push(Doc::hard_line());
-            } else {
-                let type_attr = self.attrs.iter().find_map(|attr| match attr {
-                    Attribute::Native(native) if native.name.eq_ignore_ascii_case("type") => {
-                        native.value.map(|(value, _)| value.to_ascii_lowercase())
-                    }
-                    _ => None,
-                });
-                match type_attr.as_deref() {
-                    Some(
-                        "module"
-                        | "application/javascript"
-                        | "text/javascript"
-                        | "application/ecmascript"
-                        | "text/ecmascript"
-                        | "application/x-javascript"
-                        | "application/x-ecmascript"
-                        | "text/x-javascript"
-                        | "text/x-ecmascript"
-                        | "text/jsx"
-                        | "text/babel",
-                    )
-                    | None => {
-                        let is_script_indent = ctx.script_indent();
-                        if is_script_indent {
-                            state.indent_level += 1;
-                        }
-                        let lang = self
-                            .attrs
-                            .iter()
-                            .find_map(|attr| match attr {
-                                Attribute::Native(native)
-                                    if native.name.eq_ignore_ascii_case("lang") =>
-                                {
-                                    native.value.map(|(value, _)| value)
-                                }
-                                _ => None,
-                            })
-                            .unwrap_or(if matches!(ctx.language, Language::Astro) {
-                                "ts"
-                            } else {
-                                "js"
-                            });
-                        let lang = if self.attrs.iter().any(|attr| match attr {
-                            Attribute::Native(native)
-                                if native.name.eq_ignore_ascii_case("type") =>
-                            {
-                                native.value.is_some_and(|(value, _)| value == "module")
-                            }
-                            _ => false,
-                        }) {
-                            match lang {
-                                "ts" => "mts",
-                                "js" => "mjs",
-                                lang => lang,
-                            }
-                        } else {
-                            lang
-                        };
-                        let formatted =
-                            ctx.format_script(text_node.raw, lang, text_node.start, &state);
-                        let doc = if matches!(
-                            ctx.options.script_formatter,
-                            Some(ScriptFormatter::Dprint)
-                        ) {
-                            Doc::hard_line().concat(reflow_owned(formatted.trim()))
-                        } else {
-                            Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
-                        };
-                        if is_script_indent {
-                            docs.push(doc.nest(ctx.indent_width));
-                        } else {
-                            docs.push(doc);
-                        }
-                    }
-                    Some(
-                        "importmap"
-                        | "application/json"
-                        | "text/json"
-                        | "application/ld+json"
-                        | "speculationrules",
-                    ) => {
-                        let formatted = ctx.format_json(text_node.raw, text_node.start, &state);
-                        docs.push(
-                            Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true)),
-                        );
-                    }
-                    Some(..) => {
-                        docs.push(Doc::hard_line());
-                        docs.extend(reflow_raw(text_node.raw.trim_matches('\n')));
-                    }
-                }
-                docs.push(Doc::hard_line());
-            }
-        } else if tag_name.eq_ignore_ascii_case("style")
-            && let [
-                Node {
-                    kind: NodeKind::Text(text_node),
-                    ..
-                },
-            ] = &self.children[..]
-        {
-            if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
-                docs.push(Doc::hard_line());
-            } else {
-                let lang = self
-                    .attrs
-                    .iter()
-                    .find_map(|attr| match attr {
-                        Attribute::Native(native_attribute)
-                            if native_attribute.name.eq_ignore_ascii_case("lang") =>
-                        {
-                            native_attribute.value.map(|(value, _)| value)
+            ] = &*self.children
+            {
+                if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                    docs.push(Doc::hard_line());
+                } else {
+                    let type_attr = self.attrs.iter().find_map(|attr| match attr {
+                        Attribute::Native(native) if native.name.eq_ignore_ascii_case("type") => {
+                            native.value.map(|(value, _)| value.to_ascii_lowercase())
                         }
                         _ => None,
-                    })
-                    .unwrap_or("css");
-                let (statics, dynamics) =
-                    parse_as_interpolated(text_node.raw, text_node.start, ctx.language, false);
-                const PLACEHOLDER: &str = "_saya0909_";
-                let masked = statics.join(PLACEHOLDER);
-                let formatted = ctx.format_style(&masked, lang, text_node.start, &state);
-                let doc = Doc::hard_line().concat(reflow_with_indent(
-                    formatted
-                        .split(PLACEHOLDER)
-                        .map(Cow::from)
-                        .interleave(dynamics.iter().map(|(expr, start)| match ctx.language {
-                            Language::Jinja => Cow::from(format!(
-                                "{{{{ {} }}}}",
-                                ctx.format_jinja(expr, *start, true, &state),
-                            )),
-                            Language::Vento => Cow::from(format!(
-                                "{{{{ {} }}}}",
-                                ctx.format_expr(expr, false, *start),
-                            )),
-                            Language::Mustache => Cow::from(format!("{{{{{expr}}}}}")),
-                            _ => unreachable!(),
-                        }))
-                        .collect::<String>()
-                        .trim(),
-                    lang != "sass",
-                ));
-                docs.push(
-                    if ctx.style_indent() {
-                        doc.nest(ctx.indent_width)
-                    } else {
-                        doc
+                    });
+                    match type_attr.as_deref() {
+                        Some(
+                            "module"
+                            | "application/javascript"
+                            | "text/javascript"
+                            | "application/ecmascript"
+                            | "text/ecmascript"
+                            | "application/x-javascript"
+                            | "application/x-ecmascript"
+                            | "text/x-javascript"
+                            | "text/x-ecmascript"
+                            | "text/jsx"
+                            | "text/babel",
+                        )
+                        | None => {
+                            let is_script_indent = ctx.script_indent();
+                            if is_script_indent {
+                                state.indent_level += 1;
+                            }
+                            let lang = self
+                                .attrs
+                                .iter()
+                                .find_map(|attr| match attr {
+                                    Attribute::Native(native)
+                                        if native.name.eq_ignore_ascii_case("lang") =>
+                                    {
+                                        native.value.map(|(value, _)| value)
+                                    }
+                                    _ => None,
+                                })
+                                .unwrap_or(if matches!(ctx.language, Language::Astro) {
+                                    "ts"
+                                } else {
+                                    "js"
+                                });
+                            let lang = if self.attrs.iter().any(|attr| match attr {
+                                Attribute::Native(native)
+                                    if native.name.eq_ignore_ascii_case("type") =>
+                                {
+                                    native.value.is_some_and(|(value, _)| value == "module")
+                                }
+                                _ => false,
+                            }) {
+                                match lang {
+                                    "ts" => "mts",
+                                    "js" => "mjs",
+                                    lang => lang,
+                                }
+                            } else {
+                                lang
+                            };
+                            let formatted =
+                                ctx.format_script(text_node.raw, lang, text_node.start, &state);
+                            let doc = if matches!(
+                                ctx.options.script_formatter,
+                                Some(ScriptFormatter::Dprint)
+                            ) {
+                                Doc::hard_line().concat(reflow_owned(formatted.trim()))
+                            } else {
+                                Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true))
+                            };
+                            if is_script_indent {
+                                docs.push(doc.nest(ctx.indent_width));
+                            } else {
+                                docs.push(doc);
+                            }
+                        }
+                        Some(
+                            "importmap"
+                            | "application/json"
+                            | "text/json"
+                            | "application/ld+json"
+                            | "speculationrules",
+                        ) => {
+                            let formatted = ctx.format_json(text_node.raw, text_node.start, &state);
+                            docs.push(
+                                Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true)),
+                            );
+                        }
+                        Some(..) => {
+                            docs.push(Doc::hard_line());
+                            docs.extend(reflow_raw(text_node.raw.trim_matches('\n')));
+                        }
                     }
-                    .append(Doc::hard_line()),
-                );
+                    docs.push(Doc::hard_line());
+                }
+            }
+        } else if tag_name.eq_ignore_ascii_case("style") && ctx.language != Language::Xml {
+            if let [
+                Node {
+                    kind: NodeKind::Text(text_node),
+                    ..
+                },
+            ] = &*self.children
+            {
+                if text_node.raw.chars().all(|c| c.is_ascii_whitespace()) {
+                    docs.push(Doc::hard_line());
+                } else {
+                    let lang = self
+                        .attrs
+                        .iter()
+                        .find_map(|attr| match attr {
+                            Attribute::Native(native_attribute)
+                                if native_attribute.name.eq_ignore_ascii_case("lang") =>
+                            {
+                                native_attribute.value.map(|(value, _)| value)
+                            }
+                            _ => None,
+                        })
+                        .unwrap_or("css");
+                    let (statics, dynamics) =
+                        parse_as_interpolated(text_node.raw, text_node.start, ctx.language, false);
+                    const PLACEHOLDER: &str = "_saya0909_";
+                    let masked = statics.join(PLACEHOLDER);
+                    let formatted = ctx.format_style(&masked, lang, text_node.start, &state);
+                    let doc = Doc::hard_line().concat(reflow_with_indent(
+                        formatted
+                            .split(PLACEHOLDER)
+                            .map(Cow::from)
+                            .interleave(dynamics.iter().map(|(expr, start)| match ctx.language {
+                                Language::Jinja => Cow::from(format!(
+                                    "{{{{ {} }}}}",
+                                    ctx.format_jinja(expr, *start, true, &state),
+                                )),
+                                Language::Vento => Cow::from(format!(
+                                    "{{{{ {} }}}}",
+                                    ctx.format_expr(expr, false, *start),
+                                )),
+                                Language::Mustache => Cow::from(format!("{{{{{expr}}}}}")),
+                                _ => unreachable!(),
+                            }))
+                            .collect::<String>()
+                            .trim(),
+                        lang != "sass",
+                    ));
+                    docs.push(
+                        if ctx.style_indent() {
+                            doc.nest(ctx.indent_width)
+                        } else {
+                            doc
+                        }
+                        .append(Doc::hard_line()),
+                    );
+                }
             }
         } else if tag_name.eq_ignore_ascii_case("pre") || tag_name.eq_ignore_ascii_case("textarea")
         {
