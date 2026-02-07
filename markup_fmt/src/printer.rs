@@ -1376,7 +1376,10 @@ impl<'s> DocGen<'s> for SvelteAtTag<'s> {
         Doc::text("{@")
             .append(Doc::text(self.name))
             .append(Doc::space())
-            .append(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)))
+            .concat(reflow_with_indent(
+                &ctx.format_expr(self.expr.0, false, self.expr.1),
+                true,
+            ))
             .append(Doc::text("}"))
     }
 }

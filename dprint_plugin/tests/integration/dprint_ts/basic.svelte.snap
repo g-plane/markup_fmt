@@ -57,3 +57,16 @@ function generateHtml(data: unknown) {
 <div style="background-color: {'w' + 'h' + `${'i' + 't'}`}e"></div>
 
 <div {...props}></div>
+
+<div>
+  {#if input}
+    {@render input({
+      value: ref.query,
+      oninput: handleInput,
+      onkeydown: handleKeydown,
+      placeholder,
+    })}
+  {:else}
+    <!-- ... -->
+  {/if}
+</div>
