@@ -97,7 +97,7 @@ pub(crate) fn is_whitespace_sensitive_tag(name: &str, language: Language) -> boo
                         .iter()
                         .any(|tag| tag.eq_ignore_ascii_case(name))
         }
-        Language::Xml => true,
+        Language::Xml => false,
         _ => {
             name == "a"
                 || !NON_WS_SENSITIVE_TAGS.contains(&name)

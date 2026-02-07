@@ -1358,6 +1358,7 @@ impl<'s> DocGen<'s> for Root<'s> {
                 WhitespaceSensitivity::Strict
             )
             || !is_whitespace_sensitive && has_two_more_non_text_children
+            || ctx.language == Language::Xml
         {
             format_children_with_inserting_linebreak(&self.children, ctx, state)
                 .append(Doc::hard_line())
