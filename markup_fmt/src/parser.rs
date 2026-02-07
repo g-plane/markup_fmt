@@ -113,9 +113,9 @@ impl<'s> Parser<'s> {
         let mut chars = self.chars.clone();
         let mut last = None;
 
-        for expected_char in s.chars() {
+        for expected in s.chars() {
             match chars.next() {
-                Some((idx, c)) if c == expected_char => {
+                Some((idx, c)) if c == expected => {
                     last = Some((idx, c));
                 }
                 _ => return None,
