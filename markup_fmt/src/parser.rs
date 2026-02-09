@@ -979,7 +979,6 @@ impl<'s> Parser<'s> {
         } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
         };
-
         let keyword = if let Some((end, _)) = self.try_consume_str_ignore_case("doctype") {
             unsafe { self.source.get_unchecked(keyword_start..end + 1) }
         } else {
@@ -1835,7 +1834,11 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_await_block(&mut self) -> PResult<Box<SvelteAwaitBlock<'s>>> {
-        if self.try_consume_str("{#await ").is_none() {
+        if self
+            .try_consume_str("{#await")
+            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
+            .is_none()
+        {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
         self.skip_ws();
@@ -2050,7 +2053,11 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_svelte_each_block(&mut self) -> PResult<SvelteEachBlock<'s>> {
-        if self.try_consume_str("{#each ").is_none() {
+        if self
+            .try_consume_str("{#each")
+            .and_then(|_| self.chars.next_if(|(_, c)| c.is_ascii_whitespace()))
+            .is_none()
+        {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
         self.skip_ws();
