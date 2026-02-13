@@ -1,6 +1,6 @@
 [package]
 name = "markup_fmt"
-version = "0.25.3"
+version = "0.26.0"
 edition = "2024"
 authors = ["Pig Fang <g-plane@hotmail.com>"]
 description = "Configurable HTML, Vue, Svelte, Astro, Angular, Jinja, Twig, Nunjucks, Vento, Mustache, Handlebars and XML formatter."
