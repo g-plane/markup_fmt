@@ -181,7 +181,9 @@ impl<'s> DocGen<'s> for AngularInterpolation<'s> {
         Doc::text("{{")
             .append(Doc::line_or_space())
             .concat(reflow_with_indent(
-                &ctx.format_expr(self.expr, false, self.start),
+                ctx.try_format_expr(self.expr, false, self.start)
+                    .as_deref()
+                    .unwrap_or(self.expr),
                 true,
             ))
             .nest(ctx.indent_width)
