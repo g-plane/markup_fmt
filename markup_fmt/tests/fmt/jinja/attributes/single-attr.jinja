@@ -21,3 +21,23 @@
         elif field.field.causes_yellow_card
     %}data-yellow-card{% endif %}
 ></div>
+
+
+<div
+    {% if first_condition %}
+        {% if second_condition %}
+            data-second-condition="true"
+        {% endif %}
+    {% endif %}
+>
+</div>
+
+<div
+    {% if first_condition %}
+        {% if second_condition %}
+            data-second-condition="true"
+        {% endif %}
+        data-first-condition="true"
+    {% endif %}
+>
+</div>

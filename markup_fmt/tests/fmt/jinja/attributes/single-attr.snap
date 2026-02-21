@@ -37,3 +37,22 @@ source: markup_fmt/tests/fmt.rs
   {% endif %}
 >
 </div>
+
+<div
+  {% if first_condition %}
+    {% if second_condition %}
+      data-second-condition="true"
+    {% endif %}
+  {% endif %}
+>
+</div>
+
+<div
+  {% if first_condition %}
+    {% if second_condition %}
+      data-second-condition="true"
+    {% endif %}
+    data-first-condition="true"
+  {% endif %}
+>
+</div>
