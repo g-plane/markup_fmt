@@ -21,3 +21,49 @@
         elif field.field.causes_yellow_card
     %}data-yellow-card{% endif %}
 ></div>
+
+
+<div
+    {% if first_condition %}
+        {% if second_condition %}
+            data-second-condition="true"
+        {% endif %}
+    {% endif %}
+>
+</div>
+
+<div
+    {% if first_condition %}
+        {% if second_condition %}
+            data-second-condition="true"
+        {% endif %}
+        data-first-condition="true"
+    {% endif %}
+>
+</div>
+
+# regression trest for https://github.com/g-plane/markup_fmt/issues/199
+<div
+    {% if first_condition %}
+        data-first-condition="true"
+        {% if second_condition %}
+            data-second-condition="true"
+        {% endif %}
+    {% endif %}
+>
+</div>
+
+# Regression test for https://github.com/g-plane/markup_fmt/issues/198
+<div
+    {% if first_condition %}
+        {% for key, value in my_dict.items %}
+            data-{{key}}="{{value}}"
+        {% endfor %}
+        {% if second_condition %}
+            data-second_condition="true"
+        {% endif %}
+    {% else %}
+        data-else="true"
+    {% endif %}
+>
+</div>

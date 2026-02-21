@@ -1276,6 +1276,9 @@ impl<'s> Parser<'s> {
                     }
                     children.push(children_parser(self)?);
                 }
+                Some((_, c)) if c.is_ascii_whitespace() && T::skip_ws_before_jinja_block_end() => {
+                    self.chars.next();
+                }
                 Some(..) => {
                     children.push(children_parser(self)?);
                 }
@@ -2811,6 +2814,10 @@ type AngularIfCond<'s> = ((&'s str, usize), Option<(&'s str, usize)>);
 trait HasJinjaFlowControl<'s>: Sized {
     type Intermediate;
 
+    fn skip_ws_before_jinja_block_end() -> bool {
+        false
+    }
+
     fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self;
     fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate;
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate;
@@ -2837,6 +2844,10 @@ impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
 
 impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
     type Intermediate = Attribute<'s>;
+
+    fn skip_ws_before_jinja_block_end() -> bool {
+        true
+    }
 
     fn build(intermediate: Self::Intermediate, _: &'s str) -> Self {
         intermediate
