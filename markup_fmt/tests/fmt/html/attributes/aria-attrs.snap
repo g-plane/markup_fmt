@@ -1,0 +1,36 @@
+---
+source: markup_fmt/tests/fmt.rs
+snapshot_kind: text
+---
+<!-- Elements with aria-labelledby -->
+<h1 id="main-heading">Welcome to Our Website</h1>
+<p id="intro">This website is designed to be accessible for everyone.</p>
+<div aria-labelledby="main-heading intro">
+  <p>Here you will find various resources and information.</p>
+</div>
+
+<!-- Elements with aria-describedby -->
+<button id="subscribe-button" aria-describedby="subscribe-info">
+  Subscribe
+</button>
+<p id="subscribe-info">Click the button to subscribe to our newsletter.</p>
+
+<!-- Elements with aria-controls -->
+<button id="show-more-button" aria-controls="more-info">
+  Show More Information
+</button>
+<div id="more-info" hidden>
+  <p>Here is some additional information that you can show or hide.</p>
+</div>
+
+<!-- Elements with aria-owns -->
+<div id="menu-container" aria-owns="menu1 menu2">
+  <ul id="menu1">
+    <li>Home</li>
+    <li>About</li>
+  </ul>
+  <ul id="menu2">
+    <li>Services</li>
+    <li>Contact</li>
+  </ul>
+</div>
