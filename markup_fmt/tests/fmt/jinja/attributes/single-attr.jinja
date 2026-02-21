@@ -41,3 +41,14 @@
     {% endif %}
 >
 </div>
+
+
+<div
+    {% if first_condition %}
+        data-first-condition="true"
+        {% if second_condition %}
+            data-second-condition="true"
+        {% endif %}
+    {% endif %}
+>
+</div>
