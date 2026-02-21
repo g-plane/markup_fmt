@@ -1,0 +1,32 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<!-- single value -->
+<form id="form" action="d.html" method="post" accept-charset="utf-8">
+  <p><input type="submit" value="submit"></p>
+</form>
+<form id="dff" action="d.html" method="post" accept-charset="utf-8">
+  <p><input type="submit" value="submit"></p>
+</form>
+
+<!-- space separated -->
+<form action="#" accept-charset="US-ASCII UTF-8">
+  First name:
+  <input type="text" name="fname">
+  <br> Last name:
+  <input type="text" name="lname">
+  <br>
+  <input type="submit" value="Submit">
+</form>
+
+<!-- comma separated (was previously supported https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form#accept-charset) -->
+<form
+  name="multi-charset"
+  accept-charset="EUC-JP, UTF-8, Shift_JIS"
+  action="/~info"
+>
+  <input type="text" name="q" value="こ">
+  <input type="submit" value="検索">
+</form>
+<form name="form3" action="/" method="GET" accept-charset="koi8-r, cp850">
+</form>

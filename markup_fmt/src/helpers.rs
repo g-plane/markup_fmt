@@ -1,4 +1,5 @@
 use crate::Language;
+use crate::state::State;
 use aho_corasick::AhoCorasick;
 use std::{borrow::Cow, sync::LazyLock};
 
@@ -238,4 +239,45 @@ pub(crate) fn has_template_interpolation(s: &str, language: Language) -> bool {
             s.contains("{{") || s.contains("{%")
         }
     }
+}
+
+/// Checks if the given attribute name content should be space-separated.
+///
+/// These were found using the HTML attribute list, cross-referencing the HTML spec:
+/// - <https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes>
+/// - <https://html.spec.whatwg.org/multipage/>
+pub(crate) fn should_be_space_separated(name: &str, state: &State) -> bool {
+    name.eq_ignore_ascii_case("class")
+        || name.eq_ignore_ascii_case("aria-labelledby")
+        || name.eq_ignore_ascii_case("aria-describedby")
+        || name.eq_ignore_ascii_case("aria-controls")
+        || name.eq_ignore_ascii_case("aria-owns")
+        || name.eq_ignore_ascii_case("rel")
+            && state
+                .current_tag_name
+                .map(|name| {
+                    ["form", "a", "area", "link"]
+                        .iter()
+                        .any(|tag| tag.eq_ignore_ascii_case(name))
+                })
+                .unwrap_or_default()
+        || name.eq_ignore_ascii_case("autocomplete")
+            && state
+                .current_tag_name
+                .map(|name| {
+                    ["form", "input", "select", "textarea"]
+                        .iter()
+                        .any(|tag| tag.eq_ignore_ascii_case(name))
+                })
+                .unwrap_or_default()
+        || name.eq_ignore_ascii_case("sandbox")
+            && state
+                .current_tag_name
+                .map(|name| name.eq_ignore_ascii_case("iframe"))
+                .unwrap_or_default()
+        || name.eq_ignore_ascii_case("accept-charset")
+            && state
+                .current_tag_name
+                .map(|name| name.eq_ignore_ascii_case("form"))
+                .unwrap_or_default()
 }
