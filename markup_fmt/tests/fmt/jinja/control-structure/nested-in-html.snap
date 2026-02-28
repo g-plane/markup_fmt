@@ -37,49 +37,53 @@ source: markup_fmt/tests/fmt.rs
 
 # but it's not required here because we are in a div context
 <div>
-  {%
-    if page_data.description
-  %}<p class="ds-mb-0 ds-text-current-tint-110 ds-fgdgfdg">
+  {% if page_data.description %}
+    <p class="ds-mb-0 ds-text-current-tint-110 ds-fgdgfdg">
       AA page_data.description AA
-    </p>{% endif %}
+    </p>
+  {% endif %}
 </div>
 
 <div>
-  {%
-    for drawback in offer_data.offer__drawbacks|underscore_separated_list
-  %}<li>{{ drawback|safe }}</li>{% endfor %}
+  {% for drawback in offer_data.offer__drawbacks|underscore_separated_list %}
+    <li>{{ drawback|safe }}</li>
+  {% endfor %}
 </div>
 
 <select name="{{ name }}" id="{{ name }}">
-  {% for choice in choices %}<option value="{{ choice.0 }}">
-      {{ choice.1 }}
-    </option>{% endfor %}
+  {% for choice in choices %}
+    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+  {% endfor %}
 </select>
 
 <aside class="text-cta">
-  {% if self.cta_link and self.cta_text %}<a
-      href="{{ self.cta_link }}"
-      class="btn btn-hw text-cta__cta"
-    >{{ self.cta_text }}</a>{% endif %}
+  {% if self.cta_link and self.cta_text %}
+    <a href="{{ self.cta_link }}" class="btn btn-hw text-cta__cta">{{
+      self.cta_text
+    }}</a>
+  {% endif %}
 </aside>
 
 <div class="footer-cta">
   <p class="footer-cta__title">{{ self.title }}</p>
-  {% if self.opens_modal and self.cta_text %}<a
+  {% if self.opens_modal and self.cta_text %}
+    <a
       href="tel:{{ phone_number }}"
       class="btn btn-lg"
       role="button"
       aria-expanded="false"
     >{{ self.cta_text }}</a>
-  {% elif self.cta_link and self.cta_text %}<a
-      class="btn btn-lg"
-      href="{{ self.cta_link }}"
-    >{{ self.cta_text }}</a>{% endif %}
+  {% elif self.cta_link and self.cta_text %}
+    <a class="btn btn-lg" href="{{ self.cta_link }}">{{ self.cta_text }}</a>
+  {% endif %}
 </div>
 
 <head>
-  {% block meta-extras %}{% if page.noindex %}
-      <meta name="robots" content="noindex">{% endif %}{% endblock %}
+  {% block meta-extras %}
+    {% if page.noindex %}
+      <meta name="robots" content="noindex">
+    {% endif %}
+  {% endblock %}
 </head>
 
 <a
@@ -102,9 +106,9 @@ source: markup_fmt/tests/fmt.rs
 </a>
 
 <div class="contact-info-column">
-  {% if contact.email %}<a href="mailto:{{ contact.email }}" target="blank_">{{
-      contact.email
-    }}</a>{% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}" target="blank_">{{ contact.email }}</a>
+  {% endif %}
   {% if contact.phone %}
     <a class="contact-phone" href="tel:{{ contact.phone }}">{{
       contact.phone
@@ -115,12 +119,16 @@ source: markup_fmt/tests/fmt.rs
 <p class="ds-text-14 sm:ds-text-16">
   Lorem ipsum dolor sit amet, consectetur adipiscing elit
   {% if formula_type == "foo" %}
-    sed do eiusmod{% elif formula_type == "bar" %}
-    tempor incididunt{% else %}
-    ut labore et dolore{% endif %}
+    sed do eiusmod
+  {% elif formula_type == "bar" %}
+    tempor incididunt
+  {% else %}
+    ut labore et dolore
+  {% endif %}
 </p>
 
 <div class="react-root">
-  {% block account-content %}<noscript>This page requires JavaScript to be
-      enabled to work</noscript>{% endblock %}
+  {% block account-content %}
+    <noscript>This page requires JavaScript to be enabled to work</noscript>
+  {% endblock %}
 </div>
