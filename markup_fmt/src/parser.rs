@@ -1687,7 +1687,11 @@ impl<'s> Parser<'s> {
             Some((_, '-'))
                 if matches!(
                     self.language,
-                    Language::Astro | Language::Jinja | Language::Vento | Language::Mustache
+                    Language::Html
+                        | Language::Astro
+                        | Language::Jinja
+                        | Language::Vento
+                        | Language::Mustache
                 ) && !self.state.has_front_matter =>
             {
                 let mut chars = self.chars.clone();
