@@ -30,7 +30,11 @@ pub enum SyntaxErrorKind {
     ExpectElement,
     ExpectFrontMatter,
     ExpectIdentifier,
-    ExpectJinjaBlockEnd,
+    ExpectJinjaBlockEnd {
+        tag_name: String,
+        line: usize,
+        column: usize,
+    },
     ExpectJinjaTag,
     ExpectKeyword(&'static str),
     ExpectMustacheInterpolation,
@@ -82,7 +86,14 @@ impl fmt::Display for SyntaxErrorKind {
             SyntaxErrorKind::ExpectElement => "expected element".into(),
             SyntaxErrorKind::ExpectFrontMatter => "expected front matter".into(),
             SyntaxErrorKind::ExpectIdentifier => "expected identifier".into(),
-            SyntaxErrorKind::ExpectJinjaBlockEnd => "expected Jinja block end".into(),
+            SyntaxErrorKind::ExpectJinjaBlockEnd {
+                tag_name,
+                line,
+                column,
+            } => format!(
+                "expected end tag for opening Jinja block {{% {tag_name} %}} from line {line}, column {column}"
+            )
+            .into(),
             SyntaxErrorKind::ExpectJinjaTag => "expected Jinja tag".into(),
             SyntaxErrorKind::ExpectKeyword(keyword) => {
                 format!("expected keyword '{keyword}'").into()

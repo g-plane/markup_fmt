@@ -1260,7 +1260,12 @@ impl<'s> Parser<'s> {
         Ok(unsafe { self.source.get_unchecked(start..end) })
     }
 
-    fn parse_jinja_block_children<T, F>(&mut self, children_parser: &mut F) -> PResult<Vec<T>>
+    fn parse_jinja_block_children<T, F>(
+        &mut self,
+        tag_name: &str,
+        tag_start: usize,
+        children_parser: &mut F,
+    ) -> PResult<Vec<T>>
     where
         T: HasJinjaFlowControl<'s>,
         F: FnMut(&mut Self) -> PResult<T>,
@@ -1279,7 +1284,14 @@ impl<'s> Parser<'s> {
                 Some(..) => {
                     children.push(children_parser(self)?);
                 }
-                None => return Err(self.emit_error(SyntaxErrorKind::ExpectJinjaBlockEnd)),
+                None => {
+                    let (line, column) = self.pos_to_line_col(tag_start);
+                    return Err(self.emit_error(SyntaxErrorKind::ExpectJinjaBlockEnd {
+                        tag_name: tag_name.into(),
+                        line,
+                        column,
+                    }));
+                }
             }
         }
         Ok(children)
@@ -1373,10 +1385,11 @@ impl<'s> Parser<'s> {
                 | "raw"
         ) || tag_name == "set" && !first_tag.content.contains('=')
         {
+            let tag_start = first_tag.start;
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
             loop {
-                let mut children = self.parse_jinja_block_children(children_parser)?;
+                let mut children = self.parse_jinja_block_children(tag_name, tag_start, children_parser)?;
                 if !children.is_empty() {
                     if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
                         nodes.append(&mut children);
