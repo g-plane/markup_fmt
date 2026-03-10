@@ -31,3 +31,5 @@
   - [scriptFormatter](./config/script-formatter.md)
   - [ignoreCommentDirective](./config/ignore-comment-directive.md)
   - [ignoreFileCommentDirective](./config/ignore-file-comment-directive.md)
+- [Recipes]()
+  - [Angular](./recipes/angular.md)
