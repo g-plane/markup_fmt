@@ -1,5 +1,4 @@
-use crate::Language;
-use crate::state::State;
+use crate::{Language, state::State};
 use aho_corasick::AhoCorasick;
 use std::{borrow::Cow, sync::LazyLock};
 
@@ -260,67 +259,64 @@ static SPACE_SEPARATED_GLOBAL_ATTRIBUTES: [&str; 11] = [
 /// - <https://html.spec.whatwg.org/multipage/indices.html#attributes-3>
 /// - <https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes>
 pub(crate) fn should_be_space_separated(name: &str, state: &State) -> bool {
-    SPACE_SEPARATED_GLOBAL_ATTRIBUTES
+    if SPACE_SEPARATED_GLOBAL_ATTRIBUTES
         .iter()
         .any(|tag| tag.eq_ignore_ascii_case(name))
-        || name.eq_ignore_ascii_case("rel")
-            && state
-                .current_tag_name
-                .map(|name| {
-                    ["form", "a", "area", "link"]
-                        .iter()
-                        .any(|tag| tag.eq_ignore_ascii_case(name))
-                })
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("blocking")
-            && state
-                .current_tag_name
-                .map(|name| {
-                    ["link", "script", "style"]
-                        .iter()
-                        .any(|tag| tag.eq_ignore_ascii_case(name))
-                })
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("for")
-            && state
-                .current_tag_name
-                .map(|name| name.eq_ignore_ascii_case("output"))
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("headers")
-            && state
-                .current_tag_name
-                .map(|name| {
-                    ["td", "th"]
-                        .iter()
-                        .any(|tag| tag.eq_ignore_ascii_case(name))
-                })
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("autocomplete")
-            && state
-                .current_tag_name
-                .map(|name| {
-                    ["form", "input", "select", "textarea"]
-                        .iter()
-                        .any(|tag| tag.eq_ignore_ascii_case(name))
-                })
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("sandbox")
-            && state
-                .current_tag_name
-                .map(|name| name.eq_ignore_ascii_case("iframe"))
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("accept-charset")
-            && state
-                .current_tag_name
-                .map(|name| name.eq_ignore_ascii_case("form"))
-                .unwrap_or_default()
-        || name.eq_ignore_ascii_case("ping")
-            && state
-                .current_tag_name
-                .map(|name| {
-                    ["a", "area"]
-                        .iter()
-                        .any(|tag| tag.eq_ignore_ascii_case(name))
-                })
-                .unwrap_or_default()
+    {
+        true
+    } else if name.eq_ignore_ascii_case("rel") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["form", "a", "area", "link"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("blocking") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["link", "script", "style"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("for") {
+        state
+            .current_tag_name
+            .is_some_and(|name| name.eq_ignore_ascii_case("output"))
+    } else if name.eq_ignore_ascii_case("headers") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["td", "th"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("autocomplete") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["form", "input", "select", "textarea"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("sandbox") {
+        state
+            .current_tag_name
+            .is_some_and(|name| name.eq_ignore_ascii_case("iframe"))
+    } else if name.eq_ignore_ascii_case("accept-charset") {
+        state
+            .current_tag_name
+            .is_some_and(|name| name.eq_ignore_ascii_case("form"))
+    } else if name.eq_ignore_ascii_case("ping") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["a", "area"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else {
+        false
+    }
 }
