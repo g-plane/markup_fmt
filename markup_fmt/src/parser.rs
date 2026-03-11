@@ -2814,13 +2814,13 @@ type AngularIfCond<'s> = ((&'s str, usize), Option<(&'s str, usize)>);
 trait HasJinjaFlowControl<'s>: Sized {
     type Intermediate;
 
-    fn skip_ws_before_jinja_block_end() -> bool {
-        false
-    }
-
     fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self;
     fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate;
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate;
+
+    fn skip_ws_before_jinja_block_end() -> bool {
+        false
+    }
 }
 
 impl<'s> HasJinjaFlowControl<'s> for Node<'s> {

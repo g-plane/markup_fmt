@@ -57,7 +57,7 @@ source: markup_fmt/tests/fmt.rs
 >
 </div>
 
-# regression trest for https://github.com/g-plane/markup_fmt/issues/199
+# regression test for https://github.com/g-plane/markup_fmt/issues/199
 <div
   {% if first_condition %}
     data-first-condition="true"
@@ -68,7 +68,7 @@ source: markup_fmt/tests/fmt.rs
 >
 </div>
 
-# Regression test for https://github.com/g-plane/markup_fmt/issues/198
+# regression test for https://github.com/g-plane/markup_fmt/issues/198
 <div
   {% if first_condition %}
     {% for key, value in my_dict.items %}
