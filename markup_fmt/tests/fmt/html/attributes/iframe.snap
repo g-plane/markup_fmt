@@ -1,0 +1,24 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<iframe style="display:none" sandbox="allow-scripts allow-same-origin"></iframe>
+<iframe style="display:none" sandbox="Allow-Scripts Allow-Same-Origin"></iframe>
+<iframe sandbox="allow-same-origin allow-scripts"></iframe>
+<iframe sandbox="aLlOw-SAME-oRiGin ALLOW-sCrIpTs"></iframe>
+<iframe sandbox=""></iframe>
+<iframe sandbox="allow-forms allow-scripts"></iframe>
+<iframe sandbox="allow-same-origin allow-scripts"></iframe>
+<iframe sandbox="allow-same-origin"></iframe>
+<iframe sandbox="allow-same-origin allow-scripts"></iframe>
+<iframe sandbox="allow-same-origin"></iframe>
+<iframe sandbox="allow-same-origin allow-scripts"></iframe>
+<iframe sandbox="allow-same-origin"></iframe>
+<iframe sandbox="allow-same-origin allow-scripts"></iframe>
+<iframe sandbox="allow-scripts"></iframe>
+<iframe sandbox="allow-same-origin allow-scripts"></iframe>
+<iframe
+  sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation"
+></iframe>
+<iframe sandbox=""></iframe>
+
+<div sandbox="          allow-same-origin           allow-scripts"></div>

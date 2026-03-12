@@ -1,4 +1,4 @@
-use crate::Language;
+use crate::{Language, state::State};
 use aho_corasick::AhoCorasick;
 use std::{borrow::Cow, sync::LazyLock};
 
@@ -237,5 +237,86 @@ pub(crate) fn has_template_interpolation(s: &str, language: Language) -> bool {
         Language::Jinja | Language::Vento | Language::Mustache => {
             s.contains("{{") || s.contains("{%")
         }
+    }
+}
+
+static SPACE_SEPARATED_GLOBAL_ATTRIBUTES: [&str; 11] = [
+    "class",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-controls",
+    "aria-owns",
+    "aria-flowto",
+    "accesskey",
+    "itemtype",
+    "itemprop",
+    "itemref",
+    "accesskey",
+];
+/// Checks if the given attribute name content should be space-separated.
+///
+/// These were found using the HTML attribute list from the spec, cross-referencing MDN:
+/// - <https://html.spec.whatwg.org/multipage/indices.html#attributes-3>
+/// - <https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes>
+pub(crate) fn should_be_space_separated(name: &str, state: &State) -> bool {
+    if SPACE_SEPARATED_GLOBAL_ATTRIBUTES
+        .iter()
+        .any(|tag| tag.eq_ignore_ascii_case(name))
+    {
+        true
+    } else if name.eq_ignore_ascii_case("rel") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["form", "a", "area", "link"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("blocking") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["link", "script", "style"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("for") {
+        state
+            .current_tag_name
+            .is_some_and(|name| name.eq_ignore_ascii_case("output"))
+    } else if name.eq_ignore_ascii_case("headers") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["td", "th"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("autocomplete") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["form", "input", "select", "textarea"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else if name.eq_ignore_ascii_case("sandbox") {
+        state
+            .current_tag_name
+            .is_some_and(|name| name.eq_ignore_ascii_case("iframe"))
+    } else if name.eq_ignore_ascii_case("accept-charset") {
+        state
+            .current_tag_name
+            .is_some_and(|name| name.eq_ignore_ascii_case("form"))
+    } else if name.eq_ignore_ascii_case("ping") {
+        state
+            .current_tag_name
+            .is_some_and(|name| {
+                ["a", "area"]
+                    .iter()
+                    .any(|tag| tag.eq_ignore_ascii_case(name))
+            })
+    } else {
+        false
     }
 }
