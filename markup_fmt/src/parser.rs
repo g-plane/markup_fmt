@@ -1281,6 +1281,9 @@ impl<'s> Parser<'s> {
                     }
                     children.push(children_parser(self)?);
                 }
+                Some((_, c)) if c.is_ascii_whitespace() && T::skip_ws_before_jinja_block_end() => {
+                    self.chars.next();
+                }
                 Some(..) => {
                     children.push(children_parser(self)?);
                 }
@@ -2831,6 +2834,8 @@ trait HasJinjaFlowControl<'s>: Sized {
     fn build(intermediate: Self::Intermediate, raw: &'s str) -> Self;
     fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate;
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate;
+
+    fn skip_ws_before_jinja_block_end() -> bool;
 }
 
 impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
@@ -2850,6 +2855,10 @@ impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate {
         NodeKind::JinjaBlock(block)
     }
+
+    fn skip_ws_before_jinja_block_end() -> bool {
+        false
+    }
 }
 
 impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
@@ -2865,6 +2874,10 @@ impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
 
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate {
         Attribute::JinjaBlock(block)
+    }
+
+    fn skip_ws_before_jinja_block_end() -> bool {
+        true
     }
 }
 
