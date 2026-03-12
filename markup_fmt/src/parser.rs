@@ -2818,9 +2818,7 @@ trait HasJinjaFlowControl<'s>: Sized {
     fn from_tag(tag: JinjaTag<'s>) -> Self::Intermediate;
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate;
 
-    fn skip_ws_before_jinja_block_end() -> bool {
-        false
-    }
+    fn skip_ws_before_jinja_block_end() -> bool;
 }
 
 impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
@@ -2840,14 +2838,14 @@ impl<'s> HasJinjaFlowControl<'s> for Node<'s> {
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate {
         NodeKind::JinjaBlock(block)
     }
+
+    fn skip_ws_before_jinja_block_end() -> bool {
+        false
+    }
 }
 
 impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
     type Intermediate = Attribute<'s>;
-
-    fn skip_ws_before_jinja_block_end() -> bool {
-        true
-    }
 
     fn build(intermediate: Self::Intermediate, _: &'s str) -> Self {
         intermediate
@@ -2859,6 +2857,10 @@ impl<'s> HasJinjaFlowControl<'s> for Attribute<'s> {
 
     fn from_block(block: JinjaBlock<'s, Self>) -> Self::Intermediate {
         Attribute::JinjaBlock(block)
+    }
+
+    fn skip_ws_before_jinja_block_end() -> bool {
+        true
     }
 }
 
