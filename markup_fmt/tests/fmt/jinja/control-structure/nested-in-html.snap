@@ -1,0 +1,134 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<div class="contact-info-column">
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+  {% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+  {% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}"> {{ contact.email }}</a>
+  {% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+  {% endif %}
+</div>
+<span class="contact-info-column">
+  {% if contact.email %}<a href="mailto:{{ contact.email }}">{{
+      contact.email
+    }}</a>{% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}"> {{ contact.email }}</a>{% endif %}
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+  {% endif %}
+</span>
+
+# p hug the jinja tag here
+{%
+  if page_data.description
+%}<p class="ds-mb-0 ds-text-current-tint-110 ds-fgdgfdg">
+    AA page_data.description AA
+  </p>{% endif %}
+
+# but it's not required here because we are in a div context
+<div>
+  {% if page_data.description %}
+    <p class="ds-mb-0 ds-text-current-tint-110 ds-fgdgfdg">
+      AA page_data.description AA
+    </p>
+  {% endif %}
+</div>
+
+<div>
+  {% for drawback in offer_data.offer__drawbacks|underscore_separated_list %}
+    <li>{{ drawback|safe }}</li>
+  {% endfor %}
+</div>
+
+<select name="{{ name }}" id="{{ name }}">
+  {% for choice in choices %}
+    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+  {% endfor %}
+</select>
+
+<aside class="text-cta">
+  {% if self.cta_link and self.cta_text %}
+    <a href="{{ self.cta_link }}" class="btn btn-hw text-cta__cta">{{
+      self.cta_text
+    }}</a>
+  {% endif %}
+</aside>
+
+<div class="footer-cta">
+  <p class="footer-cta__title">{{ self.title }}</p>
+  {% if self.opens_modal and self.cta_text %}
+    <a
+      href="tel:{{ phone_number }}"
+      class="btn btn-lg"
+      role="button"
+      aria-expanded="false"
+    >{{ self.cta_text }}</a>
+  {% elif self.cta_link and self.cta_text %}
+    <a class="btn btn-lg" href="{{ self.cta_link }}">{{ self.cta_text }}</a>
+  {% endif %}
+</div>
+
+<head>
+  {% block meta-extras %}
+    {% if page.noindex %}
+      <meta name="robots" content="noindex">
+    {% endif %}
+  {% endblock %}
+</head>
+
+<a
+  href="{{ url }}"
+  class="ds-rounded-md ds-border ds-border-gray-030 ds-p-16 ds-flex ds-justify-between ds-items-center ds-flex-1 ds-transition hover:ds-bg-white ds-group"
+  style="max-width: 50%;"
+>
+  {% if is_prev %}{%
+      include "firebolt/icons/clickable/chevron-left.svg" with class="ds-w-24 ds-h-24 ds-transition group-hover:-ds-translate-x-8"
+    %}{% endif %}
+  <div class="ds-flex ds-flex-col {% if is_prev %}ds-items-end{% else %}ds-items-start{% endif %}">
+    <span class="ds-text-gray-110 ds-uppercase ds-text-12 ds-font-bold">{%
+        if is_prev
+      %}previous{% else %}next{% endif %}</span>
+    <span class="ds-text-24">{{ title }}</span>
+  </div>
+  {% if not is_prev %}{%
+      include "firebolt/icons/clickable/chevron-right.svg" with class="ds-w-24 ds-h-24 ds-transition group-hover:ds-translate-x-8"
+    %}{% endif %}
+</a>
+
+<div class="contact-info-column">
+  {% if contact.email %}
+    <a href="mailto:{{ contact.email }}" target="blank_">{{ contact.email }}</a>
+  {% endif %}
+  {% if contact.phone %}
+    <a class="contact-phone" href="tel:{{ contact.phone }}">{{
+      contact.phone
+    }}</a>
+  {% endif %}
+</div>
+
+<p class="ds-text-14 sm:ds-text-16">
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  {% if formula_type == "foo" %}
+    sed do eiusmod
+  {% elif formula_type == "bar" %}
+    tempor incididunt
+  {% else %}
+    ut labore et dolore
+  {% endif %}
+</p>
+
+<div class="react-root">
+  {% block account-content %}
+    <noscript>This page requires JavaScript to be enabled to work</noscript>
+  {% endblock %}
+</div>
