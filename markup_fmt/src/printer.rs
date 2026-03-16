@@ -728,8 +728,15 @@ impl<'s> DocGen<'s> for Element<'s> {
                             } else {
                                 lang
                             };
-                            let formatted =
-                                ctx.format_script(text_node.raw, lang, text_node.start, &state);
+                            let formatted = if matches!(
+                                ctx.language,
+                                Language::Jinja | Language::Mustache | Language::Vento
+                            ) {
+                                ctx.try_format_script(text_node.raw, lang, text_node.start, &state)
+                                    .unwrap_or_else(|_| Cow::from(text_node.raw))
+                            } else {
+                                ctx.format_script(text_node.raw, lang, text_node.start, &state)
+                            };
                             let doc = if matches!(
                                 ctx.options.script_formatter,
                                 Some(ScriptFormatter::Dprint)

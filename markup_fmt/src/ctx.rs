@@ -275,7 +275,23 @@ where
         start: usize,
         state: &State,
     ) -> Cow<'a, str> {
-        self.format_with_external_formatter(
+        match self.try_format_script(code, lang, start, state) {
+            Ok(formatted) => formatted,
+            Err(e) => {
+                self.external_formatter_errors.push(e);
+                Cow::from(code)
+            }
+        }
+    }
+
+    pub(crate) fn try_format_script<'a>(
+        &mut self,
+        code: &'a str,
+        lang: &'b str,
+        start: usize,
+        state: &State,
+    ) -> Result<Cow<'a, str>, E> {
+        self.try_format_with_external_formatter(
             self.source
                 .get(0..start)
                 .unwrap_or_default()

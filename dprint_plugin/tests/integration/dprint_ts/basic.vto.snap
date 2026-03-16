@@ -27,3 +27,12 @@ body {
   background-color: {{ colors.white }};
 }
 </style>
+
+<!-- script tag with interpolation -->
+<script>
+let spreads = [
+			{{ for image of wkunzImages }}
+			'{{ image }}',
+			{{/for}}
+			]
+</script>
