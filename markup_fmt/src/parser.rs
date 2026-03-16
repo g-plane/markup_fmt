@@ -948,7 +948,7 @@ impl<'s> Parser<'s> {
         };
         let start = start + 1;
 
-        let mut end = start;
+        let end;
         loop {
             match self.chars.next() {
                 Some((i, '-')) => {
@@ -964,7 +964,10 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => break,
+                None => {
+                    end = self.source.len();
+                    break;
+                }
             }
         }
 
@@ -1392,7 +1395,8 @@ impl<'s> Parser<'s> {
             let mut body = vec![JinjaTagOrChildren::Tag(first_tag)];
 
             loop {
-                let mut children = self.parse_jinja_block_children(tag_name, tag_start, children_parser)?;
+                let mut children =
+                    self.parse_jinja_block_children(tag_name, tag_start, children_parser)?;
                 if !children.is_empty() {
                     if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
                         nodes.append(&mut children);
