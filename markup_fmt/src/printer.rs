@@ -1,4 +1,3 @@
-use crate::helpers::should_be_space_separated;
 use crate::{
     Language,
     ast::*,
@@ -1195,7 +1194,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             let mut docs = Vec::with_capacity(5);
             docs.push(name);
             docs.push(Doc::text("="));
-            if should_be_space_separated(self.name, state) {
+            if helpers::should_be_space_separated(self.name, state.current_tag_name) {
                 quote = compute_attr_value_quote(&value, self.quote, ctx);
                 let value = value.trim();
                 let maybe_line_break = if value.contains('\n') {
