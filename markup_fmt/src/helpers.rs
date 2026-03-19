@@ -265,49 +265,41 @@ pub(crate) fn should_be_space_separated(attr_name: &str, tag_name: Option<&str>)
     {
         true
     } else if attr_name.eq_ignore_ascii_case("rel") {
-        tag_name
-            .is_some_and(|name| {
-                ["form", "a", "area", "link"]
-                    .iter()
-                    .any(|tag| tag.eq_ignore_ascii_case(name))
-            })
+        tag_name.is_some_and(|name| {
+            ["form", "a", "area", "link"]
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(name))
+        })
     } else if attr_name.eq_ignore_ascii_case("blocking") {
-        tag_name
-            .is_some_and(|name| {
-                ["link", "script", "style"]
-                    .iter()
-                    .any(|tag| tag.eq_ignore_ascii_case(name))
-            })
+        tag_name.is_some_and(|name| {
+            ["link", "script", "style"]
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(name))
+        })
     } else if attr_name.eq_ignore_ascii_case("for") {
-        tag_name
-            .is_some_and(|name| name.eq_ignore_ascii_case("output"))
+        tag_name.is_some_and(|name| name.eq_ignore_ascii_case("output"))
     } else if attr_name.eq_ignore_ascii_case("headers") {
-        tag_name
-            .is_some_and(|name| {
-                ["td", "th"]
-                    .iter()
-                    .any(|tag| tag.eq_ignore_ascii_case(name))
-            })
+        tag_name.is_some_and(|name| {
+            ["td", "th"]
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(name))
+        })
     } else if attr_name.eq_ignore_ascii_case("autocomplete") {
-        tag_name
-            .is_some_and(|name| {
-                ["form", "input", "select", "textarea"]
-                    .iter()
-                    .any(|tag| tag.eq_ignore_ascii_case(name))
-            })
+        tag_name.is_some_and(|name| {
+            ["form", "input", "select", "textarea"]
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(name))
+        })
     } else if attr_name.eq_ignore_ascii_case("sandbox") {
-        tag_name
-            .is_some_and(|name| name.eq_ignore_ascii_case("iframe"))
+        tag_name.is_some_and(|name| name.eq_ignore_ascii_case("iframe"))
     } else if attr_name.eq_ignore_ascii_case("accept-charset") {
-        tag_name
-            .is_some_and(|name| name.eq_ignore_ascii_case("form"))
+        tag_name.is_some_and(|name| name.eq_ignore_ascii_case("form"))
     } else if attr_name.eq_ignore_ascii_case("ping") {
-        tag_name
-            .is_some_and(|name| {
-                ["a", "area"]
-                    .iter()
-                    .any(|tag| tag.eq_ignore_ascii_case(name))
-            })
+        tag_name.is_some_and(|name| {
+            ["a", "area"]
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(name))
+        })
     } else {
         false
     }
