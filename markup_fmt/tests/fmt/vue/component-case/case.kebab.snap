@@ -17,4 +17,5 @@ source: markup_fmt/tests/fmt.rs
     </defs>
     <rect width="200" height="200" fill="url(#grad1)" />
   </svg>
+  <u-app></u-app>
 </template>

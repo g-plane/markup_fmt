@@ -14,4 +14,5 @@
     </defs>
     <rect width="200" height="200" fill="url(#grad1)" />
   </svg>
+  <UApp></UApp>
 </template>

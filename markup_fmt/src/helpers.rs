@@ -196,7 +196,7 @@ pub(crate) fn pascal2kebab(s: &'_ str) -> Cow<'_, str> {
     {
         let mut result = String::with_capacity(s.len() + uppers);
         s.chars().fold('<', |prev, c| {
-            if c.is_ascii_uppercase() && prev.is_ascii_lowercase() {
+            if c.is_ascii_uppercase() && prev.is_ascii_alphanumeric() {
                 result.push('-');
             }
             result.push(c.to_ascii_lowercase());
