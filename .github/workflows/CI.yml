@@ -16,5 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - run: cargo fmt --check
       - run: cargo clippy --all-targets --all-features
       - run: cargo test --all-features
