@@ -50,6 +50,16 @@ source: markup_fmt/tests/fmt.rs
   {% endfor %}
 </div>
 
+<p>
+  {% if alert_level == "low" %}
+    the sky condition
+  {% elif alert_level == "storm" %}
+    the Storm warning
+  {% else %}
+    the Heatwave alert
+  {% endif %}
+</p>
+
 <select name="{{ name }}" id="{{ name }}">
   {% for choice in choices %}
     <option value="{{ choice.0 }}">{{ choice.1 }}</option>
@@ -132,3 +142,40 @@ source: markup_fmt/tests/fmt.rs
     <noscript>This page requires JavaScript to be enabled to work</noscript>
   {% endblock %}
 </div>
+
+# Inline elements in block context should preserve whitespace sensitivity
+<div>
+  {% if forloop.first %}
+    <strong>Used on the following active workflows:</strong>
+  {% endif %}
+</div>
+
+# Text after jinja tag in block context should stay inline
+<div>
+  <a href="#">{{ workflow.name }}</a>{% if not forloop.last %},{% endif %}
+</div>
+
+# blocktranslate should preserve leading/trailing spaces
+<h3>
+  {% blocktranslate with filter_title=title %} By {{ filter_title }}
+  {% endblocktranslate %}
+</h3>
+
+# Inline span in jinja block should stay on same line
+<h2>
+  <span>{{ heading }}</span>{% if is_required %}
+    <span class="w-required-mark">*</span>
+  {% endif %}
+</h2>
+<h2>
+  <span data-panel-heading-text>{{ heading }}</span>{% if is_required %}
+    <span
+      class="w-required-mark"
+      data-panel-required
+    >*</span>
+  {% endif %}
+</h2>
+
+{% if form.realm_subdomain.value() %}{{ form.realm_subdomain.value() }}.{%
+  endif
+%}{{ external_host }}

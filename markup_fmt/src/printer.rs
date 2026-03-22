@@ -2705,12 +2705,17 @@ where
                 ..
             },
         ] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
-        _ => leading_ws
-            .append(format_children_without_inserting_linebreak(
-                children, ctx, state,
-            ))
-            .nest(ctx.indent_width)
-            .append(trailing_ws),
+        _ => {
+            let children_doc = if is_whitespace_sensitive {
+                format_children_without_inserting_linebreak(children, ctx, state)
+            } else {
+                format_children_with_inserting_linebreak(children, ctx, state)
+            };
+            leading_ws
+                .append(children_doc)
+                .nest(ctx.indent_width)
+                .append(trailing_ws)
+        }
     }
 }
 
