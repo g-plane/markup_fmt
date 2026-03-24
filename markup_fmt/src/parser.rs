@@ -1019,17 +1019,23 @@ impl<'s> Parser<'s> {
             match self.chars.peek() {
                 Some((_, '/')) => {
                     self.chars.next();
-                    if self.chars.next_if(|(_, c)| *c == '>').is_some() {
-                        return Ok(Element {
-                            tag_name,
-                            attrs,
-                            first_attr_same_line,
-                            children: vec![],
-                            self_closing: true,
-                            void_element,
-                        });
+                    match self.chars.peek() {
+                        Some((_, '>')) => {
+                            self.chars.next();
+                            return Ok(Element {
+                                tag_name,
+                                attrs,
+                                first_attr_same_line,
+                                children: vec![],
+                                self_closing: true,
+                                void_element,
+                            });
+                        }
+                        Some((_, '/' | '*')) if self.language == Language::Svelte => {
+                            attrs.push(Attribute::JsComment(self.parse_js_comment()?));
+                        }
+                        _ => return Err(self.emit_error(SyntaxErrorKind::ExpectSelfCloseTag)),
                     }
-                    return Err(self.emit_error(SyntaxErrorKind::ExpectSelfCloseTag));
                 }
                 Some((_, '>')) => {
                     self.chars.next();
@@ -1439,6 +1445,45 @@ impl<'s> Parser<'s> {
             Ok(T::from_block(JinjaBlock { body }))
         } else {
             Ok(T::from_tag(first_tag))
+        }
+    }
+
+    // former `/` has been consumed
+    fn parse_js_comment(&mut self) -> PResult<JsComment<'s>> {
+        let Some((start, first_char)) = self.chars.next_if(|(_, c)| matches!(c, '/' | '*')) else {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectChar('/')));
+        };
+        let start = start + 1;
+        if first_char == '/' {
+            let mut end = start;
+            loop {
+                match self.chars.next() {
+                    Some((_, '\n')) | None => break,
+                    Some((i, _)) => end = i,
+                }
+            }
+            Ok(JsComment {
+                block: false,
+                raw: unsafe { self.source.get_unchecked(start..=end) },
+            })
+        } else {
+            let mut end = start;
+            loop {
+                match self.chars.next() {
+                    Some((i, '*')) => {
+                        end = i;
+                        if self.chars.next_if(|(_, c)| *c == '/').is_some() {
+                            break;
+                        }
+                    }
+                    Some((i, _)) => end = i,
+                    None => break,
+                }
+            }
+            Ok(JsComment {
+                block: true,
+                raw: unsafe { self.source.get_unchecked(start..end) },
+            })
         }
     }
 

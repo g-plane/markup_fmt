@@ -109,6 +109,7 @@ pub enum Attribute<'s> {
     JinjaBlock(JinjaBlock<'s, Attribute<'s>>),
     JinjaComment(JinjaComment<'s>),
     JinjaTag(JinjaTag<'s>),
+    JsComment(JsComment<'s>),
     Native(NativeAttribute<'s>),
     Svelte(SvelteAttribute<'s>),
     SvelteAttachment(SvelteAttachment<'s>),
@@ -203,6 +204,12 @@ pub struct JinjaTag<'s> {
 pub enum JinjaTagOrChildren<'s, T> {
     Tag(JinjaTag<'s>),
     Children(Vec<T>),
+}
+
+#[derive(Debug)]
+pub struct JsComment<'s> {
+    pub block: bool,
+    pub raw: &'s str,
 }
 
 #[derive(Debug)]

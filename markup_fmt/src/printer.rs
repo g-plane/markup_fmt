@@ -370,6 +370,7 @@ impl<'s> DocGen<'s> for Attribute<'s> {
             Attribute::JinjaComment(jinja_comment) => jinja_comment.doc(ctx, state),
             Attribute::JinjaTag(jinja_tag) => jinja_tag.doc(ctx, state),
             Attribute::VentoTagOrBlock(vento_tag_or_block) => vento_tag_or_block.doc(ctx, state),
+            Attribute::JsComment(js_comment) => js_comment.doc(ctx, state),
         }
     }
 }
@@ -1048,6 +1049,21 @@ impl<'s> DocGen<'s> for JinjaTag<'s> {
             .append(Doc::text(suffix))
             .append(Doc::text("%}"))
             .group()
+    }
+}
+
+impl<'s> DocGen<'s> for JsComment<'s> {
+    fn doc<E, F>(&self, _: &mut Ctx<'s, E, F>, _: &State<'s>) -> Doc<'s>
+    where
+        F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    {
+        if self.block {
+            Doc::text("/*")
+                .concat(reflow_raw(self.raw))
+                .append(Doc::text("*/"))
+        } else {
+            Doc::text(format!("//{}", self.raw.trim_ascii_end()))
+        }
     }
 }
 
@@ -2273,6 +2289,7 @@ fn is_multi_line_attr(attr: &Attribute) -> bool {
         | Attribute::JinjaTag(JinjaTag { content: value, .. }) => value.contains('\n'),
         // Templating blocks usually span across multiple lines so let's just assume true.
         Attribute::JinjaBlock(..) | Attribute::VentoTagOrBlock(..) => true,
+        Attribute::JsComment(comment) => comment.raw.contains('\n'),
     }
 }
 
