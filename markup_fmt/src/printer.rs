@@ -2068,7 +2068,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         } else {
                             "in"
                         };
-                        format_v_for(left, delimiter, right, value_start, ctx)
+                        Cow::from(format_v_for(left, delimiter, right, value_start, ctx))
                     } else if let Some((left, right)) = value.split_once(" of ") {
                         let delimiter = if let Some(VForDelimiterStyle::In) =
                             ctx.options.v_for_delimiter_style
@@ -2077,28 +2077,35 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         } else {
                             "of"
                         };
-                        format_v_for(left, delimiter, right, value_start, ctx)
+                        Cow::from(format_v_for(left, delimiter, right, value_start, ctx))
                     } else {
-                        ctx.with_escaping_quotes(value, |code, ctx| {
+                        Cow::from(ctx.with_escaping_quotes(value, |code, ctx| {
                             ctx.format_expr(&code, true, value_start)
-                        })
+                        }))
                     }
                 }
-                "#" | "slot" => ctx.format_binding(value, value_start),
-                _ => ctx.with_escaping_quotes(value, |code, ctx| {
-                    ctx.try_format_expr(&code, true, value_start)
-                        .unwrap_or_else(|_| {
-                            let formatted = ctx
-                                .format_script(&code, "ts", value_start, state)
-                                .trim()
-                                .to_owned();
-                            if formatted.contains('\n') {
-                                formatted
-                            } else {
-                                formatted.trim_end_matches(';').to_owned()
-                            }
-                        })
-                }),
+                "#" | "slot" => Cow::from(ctx.format_binding(value, value_start)),
+                _ => {
+                    if value.bytes().all(|b| b.is_ascii_alphanumeric()) {
+                        // not only a shorthand but also allowing JavaScript keywords
+                        Cow::from(value)
+                    } else {
+                        Cow::from(ctx.with_escaping_quotes(value, |code, ctx| {
+                            ctx.try_format_expr(&code, true, value_start)
+                                .unwrap_or_else(|_| {
+                                    let formatted = ctx
+                                        .format_script(&code, "ts", value_start, state)
+                                        .trim()
+                                        .to_owned();
+                                    if formatted.contains('\n') {
+                                        formatted
+                                    } else {
+                                        formatted.trim_end_matches(';').to_owned()
+                                    }
+                                })
+                        }))
+                    }
+                }
             };
             if !(matches!(ctx.options.v_bind_same_name_short_hand, Some(true))
                 && is_v_bind
