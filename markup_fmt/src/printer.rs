@@ -637,29 +637,13 @@ impl<'s> DocGen<'s> for Element<'s> {
         let has_two_more_non_text_children =
             has_two_more_non_text_children(&self.children, ctx.language);
 
-        let (leading_ws, trailing_ws) = if is_empty
-            || ctx.language == Language::Xml
-                && matches!(
-                    &*self.children,
-                    [Node {
-                        kind: NodeKind::Text(..),
-                        ..
-                    }]
-                ) {
-            (Doc::nil(), Doc::nil())
-        } else if is_whitespace_sensitive {
-            (
-                format_ws_sensitive_leading_ws(&self.children),
-                format_ws_sensitive_trailing_ws(&self.children),
-            )
-        } else if has_two_more_non_text_children {
-            (Doc::hard_line(), Doc::hard_line())
-        } else {
-            (
-                format_ws_insensitive_leading_ws(&self.children),
-                format_ws_insensitive_trailing_ws(&self.children),
-            )
-        };
+        let (leading_ws, trailing_ws) = format_leading_trailing_ws(
+            &self.children,
+            is_empty,
+            is_whitespace_sensitive,
+            has_two_more_non_text_children,
+            ctx,
+        );
 
         if tag_name.eq_ignore_ascii_case("script") && ctx.language != Language::Xml {
             if let [
@@ -2684,6 +2668,42 @@ where
     }
 }
 
+fn format_leading_trailing_ws<'s, E, F>(
+    children: &[Node<'s>],
+    is_empty: bool,
+    is_whitespace_sensitive: bool,
+    has_two_more_non_text_children: bool,
+    ctx: &Ctx<'s, E, F>,
+) -> (Doc<'s>, Doc<'s>)
+where
+    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+{
+    if is_empty
+        || ctx.language == Language::Xml
+            && matches!(
+                children,
+                [Node {
+                    kind: NodeKind::Text(..),
+                    ..
+                }]
+            )
+    {
+        (Doc::nil(), Doc::nil())
+    } else if is_whitespace_sensitive {
+        (
+            format_ws_sensitive_leading_ws(children),
+            format_ws_sensitive_trailing_ws(children),
+        )
+    } else if has_two_more_non_text_children {
+        (Doc::hard_line(), Doc::hard_line())
+    } else {
+        (
+            format_ws_insensitive_leading_ws(children),
+            format_ws_insensitive_trailing_ws(children),
+        )
+    }
+}
+
 fn format_control_structure_block_children<'s, E, F>(
     children: &[Node<'s>],
     ctx: &mut Ctx<'s, E, F>,
@@ -2692,6 +2712,16 @@ fn format_control_structure_block_children<'s, E, F>(
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
 {
+    let is_whitespace_sensitive = state
+        .current_tag_name
+        .is_none_or(|current_tag_name| ctx.is_whitespace_sensitive(current_tag_name));
+    let (leading_ws, trailing_ws) = format_leading_trailing_ws(
+        children,
+        is_empty_element(children, is_whitespace_sensitive),
+        is_whitespace_sensitive,
+        has_two_more_non_text_children(children, ctx.language),
+        ctx,
+    );
     match children {
         [
             Node {
@@ -2699,12 +2729,17 @@ where
                 ..
             },
         ] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
-        _ => format_ws_sensitive_leading_ws(children)
-            .append(format_children_without_inserting_linebreak(
-                children, ctx, state,
-            ))
-            .nest(ctx.indent_width)
-            .append(format_ws_sensitive_trailing_ws(children)),
+        _ => {
+            let children_doc = if is_whitespace_sensitive {
+                format_children_without_inserting_linebreak(children, ctx, state)
+            } else {
+                format_children_with_inserting_linebreak(children, ctx, state)
+            };
+            leading_ws
+                .append(children_doc)
+                .nest(ctx.indent_width)
+                .append(trailing_ws)
+        }
     }
 }
 
