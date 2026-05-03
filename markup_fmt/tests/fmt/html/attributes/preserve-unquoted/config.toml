@@ -1,0 +1,4 @@
+[default]
+
+[preserve-enabled]
+preserveUnquotedAttrs = true

@@ -374,6 +374,12 @@ pub(crate) fn resolve_config(
                 true,
                 &mut diagnostics,
             ),
+            preserve_unquoted_attrs: get_value(
+                &mut config,
+                "preserveUnquotedAttrs",
+                false,
+                &mut diagnostics,
+            ),
             astro_attr_shorthand: get_nullable_value(
                 &mut config,
                 "astroAttrShorthand",

@@ -6,6 +6,7 @@
   - [indentWidth](./config/indent-width.md)
   - [lineBreak](./config/line-break.md)
   - [quotes](./config/quotes.md)
+  - [preserveUnquotedAttrs](./config/preserve-unquoted-attrs.md)
   - [formatComments](./config/format-comments.md)
   - [scriptIndent](./config/script-indent.md)
   - [styleIndent](./config/style-indent.md)

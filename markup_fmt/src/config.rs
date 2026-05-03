@@ -223,6 +223,9 @@ pub struct LanguageOptions {
     )]
     pub angular_next_control_flow_same_line: bool,
 
+    #[cfg_attr(feature = "config_serde", serde(alias = "preserveUnquotedAttrs"))]
+    pub preserve_unquoted_attrs: bool,
+
     #[cfg_attr(feature = "config_serde", serde(alias = "scriptFormatter"))]
     pub script_formatter: Option<ScriptFormatter>,
 
@@ -275,6 +278,7 @@ impl Default for LanguageOptions {
             svelte_directive_shorthand: None,
             astro_attr_shorthand: None,
             angular_next_control_flow_same_line: true,
+            preserve_unquoted_attrs: false,
             script_formatter: None,
             ignore_comment_directive: "markup-fmt-ignore".into(),
             ignore_file_comment_directive: "markup-fmt-ignore-file".into(),
