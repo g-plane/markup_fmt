@@ -1,0 +1,17 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<c-button editable=True :disabled="False" count=42 label="Click me" disabled />
+
+<c-layout.header
+  user_id="{{ user.id }}"
+  name="{{ user.name }}"
+  links_editable=True
+  tags_editable=True
+  editable
+  name_editable
+/>
+
+<div class="container" data-active=true hidden>
+  <input type="text" value=placeholder>
+</div>

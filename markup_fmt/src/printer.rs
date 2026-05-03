@@ -1282,8 +1282,13 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 quote = compute_attr_value_quote(&value, self.quote, ctx);
                 docs.extend(reflow_owned(&value));
             }
-            docs.insert(2, quote.clone());
-            docs.push(quote);
+            if ctx.options.preserve_unquoted_attrs && self.quote.is_none() {
+                docs.insert(2, Doc::nil());
+                docs.push(Doc::nil());
+            } else {
+                docs.insert(2, quote.clone());
+                docs.push(quote);
+            }
             Doc::list(docs)
         } else if matches!(ctx.language, Language::Svelte)
             && matches!(ctx.options.svelte_directive_shorthand, Some(false))
