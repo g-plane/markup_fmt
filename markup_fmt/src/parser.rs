@@ -1192,7 +1192,7 @@ impl<'s> Parser<'s> {
                     pair_stack.pop();
                 }
                 Some((_, '/'))
-                    if !matches!(pair_stack.last(), Some('\'' | '"' | '`' | '/' | '*')) =>
+                    if !matches!(pair_stack.last(), Some('\'' | '"' | '`' | '/' | '*' | '$')) =>
                 {
                     if let Some((_, c)) = self.chars.next_if(|(_, c)| *c == '/' || *c == '*') {
                         pair_stack.push(c);
