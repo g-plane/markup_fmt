@@ -136,7 +136,8 @@ where
         attr: bool,
         start: usize,
     ) -> Result<String, E> {
-        if code.trim().is_empty() {
+        let trimmed = code.trim();
+        if trimmed.is_empty() {
             Ok(String::new())
         } else {
             // Trim original code before sending it to the external formatter.
@@ -146,19 +147,9 @@ where
             let will_add_brackets =
                 preprocessed.starts_with('{') || preprocessed.starts_with("...");
             let wrapped = if will_add_brackets {
-                self.source
-                    .get(0..start.saturating_sub(1))
-                    .unwrap_or_default()
-                    .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                    + "["
-                    + code.trim()
-                    + "]"
+                format!("[{}]", trimmed)
             } else {
-                self.source
-                    .get(0..start)
-                    .unwrap_or_default()
-                    .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                    + code
+                code.to_owned()
             };
             let formatted = self.try_format_with_external_formatter(
                 wrapped,
@@ -181,17 +172,11 @@ where
     }
 
     pub(crate) fn format_binding(&mut self, code: &str, start: usize) -> String {
-        if code.trim().is_empty() {
+        let trimmed = code.trim();
+        if trimmed.is_empty() {
             String::new()
         } else {
-            let wrapped = self
-                .source
-                .get(0..start.saturating_sub(4))
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + "let "
-                + code.trim()
-                + " = 0";
+            let wrapped = format!("let {} = 0", trimmed);
             let formatted = self.format_with_external_formatter(
                 wrapped,
                 Hints {
@@ -211,17 +196,11 @@ where
     }
 
     pub(crate) fn format_type_params(&mut self, code: &str, start: usize) -> String {
-        if code.trim().is_empty() {
+        let trimmed = code.trim();
+        if trimmed.is_empty() {
             String::new()
         } else {
-            let wrapped = self
-                .source
-                .get(0..start.saturating_sub(7))
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + "type T<"
-                + code.trim()
-                + "> = 0";
+            let wrapped = format!("type T<{}> = 0", trimmed);
             let formatted = self.format_with_external_formatter(
                 wrapped,
                 Hints {
@@ -292,11 +271,7 @@ where
         state: &State,
     ) -> Result<Cow<'a, str>, E> {
         self.try_format_with_external_formatter(
-            self.source
-                .get(0..start)
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + code,
+            code.to_owned(),
             Hints {
                 print_width: self.print_width,
                 indent_level: state.indent_level,
@@ -314,14 +289,7 @@ where
         state: &State,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
-            "\n".repeat(
-                self.source
-                    .get(0..start)
-                    .unwrap_or_default()
-                    .lines()
-                    .count()
-                    .saturating_sub(1),
-            ) + code,
+            code.to_owned(),
             Hints {
                 print_width: self
                     .print_width
@@ -340,11 +308,7 @@ where
 
     pub(crate) fn format_style_attr(&mut self, code: &str, start: usize, state: &State) -> String {
         self.format_with_external_formatter(
-            self.source
-                .get(0..start)
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + code,
+            code.to_owned(),
             Hints {
                 print_width: u16::MAX as usize,
                 indent_level: state.indent_level,
@@ -363,11 +327,7 @@ where
         state: &State,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
-            self.source
-                .get(0..start)
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + code,
+            code.to_owned(),
             Hints {
                 print_width: self
                     .print_width
@@ -392,11 +352,7 @@ where
         state: &State,
     ) -> String {
         self.format_with_external_formatter(
-            self.source
-                .get(0..start)
-                .unwrap_or_default()
-                .replace(|c: char| !c.is_ascii_whitespace(), " ")
-                + code,
+            code.to_owned(),
             Hints {
                 print_width: self
                     .print_width
