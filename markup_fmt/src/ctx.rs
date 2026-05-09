@@ -13,7 +13,6 @@ pub(crate) struct Ctx<'b, E, F>
 where
     F: for<'a> FnMut(&'a str, Hints<'b>) -> Result<Cow<'a, str>, E>,
 {
-    pub(crate) source: &'b str,
     pub(crate) language: Language,
     pub(crate) indent_width: usize,
     pub(crate) print_width: usize,
@@ -120,8 +119,8 @@ where
         }
     }
 
-    pub(crate) fn format_expr(&mut self, code: &str, attr: bool, start: usize) -> String {
-        match self.try_format_expr(code, attr, start) {
+    pub(crate) fn format_expr(&mut self, code: &str, attr: bool) -> String {
+        match self.try_format_expr(code, attr) {
             Ok(formatted) => formatted,
             Err(e) => {
                 self.external_formatter_errors.push(e);
@@ -130,12 +129,7 @@ where
         }
     }
 
-    pub(crate) fn try_format_expr(
-        &mut self,
-        code: &str,
-        attr: bool,
-        start: usize,
-    ) -> Result<String, E> {
+    pub(crate) fn try_format_expr(&mut self, code: &str, attr: bool) -> Result<String, E> {
         let trimmed = code.trim();
         if trimmed.is_empty() {
             Ok(String::new())
@@ -171,7 +165,7 @@ where
         }
     }
 
-    pub(crate) fn format_binding(&mut self, code: &str, start: usize) -> String {
+    pub(crate) fn format_binding(&mut self, code: &str) -> String {
         let trimmed = code.trim();
         if trimmed.is_empty() {
             String::new()
@@ -195,7 +189,7 @@ where
         }
     }
 
-    pub(crate) fn format_type_params(&mut self, code: &str, start: usize) -> String {
+    pub(crate) fn format_type_params(&mut self, code: &str) -> String {
         let trimmed = code.trim();
         if trimmed.is_empty() {
             String::new()
@@ -251,10 +245,9 @@ where
         &mut self,
         code: &'a str,
         lang: &'b str,
-        start: usize,
         state: &State,
     ) -> Cow<'a, str> {
-        match self.try_format_script(code, lang, start, state) {
+        match self.try_format_script(code, lang, state) {
             Ok(formatted) => formatted,
             Err(e) => {
                 self.external_formatter_errors.push(e);
@@ -267,7 +260,6 @@ where
         &mut self,
         code: &'a str,
         lang: &'b str,
-        start: usize,
         state: &State,
     ) -> Result<Cow<'a, str>, E> {
         self.try_format_with_external_formatter(
@@ -285,7 +277,6 @@ where
         &mut self,
         code: &'a str,
         lang: &'b str,
-        start: usize,
         state: &State,
     ) -> Cow<'a, str> {
         self.format_with_external_formatter(
@@ -306,7 +297,7 @@ where
         )
     }
 
-    pub(crate) fn format_style_attr(&mut self, code: &str, start: usize, state: &State) -> String {
+    pub(crate) fn format_style_attr(&mut self, code: &str, state: &State) -> String {
         self.format_with_external_formatter(
             code.to_owned(),
             Hints {
@@ -320,12 +311,7 @@ where
         .to_owned()
     }
 
-    pub(crate) fn format_json<'a>(
-        &mut self,
-        code: &'a str,
-        start: usize,
-        state: &State,
-    ) -> Cow<'a, str> {
+    pub(crate) fn format_json<'a>(&mut self, code: &'a str, state: &State) -> Cow<'a, str> {
         self.format_with_external_formatter(
             code.to_owned(),
             Hints {
@@ -344,13 +330,7 @@ where
         )
     }
 
-    pub(crate) fn format_jinja(
-        &mut self,
-        code: &str,
-        start: usize,
-        expr: bool,
-        state: &State,
-    ) -> String {
+    pub(crate) fn format_jinja(&mut self, code: &str, expr: bool, state: &State) -> String {
         self.format_with_external_formatter(
             code.to_owned(),
             Hints {

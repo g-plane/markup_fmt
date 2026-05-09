@@ -564,7 +564,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_astro_expr(&mut self) -> PResult<AstroExpr<'s>> {
-        let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '{') else {
+        let Some(_) = self.chars.next_if(|(_, c)| *c == '{') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAstroExpr));
         };
 
@@ -692,7 +692,6 @@ impl<'s> Parser<'s> {
         Ok(AstroExpr {
             children,
             has_line_comment,
-            start: start + 1,
         })
     }
 
@@ -1223,7 +1222,6 @@ impl<'s> Parser<'s> {
         self.state.has_front_matter = true;
         Ok(FrontMatter {
             raw: unsafe { self.source.get_unchecked(start..end) },
-            start,
         })
     }
 
@@ -1662,16 +1660,15 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 match chars.next() {
-                    Some((_, '{')) => {
-                        match self.language {
-                            Language::Html | Language::Xml => {
-                                self.parse_text_node().map(NodeKind::Text)
-                            }
-                            Language::Vue | Language::Jinja => self
-                                .parse_mustache_interpolation()
-                                .map(|(expr, start)| match self.language {
+                    Some((_, '{')) => match self.language {
+                        Language::Html | Language::Xml => {
+                            self.parse_text_node().map(NodeKind::Text)
+                        }
+                        Language::Vue | Language::Jinja => {
+                            self.parse_mustache_interpolation().map(|(expr, _)| {
+                                match self.language {
                                     Language::Vue => {
-                                        NodeKind::VueInterpolation(VueInterpolation { expr, start })
+                                        NodeKind::VueInterpolation(VueInterpolation { expr })
                                     }
                                     Language::Jinja => {
                                         let (trim_prev, expr) =
@@ -1688,31 +1685,28 @@ impl<'s> Parser<'s> {
                                             };
                                         NodeKind::JinjaInterpolation(JinjaInterpolation {
                                             expr,
-                                            start: if trim_prev { start + 1 } else { start },
                                             trim_prev,
                                             trim_next,
                                         })
                                     }
                                     _ => unreachable!(),
-                                }),
-                            Language::Svelte => self
-                                .parse_svelte_interpolation()
-                                .map(NodeKind::SvelteInterpolation),
-                            Language::Astro => self.parse_astro_expr().map(NodeKind::AstroExpr),
-                            Language::Angular => self
-                                .try_parse(|parser| {
-                                    parser.parse_mustache_interpolation().map(|(expr, start)| {
-                                        NodeKind::AngularInterpolation(AngularInterpolation {
-                                            expr,
-                                            start,
-                                        })
-                                    })
-                                })
-                                .or_else(|_| self.parse_text_node().map(NodeKind::Text)),
-                            Language::Vento => self.parse_vento_tag_or_block(None),
-                            Language::Mustache => self.parse_mustache_block_or_interpolation(),
+                                }
+                            })
                         }
-                    }
+                        Language::Svelte => self
+                            .parse_svelte_interpolation()
+                            .map(NodeKind::SvelteInterpolation),
+                        Language::Astro => self.parse_astro_expr().map(NodeKind::AstroExpr),
+                        Language::Angular => self
+                            .try_parse(|parser| {
+                                parser.parse_mustache_interpolation().map(|(expr, _)| {
+                                    NodeKind::AngularInterpolation(AngularInterpolation { expr })
+                                })
+                            })
+                            .or_else(|_| self.parse_text_node().map(NodeKind::Text)),
+                        Language::Vento => self.parse_vento_tag_or_block(None),
+                        Language::Mustache => self.parse_mustache_block_or_interpolation(),
+                    },
                     Some((_, '#')) if matches!(self.language, Language::Svelte) => {
                         match chars.next() {
                             Some((_, 'i')) => {
@@ -2601,8 +2595,7 @@ impl<'s> Parser<'s> {
         &mut self,
         first_tag: Option<(&'s str, bool, bool, usize)>,
     ) -> PResult<NodeKind<'s>> {
-        let (first_tag, trim_prev, trim_next, first_tag_start) = if let Some(first_tag) = first_tag
-        {
+        let (first_tag, trim_prev, trim_next, _) = if let Some(first_tag) = first_tag {
             first_tag
         } else {
             let (mut first_tag, mut start) = self.parse_mustache_interpolation()?;
@@ -2626,10 +2619,7 @@ impl<'s> Parser<'s> {
         {
             return Ok(NodeKind::VentoComment(VentoComment { raw }));
         } else if let Some(raw) = first_tag.strip_prefix('>') {
-            return Ok(NodeKind::VentoEval(VentoEval {
-                raw,
-                start: first_tag_start,
-            }));
+            return Ok(NodeKind::VentoEval(VentoEval { raw }));
         }
 
         let (tag_name, tag_rest) = helpers::parse_vento_tag(first_tag);
@@ -2712,7 +2702,6 @@ impl<'s> Parser<'s> {
         } else if is_vento_interpolation(tag_name) {
             Ok(NodeKind::VentoInterpolation(VentoInterpolation {
                 expr: first_tag,
-                start: first_tag_start,
                 trim_prev,
                 trim_next,
             }))

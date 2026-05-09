@@ -46,7 +46,6 @@ pub struct AngularGenericBlock<'s> {
 /// See https://angular.dev/guide/templates/binding#render-dynamic-text-with-text-interpolation.
 pub struct AngularInterpolation<'s> {
     pub expr: &'s str,
-    pub start: usize,
 }
 
 #[derive(Debug)]
@@ -93,7 +92,6 @@ pub struct AstroAttribute<'s> {
 pub struct AstroExpr<'s> {
     pub children: Vec<AstroExprChild<'s>>,
     pub has_line_comment: bool,
-    pub start: usize,
 }
 
 #[derive(Debug)]
@@ -161,7 +159,6 @@ pub struct Element<'s> {
 /// See https://docs.astro.build/en/guides/markdown-content/.
 pub struct FrontMatter<'s> {
     pub raw: &'s str,
-    pub start: usize,
 }
 
 #[derive(Debug)]
@@ -186,7 +183,6 @@ pub struct JinjaComment<'s> {
 /// See https://jinja.palletsprojects.com/en/stable/templates/#expressions.
 pub struct JinjaInterpolation<'s> {
     pub expr: &'s str,
-    pub start: usize,
     pub trim_prev: bool,
     pub trim_next: bool,
 }
@@ -436,7 +432,6 @@ pub struct VentoComment<'s> {
 /// See https://vento.js.org/syntax/javascript/.
 pub struct VentoEval<'s> {
     pub raw: &'s str,
-    pub start: usize,
 }
 
 #[derive(Debug)]
@@ -445,7 +440,6 @@ pub struct VentoEval<'s> {
 /// See https://vento.js.org/syntax/print/.
 pub struct VentoInterpolation<'s> {
     pub expr: &'s str,
-    pub start: usize,
     pub trim_prev: bool,
     pub trim_next: bool,
 }
@@ -482,7 +476,6 @@ pub struct VueDirective<'s> {
 /// See https://vuejs.org/guide/essentials/template-syntax.html#text-interpolation.
 pub struct VueInterpolation<'s> {
     pub expr: &'s str,
-    pub start: usize,
 }
 
 #[derive(Debug)]

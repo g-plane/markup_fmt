@@ -77,7 +77,6 @@ where
     }
 
     let mut ctx = Ctx {
-        source: code,
         language,
         indent_width: options.layout.indent_width,
         print_width: options.layout.print_width,
