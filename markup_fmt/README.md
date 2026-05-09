@@ -35,23 +35,3 @@ assert!(matches!(
     FormatError::Syntax(SyntaxError { .. })
 ));
 ```
-
-External formatter can return [`Err`] as well.
-This error will be aggregated and returned in [`FormatError::External`]:
-
-```rust
-use markup_fmt::{config::FormatOptions, format_text, FormatError, Language};
-
-struct ExternalFormatterError;
-
-let options = FormatOptions::default();
-assert!(matches!(
-    format_text(
-        "<script>a</script>",
-        Language::Html,
-        &options,
-        |_, _| Err(ExternalFormatterError),
-    ).unwrap_err(),
-    FormatError::External(errors) if !errors.is_empty()
-));
-```

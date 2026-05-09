@@ -18,7 +18,6 @@ where
     pub(crate) print_width: usize,
     pub(crate) options: &'b LanguageOptions,
     pub(crate) external_formatter: F,
-    pub(crate) external_formatter_errors: Vec<E>,
 }
 
 impl<'b, E, F> Ctx<'b, E, F>
@@ -122,10 +121,7 @@ where
     pub(crate) fn format_expr(&mut self, code: &str, attr: bool) -> String {
         match self.try_format_expr(code, attr) {
             Ok(formatted) => formatted,
-            Err(e) => {
-                self.external_formatter_errors.push(e);
-                code.to_owned()
-            }
+            Err(_) => code.to_owned(),
         }
     }
 
@@ -249,10 +245,7 @@ where
     ) -> Cow<'a, str> {
         match self.try_format_script(code, lang, state) {
             Ok(formatted) => formatted,
-            Err(e) => {
-                self.external_formatter_errors.push(e);
-                Cow::from(code)
-            }
+            Err(_) => Cow::from(code),
         }
     }
 
@@ -358,10 +351,7 @@ where
         match (self.external_formatter)(&code, hints) {
             Ok(Cow::Owned(formatted)) => Cow::from(formatted),
             Ok(Cow::Borrowed(..)) => Cow::from(code),
-            Err(e) => {
-                self.external_formatter_errors.push(e);
-                code.into()
-            }
+            Err(_) => code.into(),
         }
     }
 

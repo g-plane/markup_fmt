@@ -82,7 +82,6 @@ where
         print_width: options.layout.print_width,
         options: &options.language,
         external_formatter,
-        external_formatter_errors: Default::default(),
     };
 
     let doc = ast.doc(
@@ -94,9 +93,6 @@ where
             indent_level: 0,
         },
     );
-    if !ctx.external_formatter_errors.is_empty() {
-        return Err(FormatError::External(ctx.external_formatter_errors));
-    }
 
     Ok(tiny_pretty::print(
         &doc,
