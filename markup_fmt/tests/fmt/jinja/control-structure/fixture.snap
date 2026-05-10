@@ -84,3 +84,9 @@ source: markup_fmt/tests/fmt.rs
     {% endfor %}
   </ul>
 {% endraw %}
+
+{% call(user) dump_users(list_of_user) %}
+  <dl>
+    <dt>Realname</dt>
+  </dl>
+{% endcall %}

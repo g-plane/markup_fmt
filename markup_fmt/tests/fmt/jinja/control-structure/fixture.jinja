@@ -76,3 +76,9 @@ There are {{ count }} {{ name }} objects.
 {% endfor %}
 </ul>
 {% endraw %}
+
+{% call(user) dump_users(list_of_user) %}
+    <dl>
+        <dt>Realname</dt>
+    </dl>
+{% endcall %}

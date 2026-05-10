@@ -2840,7 +2840,7 @@ fn is_attr_name_char(c: char) -> bool {
 fn parse_jinja_tag_name<'s>(tag: &JinjaTag<'s>) -> &'s str {
     let trimmed = tag.content.trim_start_matches(['+', '-']).trim_start();
     trimmed
-        .split_once(|c: char| c.is_ascii_whitespace())
+        .split_once(|c: char| !c.is_ascii_alphanumeric() && c != '_')
         .map(|(name, _)| name)
         .unwrap_or(trimmed)
 }
