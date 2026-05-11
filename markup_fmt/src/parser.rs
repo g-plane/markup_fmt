@@ -2636,7 +2636,7 @@ impl<'s> Parser<'s> {
 
         let is_function = tag_name == "function"
             || matches!(tag_name, "async" | "export") && tag_rest.starts_with("function");
-        if matches!(tag_name, "for" | "if" | "layout")
+        if matches!(tag_name, "for" | "if" | "layout" | "slot" | "default")
             || matches!(tag_name, "set" | "export") && !first_tag.contains('=')
             || is_function
         {
