@@ -870,18 +870,14 @@ impl<'s> Parser<'s> {
                         let mut chars = self.chars.clone();
                         chars.next();
                         match chars.peek() {
-                            Some((_, '%')) => {
+                            Some((_, '%'))
                                 if self
                                     .parse_jinja_tag_or_block(None, &mut Parser::parse_node)
-                                    .is_ok()
-                                {
-                                    end =
-                                        self.chars.peek().map(|(i, _)| i - 1).ok_or_else(|| {
-                                            self.emit_error(SyntaxErrorKind::ExpectAttrValue)
-                                        })?;
-                                } else {
-                                    self.chars.next();
-                                }
+                                    .is_ok() =>
+                            {
+                                end = self.chars.peek().map(|(i, _)| i - 1).ok_or_else(|| {
+                                    self.emit_error(SyntaxErrorKind::ExpectAttrValue)
+                                })?;
                             }
                             Some((_, '{')) => {
                                 chars.next();
@@ -1923,28 +1919,26 @@ impl<'s> Parser<'s> {
                         self.skip_ws();
                         let mut chars = self.chars.clone();
                         match chars.next() {
-                            Some((_, 't')) => {
+                            Some((_, 't'))
                                 if chars
                                     .next_if(|(_, c)| *c == 'h')
                                     .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
                                     .and_then(|_| chars.next_if(|(_, c)| *c == 'n'))
-                                    .is_some()
-                                {
-                                    end = i;
-                                    break;
-                                }
+                                    .is_some() =>
+                            {
+                                end = i;
+                                break;
                             }
-                            Some((_, 'c')) => {
+                            Some((_, 'c'))
                                 if chars
                                     .next_if(|(_, c)| *c == 'a')
                                     .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
                                     .and_then(|_| chars.next_if(|(_, c)| *c == 'c'))
                                     .and_then(|_| chars.next_if(|(_, c)| *c == 'h'))
-                                    .is_some()
-                                {
-                                    end = i;
-                                    break;
-                                }
+                                    .is_some() =>
+                            {
+                                end = i;
+                                break;
                             }
                             _ => {}
                         }
@@ -2954,12 +2948,12 @@ pub fn parse_as_interpolated(
                         pos = i;
                         brace_stack += 1;
                     }
-                    Language::Jinja | Language::Vento | Language::Mustache => {
-                        if chars.next_if(|(_, c)| *c == '{').is_some() {
-                            statics.push(unsafe { text.get_unchecked(pos..i) });
-                            pos = i;
-                            brace_stack += 1;
-                        }
+                    Language::Jinja | Language::Vento | Language::Mustache
+                        if chars.next_if(|(_, c)| *c == '{').is_some() =>
+                    {
+                        statics.push(unsafe { text.get_unchecked(pos..i) });
+                        pos = i;
+                        brace_stack += 1;
                     }
                     _ => {}
                 }
@@ -2978,15 +2972,15 @@ pub fn parse_as_interpolated(
                         pos = i + 1;
                         brace_stack = 0;
                     }
-                    Language::Jinja | Language::Vento | Language::Mustache => {
-                        if chars.next_if(|(_, c)| *c == '}').is_some() {
-                            dynamics.push((
-                                unsafe { text.get_unchecked(pos + 2..i) },
-                                base_start + pos + 2,
-                            ));
-                            pos = i + 2;
-                            brace_stack = 0;
-                        }
+                    Language::Jinja | Language::Vento | Language::Mustache
+                        if chars.next_if(|(_, c)| *c == '}').is_some() =>
+                    {
+                        dynamics.push((
+                            unsafe { text.get_unchecked(pos + 2..i) },
+                            base_start + pos + 2,
+                        ));
+                        pos = i + 2;
+                        brace_stack = 0;
                     }
                     _ => {}
                 }

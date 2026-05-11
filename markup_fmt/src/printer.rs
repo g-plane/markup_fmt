@@ -1884,11 +1884,9 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
                                         quotes_stack.push(char);
                                     }
                                 }
-                                '{' => {
-                                    if quotes_stack.is_empty() {
-                                        brace_index = Some(index);
-                                        break;
-                                    }
+                                '{' if quotes_stack.is_empty() => {
+                                    brace_index = Some(index);
+                                    break;
                                 }
                                 _ => {}
                             }
@@ -2207,10 +2205,10 @@ fn reflow_with_indent<'i, 'o: 'i>(
                         pair_stack.push(c);
                     }
                 }
-                '$' if matches!(pair_stack.last(), Some('`')) => {
-                    if chars.next_if(|next| *next == '{').is_some() {
-                        pair_stack.push('$');
-                    }
+                '$' if matches!(pair_stack.last(), Some('`'))
+                    && chars.next_if(|next| *next == '{').is_some() =>
+                {
+                    pair_stack.push('$');
                 }
                 '{' if !matches!(pair_stack.last(), Some('`' | '\'' | '"' | '/')) => {
                     pair_stack.push('{');
@@ -2225,10 +2223,8 @@ fn reflow_with_indent<'i, 'o: 'i>(
                         break;
                     }
                 }
-                '*' => {
-                    if chars.next_if(|next| *next == '/').is_some() {
-                        pair_stack.pop();
-                    }
+                '*' if chars.next_if(|next| *next == '/').is_some() => {
+                    pair_stack.pop();
                 }
                 '\\' if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
                     chars.next();
