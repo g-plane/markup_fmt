@@ -1,6 +1,6 @@
 use insta::{Settings, assert_snapshot, glob};
 use markup_fmt::{Language, config::FormatOptions, detect_language, format_text};
-use std::{collections::HashMap, convert::Infallible, fs, path::Path};
+use std::{collections::HashMap, fs, path::Path};
 
 #[test]
 fn fmt_snapshot() {
@@ -39,21 +39,17 @@ fn run_format_test(
     options: &FormatOptions,
     language: Language,
 ) -> String {
-    let output = format_text(input, language, options, |code, _| {
-        Ok::<_, Infallible>(code.into())
-    })
-    .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
-    .unwrap();
-    let regression_format = format_text(&output, language, options, |code, _| {
-        Ok::<_, Infallible>(code.into())
-    })
-    .map_err(|err| {
-        format!(
-            "syntax error in stability test '{}': {err:?}",
-            path.display(),
-        )
-    })
-    .unwrap();
+    let output = format_text(input, language, options, |code, _| Ok(code.into()))
+        .map_err(|err| format!("failed to format '{}': {:?}", path.display(), err))
+        .unwrap();
+    let regression_format = format_text(&output, language, options, |code, _| Ok(code.into()))
+        .map_err(|err| {
+            format!(
+                "syntax error in stability test '{}': {err:?}",
+                path.display(),
+            )
+        })
+        .unwrap();
     similar_asserts::assert_eq!(
         output,
         regression_format,

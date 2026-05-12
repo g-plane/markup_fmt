@@ -1,4 +1,5 @@
-use std::{borrow::Cow, error::Error, fmt};
+use anyhow::Error;
+use std::{borrow::Cow, fmt};
 
 #[derive(Clone, Debug)]
 /// Syntax error when parsing tags, not `<script>` or `<style>` tag.
@@ -136,22 +137,19 @@ impl fmt::Display for SyntaxError {
     }
 }
 
-impl Error for SyntaxError {}
+impl std::error::Error for SyntaxError {}
 
 #[derive(Debug)]
 /// The error type for markup_fmt.
-pub enum FormatError<E> {
+pub enum FormatError {
     /// Syntax error when parsing tags.
     Syntax(SyntaxError),
     /// Error from external formatter, for example,
     /// there're errors when formatting the `<script>` or `<style>` tag.
-    External(Vec<E>),
+    External(Vec<Error>),
 }
 
-impl<E> fmt::Display for FormatError<E>
-where
-    E: fmt::Display,
-{
+impl fmt::Display for FormatError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             FormatError::Syntax(e) => e.fmt(f),
@@ -166,4 +164,4 @@ where
     }
 }
 
-impl<E> Error for FormatError<E> where E: Error {}
+impl std::error::Error for FormatError {}

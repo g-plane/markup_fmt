@@ -1,5 +1,5 @@
 use markup_fmt::{config::FormatOptions, detect_language, format_text};
-use std::{convert::Infallible, env, fs, io};
+use std::{env, fs, io};
 
 fn main() -> anyhow::Result<()> {
     let file_path = env::args().nth(1).unwrap();
@@ -16,9 +16,7 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    let formatted = format_text(&code, language, &options, |code, _| {
-        Ok::<_, Infallible>(code.into())
-    })?;
+    let formatted = format_text(&code, language, &options, |code, _| Ok(code.into()))?;
     print!("{formatted}");
     Ok(())
 }

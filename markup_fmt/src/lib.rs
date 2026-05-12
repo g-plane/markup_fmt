@@ -11,6 +11,7 @@ mod state;
 
 use crate::{config::FormatOptions, ctx::Ctx, parser::Parser, printer::DocGen, state::State};
 pub use crate::{ctx::Hints, error::*, parser::Language};
+use anyhow::Error;
 use std::{borrow::Cow, path::Path};
 use tiny_pretty::{IndentKind, PrintOptions};
 
@@ -37,7 +38,7 @@ use tiny_pretty::{IndentKind, PrintOptions};
 ///     code,
 ///     Language::Html,
 ///     &Default::default(),
-///     |code, _| Ok::<_, std::convert::Infallible>(code.into()),
+///     |code, _| Ok(code.into()),
 /// ).unwrap();
 /// ```
 ///
@@ -46,14 +47,14 @@ use tiny_pretty::{IndentKind, PrintOptions};
 /// - The first argument is code that needs formatting.
 /// - The second argument is hints which contains useful information for external formatters,
 ///   such as file extension and print width.
-pub fn format_text<E, F>(
+pub fn format_text<F>(
     code: &str,
     language: Language,
     options: &FormatOptions,
     external_formatter: F,
-) -> Result<String, FormatError<E>>
+) -> Result<String, FormatError>
 where
-    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, E>,
+    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, Error>,
 {
     let mut parser = Parser::new(code, language);
     let ast = parser.parse_root().map_err(FormatError::Syntax)?;
@@ -142,7 +143,6 @@ pub fn detect_language(path: impl AsRef<Path>) -> Option<Language> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::convert::Infallible;
 
     #[test]
     fn mjs() {
@@ -153,7 +153,7 @@ mod tests {
             &Default::default(),
             |code, hints| {
                 ext = Some(hints.ext.to_owned());
-                Ok::<_, Infallible>(Cow::from(code))
+                Ok(Cow::from(code))
             },
         );
         assert_eq!(ext.as_deref(), Some("mjs"));
@@ -168,7 +168,7 @@ mod tests {
             &Default::default(),
             |code, hints| {
                 ext = Some(hints.ext.to_owned());
-                Ok::<_, Infallible>(Cow::from(code))
+                Ok(Cow::from(code))
             },
         );
         assert_eq!(ext.as_deref(), Some("mts"));
@@ -183,7 +183,7 @@ mod tests {
             &Default::default(),
             |code, hints| {
                 ext = Some(hints.ext.to_owned());
-                Ok::<_, Infallible>(Cow::from(code))
+                Ok(Cow::from(code))
             },
         );
         assert_eq!(ext.as_deref(), Some("jsx"));
@@ -198,7 +198,7 @@ mod tests {
             &Default::default(),
             |code, hints| {
                 ext = Some(hints.ext.to_owned());
-                Ok::<_, Infallible>(Cow::from(code))
+                Ok(Cow::from(code))
             },
         );
         assert_eq!(ext.as_deref(), Some("tsx"));
