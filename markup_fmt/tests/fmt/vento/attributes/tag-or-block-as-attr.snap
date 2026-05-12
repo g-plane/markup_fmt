@@ -2,19 +2,25 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div
-  {{ if colored_with_absolute_dates }}colored-with-absolute-dates{{ /if }}
-  {{ if colored_with_days }}colored-with-days{{ /if }}
+  {{ if colored_with_absolute_dates }}
+    colored-with-absolute-dates
+  {{ /if }}
+  {{ if colored_with_days }}
+    colored-with-days
+  {{ /if }}
 >
 </div>
 
 <div
   class="flex"
-  {{ if colored_with_absolute_dates }}colored-with-absolute-dates{{ /if }}
+  {{ if colored_with_absolute_dates }}
+    colored-with-absolute-dates
+  {{ /if }}
   id="3"
 >
 </div>
 
-<div {{ if id }} id="{{ id }}" {{ /if }} class="flex gap-10"></div>
+<div {{ if id }}id="{{ id }}"{{ /if }} class="flex gap-10"></div>
 
 <div {{ if id != 1 }}class="active"{{ /if }}></div>
 
@@ -95,14 +101,18 @@ source: markup_fmt/tests/fmt.rs
 <div
   class="flex foo"
   id="index_id"
-  {{ if index_type == "foo" }}style="display: none"{{ /if }}
+  {{ if index_type == "foo" }}
+    style="display: none"
+  {{ /if }}
 >
   My text that should sometimes be hidden
 </div>
 
 <div
   data-toggle-mobile="true"
-  {{ if "adsl" not in connectivity_technology }}data-filter="fiber"{{ /if }}
+  {{ if "adsl" not in connectivity_technology }}
+    data-filter="fiber"
+  {{ /if }}
   class="foo bar baz yayayayayayaya"
 >
   Data attributes
