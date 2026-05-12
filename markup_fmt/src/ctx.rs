@@ -142,17 +142,16 @@ where
         attr: bool,
         start: usize,
     ) -> Result<String, Error> {
-        if code.trim().is_empty() {
+        let code = code.trim_ascii();
+        if code.is_empty() {
             Ok(String::new())
         } else {
             // Trim original code before sending it to the external formatter.
             // This makes sure the code will be trimmed
             // though external formatter isn't available.
-            let preprocessed = code.trim_start();
-            let will_add_brackets =
-                preprocessed.starts_with('{') || preprocessed.starts_with("...");
+            let will_add_brackets = code.starts_with('{') || code.starts_with("...");
             let wrapped = if will_add_brackets {
-                &format!("[{}]", code.trim())
+                &format!("[{code}]")
             } else {
                 code
             };
@@ -168,8 +167,8 @@ where
             )?;
             let mut formatted =
                 formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
-            formatted = trim_delim(preprocessed, formatted, '[', ']');
-            formatted = trim_delim(preprocessed, formatted, '(', ')');
+            formatted = trim_delim(code, formatted, '[', ']');
+            formatted = trim_delim(code, formatted, '(', ')');
             if will_add_brackets {
                 formatted = formatted.trim_ascii_end().trim_end_matches(',');
             }
@@ -178,10 +177,11 @@ where
     }
 
     pub(crate) fn format_binding(&mut self, code: &str, start: usize) -> String {
-        if code.trim().is_empty() {
+        let code = code.trim_ascii();
+        if code.is_empty() {
             String::new()
         } else {
-            let wrapped = format!("let {} = 0", code.trim());
+            let wrapped = format!("let {code} = 0");
             let formatted = self.format_with_external_formatter(
                 &wrapped,
                 Hints {
@@ -202,10 +202,11 @@ where
     }
 
     pub(crate) fn format_type_params(&mut self, code: &str, start: usize) -> String {
-        if code.trim().is_empty() {
+        let code = code.trim_ascii();
+        if code.is_empty() {
             String::new()
         } else {
-            let wrapped = format!("type T<{}> = 0", code.trim());
+            let wrapped = format!("type T<{code}> = 0");
             let formatted = self.format_with_external_formatter(
                 &wrapped,
                 Hints {
@@ -228,7 +229,8 @@ where
     }
 
     pub(crate) fn format_stmt_header(&mut self, keyword: &str, code: &str) -> String {
-        if code.trim().is_empty() {
+        let code = code.trim_ascii();
+        if code.is_empty() {
             String::new()
         } else {
             let wrapped = format!("{keyword} ({code}) {{}}");
