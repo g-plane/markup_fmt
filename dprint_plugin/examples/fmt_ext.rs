@@ -1,6 +1,6 @@
 use anyhow::Error;
 use dprint_core::configuration::GlobalConfiguration;
-use markup_fmt::{config::FormatOptions, detect_language, format_text};
+use markup_fmt::{FormatError, config::FormatOptions, detect_language, format_text};
 use std::{borrow::Cow, env, fs, io, path::Path};
 
 fn main() {
@@ -79,7 +79,18 @@ fn main() {
                 Ok(Cow::from(code))
             }
         },
-    )
-    .unwrap();
-    print!("{formatted}");
+    );
+    match formatted {
+        Ok(formatted) => {
+            print!("{formatted}");
+        }
+        Err(FormatError::Syntax(error)) => {
+            eprintln!("{error}");
+        }
+        Err(FormatError::External(errors)) => {
+            errors.into_iter().for_each(|error| {
+                eprintln!("{error}");
+            });
+        }
+    }
 }
