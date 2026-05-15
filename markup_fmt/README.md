@@ -12,7 +12,7 @@ assert_eq!("<div class=\"container\"></div>\n", &format_text(
     "<div class=container></div>",
     Language::Html,
     &options,
-    |code, _| Ok::<_, std::convert::Infallible>(code.into()),
+    |code, _| Ok(code.into()),
 ).unwrap());
 ```
 
@@ -30,19 +30,18 @@ assert!(matches!(
         "<div>",
         Language::Html,
         &options,
-        |code, _| Ok::<_, std::convert::Infallible>(code.into()),
+        |code, _| Ok(code.into()),
     ).unwrap_err(),
     FormatError::Syntax(SyntaxError { .. })
 ));
 ```
 
-External formatter can return [`Err`] as well.
+External formatter can return `anyhow::Error`.
 This error will be aggregated and returned in [`FormatError::External`]:
 
 ```rust
+use anyhow::Error;
 use markup_fmt::{config::FormatOptions, format_text, FormatError, Language};
-
-struct ExternalFormatterError;
 
 let options = FormatOptions::default();
 assert!(matches!(
@@ -50,7 +49,7 @@ assert!(matches!(
         "<script>a</script>",
         Language::Html,
         &options,
-        |_, _| Err(ExternalFormatterError),
+        |_, _| Err(Error::msg("external formatter error")),
     ).unwrap_err(),
     FormatError::External(errors) if !errors.is_empty()
 ));

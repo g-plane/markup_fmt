@@ -315,7 +315,7 @@ pub(crate) fn pos_to_line_col(source: &str, pos: usize) -> (usize, usize) {
         },
     );
     match search {
-        ControlFlow::Break((line, offset)) => (line, pos - offset + 1),
+        ControlFlow::Break((line, offset)) => (line, pos - offset.max(pos)),
         ControlFlow::Continue((line, _)) => (line, 0),
     }
 }
