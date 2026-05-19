@@ -16,3 +16,6 @@ source: markup_fmt/tests/fmt.rs
 {{ default bar }}
   Default content for bar
 {{ /default }}
+
+{{ comp }}
+{{ /comp }}
