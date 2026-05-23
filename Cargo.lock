@@ -609,7 +609,7 @@ dependencies = [
  "memchr",
  "raffia",
  "serde",
- "tiny_pretty",
+ "tiny_pretty 0.2.1",
 ]
 
 [[package]]
@@ -625,7 +625,7 @@ dependencies = [
  "regex",
  "serde",
  "similar-asserts",
- "tiny_pretty",
+ "tiny_pretty 0.3.1",
  "toml",
 ]
 
@@ -1222,6 +1222,12 @@ name = "tiny_pretty"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650d82e943da333637be9f1567d33d605e76810a26464edfd7ae74f7ef181e95"
+
+[[package]]
+name = "tiny_pretty"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04eee220e23d20da16daeac8f8e8c4a3ae5e12640758c1fddb91be2e34e71f67"
 dependencies = [
  "unicode-width 0.2.1",
 ]
