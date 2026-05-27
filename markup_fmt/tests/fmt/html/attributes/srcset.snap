@@ -19,9 +19,11 @@ source: markup_fmt/tests/fmt.rs
   sizes="(max-width: 66rem) 100vw, 66rem"
   alt=""
 />
-<img srcset="
+<img
+  srcset="
              /media/examples/surfer-240-200.jpg
-">
+"
+>
 <!-- #8150 -->
 <img
   sizes="(max-width: 1400px) 100vw, 1400px"

@@ -10,9 +10,13 @@ source: markup_fmt/tests/fmt.rs
   alt=""
 />
 
-<img src="a" srcset="
+<img
+  src="a"
+  srcset="
  should-not-format ,, should-not-format 0q,,,
-" alt="" />
+"
+  alt=""
+/>
 
 <img src="a" srcset=",,," />
 

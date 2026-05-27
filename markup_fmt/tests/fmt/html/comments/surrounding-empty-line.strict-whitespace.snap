@@ -5,8 +5,7 @@ source: markup_fmt/tests/fmt.rs
 --><li>First</li><!-- 123
 456
    789
---><li
-  >Second</li><!--
+--><li>Second</li><!--
 
 
     123
@@ -14,8 +13,7 @@ source: markup_fmt/tests/fmt.rs
           789
 
 
---><li
-  >Second</li><!--
+--><li>Second</li><!--
 
 
            123
