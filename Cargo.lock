@@ -327,7 +327,7 @@ dependencies = [
 
 [[package]]
 name = "dprint_plugin_markup"
-version = "0.27.2"
+version = "0.27.3"
 dependencies = [
  "anyhow",
  "dprint-core",
@@ -696,7 +696,7 @@ dependencies = [
 
 [[package]]
 name = "markup_fmt"
-version = "0.27.2"
+version = "0.27.3"
 dependencies = [
  "aho-corasick",
  "anyhow",
