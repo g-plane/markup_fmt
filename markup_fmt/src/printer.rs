@@ -766,8 +766,7 @@ impl<'s> DocGen<'s> for Element<'s> {
                             );
                         }
                         Some(..) => {
-                            docs.push(Doc::hard_line());
-                            docs.extend(reflow_raw(text_node.raw.trim_matches('\n')));
+                            docs.extend(reflow_raw(text_node.raw.trim_ascii_end()));
                         }
                     }
                     docs.push(Doc::hard_line());
