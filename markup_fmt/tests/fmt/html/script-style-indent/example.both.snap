@@ -18,5 +18,8 @@ source: markup_fmt/tests/fmt.rs
     <script>
       window.addEventListener('load', () => {})
     </script>
+    <script type="application/json">
+      {"ssrData":{"items":[1,2,3]}}
+    </script>
   </body>
 </html>
