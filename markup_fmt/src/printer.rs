@@ -679,6 +679,10 @@ impl<'s> DocGen<'s> for Element<'s> {
                         }
                         _ => None,
                     });
+                    let is_script_indent = ctx.script_indent();
+                    if is_script_indent {
+                        state.indent_level += 1;
+                    }
                     match type_attr.as_deref() {
                         Some(
                             "module"
@@ -694,10 +698,6 @@ impl<'s> DocGen<'s> for Element<'s> {
                             | "text/babel",
                         )
                         | None => {
-                            let is_script_indent = ctx.script_indent();
-                            if is_script_indent {
-                                state.indent_level += 1;
-                            }
                             let lang = self
                                 .attrs
                                 .iter()
@@ -761,9 +761,13 @@ impl<'s> DocGen<'s> for Element<'s> {
                             | "speculationrules",
                         ) => {
                             let formatted = ctx.format_json(text_node.raw, text_node.start, &state);
-                            docs.push(
-                                Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true)),
-                            );
+                            let doc =
+                                Doc::hard_line().concat(reflow_with_indent(formatted.trim(), true));
+                            if is_script_indent {
+                                docs.push(doc.nest(ctx.indent_width));
+                            } else {
+                                docs.push(doc);
+                            }
                         }
                         Some(..) => {
                             docs.extend(reflow_raw(text_node.raw.trim_ascii_end()));
