@@ -56,8 +56,8 @@ source: markup_fmt/tests/fmt.rs
     :key="index // hello"
     @click="() => {console.log(test)}"
     @click="() => {
-      console.log(test);
-    }"
+        console.log(test);
+      }"
     @click="doSomething()"
     @click="doSomething"
     @click="a.b"

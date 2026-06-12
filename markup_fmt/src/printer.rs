@@ -1296,7 +1296,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 let value = format!("{{{binding_name}}}");
                 name.append(Doc::char('='))
                     .append(if ctx.options.strict_svelte_attr {
-                        format_attr_value(value, &ctx.options.quotes)
+                        format_attr_value(value, &ctx.options.quotes, ctx.indent_width)
                     } else {
                         Doc::text(value)
                     })
@@ -1442,6 +1442,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                         name.append(format_attr_value(
                             format!("{{{expr_code}}}"),
                             &ctx.options.quotes,
+                            ctx.indent_width,
                         ))
                     } else {
                         name.append(expr)
@@ -1454,6 +1455,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                 name.append(format_attr_value(
                     format!("{{{expr_code}}}"),
                     &ctx.options.quotes,
+                    ctx.indent_width,
                 ))
             } else {
                 name.append(expr)
@@ -2114,14 +2116,22 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
             {
                 docs.push(Doc::char('='));
-                docs.push(format_attr_value(value, &ctx.options.quotes));
+                docs.push(format_attr_value(
+                    value,
+                    &ctx.options.quotes,
+                    ctx.indent_width,
+                ));
             }
         } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false))
             && is_v_bind
             && let Some(arg_and_modifiers) = self.arg_and_modifiers
         {
             docs.push(Doc::char('='));
-            docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
+            docs.push(format_attr_value(
+                arg_and_modifiers,
+                &ctx.options.quotes,
+                ctx.indent_width,
+            ));
         }
 
         Doc::list(docs)
@@ -2394,7 +2404,7 @@ fn has_two_more_non_text_children(children: &[Node], language: Language) -> bool
         > 1
 }
 
-fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'_> {
+fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes, indent_width: usize) -> Doc<'_> {
     let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::char('\'')
@@ -2407,7 +2417,7 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'_> {
     };
     quote
         .clone()
-        .concat(reflow_with_indent(value, true))
+        .append(Doc::list(reflow_with_indent(value, true).collect()).nest(indent_width))
         .append(quote)
 }
 

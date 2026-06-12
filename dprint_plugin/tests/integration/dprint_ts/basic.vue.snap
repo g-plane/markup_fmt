@@ -36,13 +36,13 @@ function greet(msg: string) {
   <button :class="" @click="">{{  }}{{ /**/ }}</button>
   <v-list-item
     @click="$triggerDialog('editScreen', { screenId: screen.id });
-    close()"
+      close()"
   />
   <div
     :style="{
-      'height': '200px',
-      /* position: relative; */
-    }"
+        'height': '200px',
+        /* position: relative; */
+      }"
   >
   </div>
 </template>
