@@ -6,4 +6,11 @@
   >
     <u-badge :label="row.original.acknowledgement.severity.label" />
   </u-tooltip>
+  <div
+    :data-raw="cond
+          ? `line one
+line two keeps raw template literal content`
+          : other"
+  >
+  </div>
 </template>

@@ -175,17 +175,72 @@ pub(crate) static UNESCAPING_AC: LazyLock<AhoCorasick> =
     LazyLock::new(|| AhoCorasick::new(["&quot;", "&#x22;", "&#x27;"]).unwrap());
 
 pub(crate) fn detect_indent(s: &str) -> usize {
+    let mut pair_stack = Vec::new();
     s.lines()
-        .skip(if s.starts_with([' ', '\t']) { 0 } else { 1 })
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| {
-            line.as_bytes()
-                .iter()
-                .take_while(|byte| byte.is_ascii_whitespace())
-                .count()
+        .enumerate()
+        .filter_map(|(i, line)| {
+            // Leading whitespace inside a template literal is content, not indentation.
+            let in_template_literal = matches!(pair_stack.last(), Some('`'));
+            update_pair_stack(&mut pair_stack, line);
+            if in_template_literal
+                || line.trim().is_empty()
+                || i == 0 && !s.starts_with([' ', '\t'])
+            {
+                None
+            } else {
+                Some(
+                    line.as_bytes()
+                        .iter()
+                        .take_while(|byte| byte.is_ascii_whitespace())
+                        .count(),
+                )
+            }
         })
         .min()
         .unwrap_or_default()
+}
+
+/// Carries open string/template literal/brace/comment delimiters across the lines
+/// of an embedded expression; a '`' on top means "currently inside a template literal".
+pub(crate) fn update_pair_stack(pair_stack: &mut Vec<char>, line: &str) {
+    let mut chars = line.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '`' | '\'' | '"' => {
+                let last = pair_stack.last();
+                if last.is_some_and(|last| *last == c) {
+                    pair_stack.pop();
+                } else if matches!(last, Some('$' | '{') | None) {
+                    pair_stack.push(c);
+                }
+            }
+            '$' if matches!(pair_stack.last(), Some('`'))
+                && chars.next_if(|next| *next == '{').is_some() =>
+            {
+                pair_stack.push('$');
+            }
+            '{' if !matches!(pair_stack.last(), Some('`' | '\'' | '"' | '/')) => {
+                pair_stack.push('{');
+            }
+            '}' if matches!(pair_stack.last(), Some('$' | '{')) => {
+                pair_stack.pop();
+            }
+            '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                if chars.next_if(|next| *next == '*').is_some() {
+                    pair_stack.push('*');
+                } else if chars.next_if(|next| *next == '/').is_some() {
+                    break;
+                }
+            }
+            '*' if chars.next_if(|next| *next == '/').is_some() => {
+                pair_stack.pop();
+            }
+            '\\' if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
+                chars.next();
+            }
+            _ => {}
+        }
+    }
 }
 
 pub(crate) fn pascal2kebab(s: &'_ str) -> Cow<'_, str> {

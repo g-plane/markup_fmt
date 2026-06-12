@@ -2207,45 +2207,7 @@ fn reflow_with_indent<'i, 'o: 'i>(
             s
         };
         let should_keep_raw = matches!(pair_stack.last(), Some('`'));
-
-        let mut chars = s.chars().peekable();
-        while let Some(c) = chars.next() {
-            match c {
-                '`' | '\'' | '"' => {
-                    let last = pair_stack.last();
-                    if last.is_some_and(|last| *last == c) {
-                        pair_stack.pop();
-                    } else if matches!(last, Some('$' | '{') | None) {
-                        pair_stack.push(c);
-                    }
-                }
-                '$' if matches!(pair_stack.last(), Some('`'))
-                    && chars.next_if(|next| *next == '{').is_some() =>
-                {
-                    pair_stack.push('$');
-                }
-                '{' if !matches!(pair_stack.last(), Some('`' | '\'' | '"' | '/')) => {
-                    pair_stack.push('{');
-                }
-                '}' if matches!(pair_stack.last(), Some('$' | '{')) => {
-                    pair_stack.pop();
-                }
-                '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
-                    if chars.next_if(|next| *next == '*').is_some() {
-                        pair_stack.push('*');
-                    } else if chars.next_if(|next| *next == '/').is_some() {
-                        break;
-                    }
-                }
-                '*' if chars.next_if(|next| *next == '/').is_some() => {
-                    pair_stack.pop();
-                }
-                '\\' if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
-                    chars.next();
-                }
-                _ => {}
-            }
-        }
+        helpers::update_pair_stack(&mut pair_stack, s);
 
         [
             if i == 0 {

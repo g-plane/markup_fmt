@@ -14,9 +14,9 @@ source: dprint_plugin/tests/integration.rs
   </u-tooltip>
   <div
     :data-raw="cond
-        ? `line one
+      ? `line one
 line two keeps raw template literal content`
-        : someOtherValueThatIsLongEnoughToKeepTheExpressionBrokenAcrossLines"
+      : someOtherValueThatIsLongEnoughToKeepTheExpressionBrokenAcrossLines"
   >
   </div>
 </template>
