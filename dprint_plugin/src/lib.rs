@@ -122,7 +122,10 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
                     config.language.script_formatter,
                     Some(ScriptFormatter::Biome)
                 ) {
+                    // dprint-plugin-biome renamed this key to `javascript.quoteStyle`;
+                    // keep the old name for older versions of that plugin.
                     additional_config.insert("javascriptQuoteStyle".into(), "single".into());
+                    additional_config.insert("javascript.quoteStyle".into(), "single".into());
                 } else {
                     additional_config.insert("quoteStyle".into(), "alwaysSingle".into());
                 }
@@ -133,6 +136,7 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
                     Some(ScriptFormatter::Biome)
                 ) {
                     additional_config.insert("javascriptQuoteStyle".into(), "double".into());
+                    additional_config.insert("javascript.quoteStyle".into(), "double".into());
                 } else {
                     additional_config.insert("quoteStyle".into(), "alwaysDouble".into());
                 }
