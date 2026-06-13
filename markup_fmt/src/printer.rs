@@ -2145,9 +2145,9 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
     {
         Doc::text("{{")
             .append(Doc::line_or_space())
-            .concat(reflow_with_indent(
+            .append(reflow_expr_with_indent(
                 &ctx.format_expr(self.expr, false, self.start),
-                true,
+                ctx.indent_width,
             ))
             .nest(ctx.indent_width)
             .append(Doc::line_or_space())
@@ -2377,25 +2377,49 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes, indent_width: usiz
     } else {
         Doc::char('\'')
     };
-    // A value whose last line opens with a closing delimiter is anchored by the
-    // bracket on its first line, like `:ui="{ ... }"`, and its inner lines already
-    // read one level deep, so indenting further would fight the conventions of
-    // Prettier and eslint-plugin-vue. Only unanchored continuations (ternaries,
-    // additional statements) need the extra level to stay clear of the column
-    // where attribute names live.
-    let is_anchored = value
-        .lines()
-        .next_back()
-        .is_some_and(|line| matches!(line.trim_start().chars().next(), Some('}' | ')' | ']')));
-    let content = Doc::list(reflow_with_indent(value, true).collect());
     quote
         .clone()
-        .append(if is_anchored {
-            content
-        } else {
-            content.nest(indent_width)
-        })
+        .append(reflow_expr_with_indent(value, indent_width))
         .append(quote)
+}
+
+/// Reflows a formatted embedded expression, giving continuation lines one extra
+/// level of indentation unless the expression is anchored: when a line at the
+/// expression's base indentation opens with a closing delimiter, like the brace
+/// in `:ui="{ ... }"`, the bracket pair already structures the block and inner
+/// lines already read one level deep, so indenting further would fight the
+/// conventions of Prettier and eslint-plugin-vue, and would break the closer
+/// out of line with its opener. Only unanchored continuations (ternaries,
+/// additional statements) need the extra level to stay clear of the column
+/// where attribute names or sibling elements live.
+fn reflow_expr_with_indent<'i, 'o: 'i>(expr: &'i str, indent_width: usize) -> Doc<'o> {
+    let base_indent = helpers::detect_indent(expr);
+    let mut pair_stack = Vec::new();
+    let mut lines = expr.lines();
+    if let Some(first_line) = lines.next() {
+        helpers::update_pair_stack(&mut pair_stack, first_line);
+    }
+    let mut is_anchored = false;
+    for line in lines {
+        let in_template_literal = matches!(pair_stack.last(), Some('`'));
+        helpers::update_pair_stack(&mut pair_stack, line);
+        if in_template_literal {
+            continue;
+        }
+        let indent = line.len() - line.trim_start_matches([' ', '\t']).len();
+        if indent == base_indent
+            && matches!(line.trim_start().chars().next(), Some('}' | ')' | ']'))
+        {
+            is_anchored = true;
+            break;
+        }
+    }
+    let content = Doc::list(reflow_with_indent(expr, true).collect());
+    if is_anchored {
+        content
+    } else {
+        content.nest(indent_width)
+    }
 }
 
 fn format_children_with_inserting_linebreak<'s, F>(
