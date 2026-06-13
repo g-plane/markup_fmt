@@ -16,4 +16,14 @@ line two keeps raw template literal content`
           : someOtherValueThatIsLongEnoughToKeepTheExpressionBrokenAcrossLines"
   >
   </div>
+  <u-page-header
+    :title="page.title"
+    :ui="{
+      root: 'border-b border-default',
+      description: 'mt-1 text-muted',
+      headline: 'text-sm uppercase tracking-wide text-primary',
+    }"
+    @close='emit("close");
+    reset();'
+  ></u-page-header>
 </template>

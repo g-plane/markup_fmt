@@ -2377,9 +2377,24 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes, indent_width: usiz
     } else {
         Doc::char('\'')
     };
+    // A value whose last line opens with a closing delimiter is anchored by the
+    // bracket on its first line, like `:ui="{ ... }"`, and its inner lines already
+    // read one level deep, so indenting further would fight the conventions of
+    // Prettier and eslint-plugin-vue. Only unanchored continuations (ternaries,
+    // additional statements) need the extra level to stay clear of the column
+    // where attribute names live.
+    let is_anchored = value
+        .lines()
+        .next_back()
+        .is_some_and(|line| matches!(line.trim_start().chars().next(), Some('}' | ')' | ']')));
+    let content = Doc::list(reflow_with_indent(value, true).collect());
     quote
         .clone()
-        .append(Doc::list(reflow_with_indent(value, true).collect()).nest(indent_width))
+        .append(if is_anchored {
+            content
+        } else {
+            content.nest(indent_width)
+        })
         .append(quote)
 }
 

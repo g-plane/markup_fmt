@@ -40,9 +40,9 @@ function greet(msg: string) {
   />
   <div
     :style="{
-        'height': '200px',
-        /* position: relative; */
-      }"
+      'height': '200px',
+      /* position: relative; */
+    }"
   >
   </div>
 </template>

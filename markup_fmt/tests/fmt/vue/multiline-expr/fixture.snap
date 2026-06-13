@@ -16,4 +16,13 @@ line two keeps raw template literal content`
       : other"
   >
   </div>
+  <u-page-header
+    :title="page.title"
+    :ui="{
+      root: 'border-b border-default',
+      description: 'mt-1 text-muted',
+    }"
+    @close='emit("close");
+      reset()'
+  ></u-page-header>
 </template>
