@@ -78,11 +78,19 @@ source: markup_fmt/tests/fmt.rs
 {% endtrans %}
 
 {% raw %}
-  <ul>
-    {% for item in seq %}
-      <li>{{ item }}</li>
-    {% endfor %}
-  </ul>
+<ul>
+{% for item in seq %}
+    <li>{{ item }}</li>
+{% endfor %}
+</ul>
+{% endraw %}
+{% raw %}
+<p style="color: white; white-space: nowrap">
+    {{s1|mention|Le %date%}}
+</p>
+{% endraw %}
+{% raw %}
+    {{if dying}}Still alive.{{/if}}
 {% endraw %}
 
 {% call(user) dump_users(list_of_user) %}

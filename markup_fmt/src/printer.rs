@@ -2300,11 +2300,11 @@ fn is_multi_line_attr(attr: &Attribute) -> bool {
     }
 }
 
-fn should_ignore_node<'s, F>(index: usize, nodes: &[Node], ctx: &Ctx<'s, F>) -> bool
+fn should_ignore_node<'s, F>(node: &Node, index: usize, nodes: &[Node], ctx: &Ctx<'s, F>) -> bool
 where
     F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, Error>,
 {
-    match index.checked_sub(1).and_then(|i| nodes.get(i)) {
+    (match index.checked_sub(1).and_then(|i| nodes.get(i)) {
         Some(Node {
             kind: NodeKind::Comment(comment),
             ..
@@ -2324,6 +2324,12 @@ where
             }
         }
         _ => false,
+    }) || if let NodeKind::JinjaBlock(block) = &node.kind
+        && let Some(JinjaTagOrChildren::Tag(tag)) = block.body.first()
+    {
+        tag.content.trim_ascii() == "raw"
+    } else {
+        false
     }
 }
 fn has_ignore_directive<'s, F>(comment: &Comment, ctx: &Ctx<'s, F>) -> bool
@@ -2427,7 +2433,7 @@ where
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
                     let is_current_text_like = is_text_like(child, ctx.language);
-                    if should_ignore_node(i, children, ctx) {
+                    if should_ignore_node(child, i, children, ctx) {
                         let raw = child.raw.trim_end_matches([' ', '\t']);
                         let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
                         docs.extend(reflow_raw(last_line_break_removed.unwrap_or(raw)));
@@ -2515,7 +2521,7 @@ where
             .fold(
                 (Vec::with_capacity(children.len() * 2), true),
                 |(mut docs, is_prev_text_like), (i, child)| {
-                    if should_ignore_node(i, children, ctx) {
+                    if should_ignore_node(child, i, children, ctx) {
                         let raw = child.raw.trim_end_matches([' ', '\t']);
                         let last_line_break_removed = raw.strip_suffix(['\n', '\r']);
                         docs.extend(reflow_raw(last_line_break_removed.unwrap_or(raw)));
