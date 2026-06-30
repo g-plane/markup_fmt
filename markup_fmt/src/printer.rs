@@ -1296,7 +1296,7 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 let value = format!("{{{binding_name}}}");
                 name.append(Doc::char('='))
                     .append(if ctx.options.strict_svelte_attr {
-                        format_attr_value(value, &ctx.options.quotes)
+                        format_attr_value(value, &ctx.options.quotes, ctx.indent_width)
                     } else {
                         Doc::text(value)
                     })
@@ -1442,6 +1442,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                         name.append(format_attr_value(
                             format!("{{{expr_code}}}"),
                             &ctx.options.quotes,
+                            ctx.indent_width,
                         ))
                     } else {
                         name.append(expr)
@@ -1454,6 +1455,7 @@ impl<'s> DocGen<'s> for SvelteAttribute<'s> {
                 name.append(format_attr_value(
                     format!("{{{expr_code}}}"),
                     &ctx.options.quotes,
+                    ctx.indent_width,
                 ))
             } else {
                 name.append(expr)
@@ -2114,14 +2116,22 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                 && matches!(self.arg_and_modifiers, Some(arg_and_modifiers) if arg_and_modifiers == value))
             {
                 docs.push(Doc::char('='));
-                docs.push(format_attr_value(value, &ctx.options.quotes));
+                docs.push(format_attr_value(
+                    value,
+                    &ctx.options.quotes,
+                    ctx.indent_width,
+                ));
             }
         } else if matches!(ctx.options.v_bind_same_name_short_hand, Some(false))
             && is_v_bind
             && let Some(arg_and_modifiers) = self.arg_and_modifiers
         {
             docs.push(Doc::char('='));
-            docs.push(format_attr_value(arg_and_modifiers, &ctx.options.quotes));
+            docs.push(format_attr_value(
+                arg_and_modifiers,
+                &ctx.options.quotes,
+                ctx.indent_width,
+            ));
         }
 
         Doc::list(docs)
@@ -2135,9 +2145,9 @@ impl<'s> DocGen<'s> for VueInterpolation<'s> {
     {
         Doc::text("{{")
             .append(Doc::line_or_space())
-            .concat(reflow_with_indent(
+            .append(reflow_expr_with_indent(
                 &ctx.format_expr(self.expr, false, self.start),
-                true,
+                ctx.indent_width,
             ))
             .nest(ctx.indent_width)
             .append(Doc::line_or_space())
@@ -2197,45 +2207,7 @@ fn reflow_with_indent<'i, 'o: 'i>(
             s
         };
         let should_keep_raw = matches!(pair_stack.last(), Some('`'));
-
-        let mut chars = s.chars().peekable();
-        while let Some(c) = chars.next() {
-            match c {
-                '`' | '\'' | '"' => {
-                    let last = pair_stack.last();
-                    if last.is_some_and(|last| *last == c) {
-                        pair_stack.pop();
-                    } else if matches!(last, Some('$' | '{') | None) {
-                        pair_stack.push(c);
-                    }
-                }
-                '$' if matches!(pair_stack.last(), Some('`'))
-                    && chars.next_if(|next| *next == '{').is_some() =>
-                {
-                    pair_stack.push('$');
-                }
-                '{' if !matches!(pair_stack.last(), Some('`' | '\'' | '"' | '/')) => {
-                    pair_stack.push('{');
-                }
-                '}' if matches!(pair_stack.last(), Some('$' | '{')) => {
-                    pair_stack.pop();
-                }
-                '/' if !matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
-                    if chars.next_if(|next| *next == '*').is_some() {
-                        pair_stack.push('*');
-                    } else if chars.next_if(|next| *next == '/').is_some() {
-                        break;
-                    }
-                }
-                '*' if chars.next_if(|next| *next == '/').is_some() => {
-                    pair_stack.pop();
-                }
-                '\\' if matches!(pair_stack.last(), Some('\'' | '"' | '`')) => {
-                    chars.next();
-                }
-                _ => {}
-            }
-        }
+        helpers::update_pair_stack(&mut pair_stack, s);
 
         [
             if i == 0 {
@@ -2400,7 +2372,7 @@ fn has_two_more_non_text_children(children: &[Node], language: Language) -> bool
         > 1
 }
 
-fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'_> {
+fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes, indent_width: usize) -> Doc<'_> {
     let value = value.as_ref();
     let quote = if value.contains('"') {
         Doc::char('\'')
@@ -2413,8 +2385,47 @@ fn format_attr_value(value: impl AsRef<str>, quotes: &Quotes) -> Doc<'_> {
     };
     quote
         .clone()
-        .concat(reflow_with_indent(value, true))
+        .append(reflow_expr_with_indent(value, indent_width))
         .append(quote)
+}
+
+/// Reflows a formatted embedded expression, giving continuation lines one extra
+/// level of indentation unless the expression is anchored: when a line at the
+/// expression's base indentation opens with a closing delimiter, like the brace
+/// in `:ui="{ ... }"`, the bracket pair already structures the block and inner
+/// lines already read one level deep, so indenting further would fight the
+/// conventions of Prettier and eslint-plugin-vue, and would break the closer
+/// out of line with its opener. Only unanchored continuations (ternaries,
+/// additional statements) need the extra level to stay clear of the column
+/// where attribute names or sibling elements live.
+fn reflow_expr_with_indent<'i, 'o: 'i>(expr: &'i str, indent_width: usize) -> Doc<'o> {
+    let base_indent = helpers::detect_indent(expr);
+    let mut pair_stack = Vec::new();
+    let mut lines = expr.lines();
+    if let Some(first_line) = lines.next() {
+        helpers::update_pair_stack(&mut pair_stack, first_line);
+    }
+    let mut is_anchored = false;
+    for line in lines {
+        let in_template_literal = matches!(pair_stack.last(), Some('`'));
+        helpers::update_pair_stack(&mut pair_stack, line);
+        if in_template_literal {
+            continue;
+        }
+        let indent = line.len() - line.trim_start_matches([' ', '\t']).len();
+        if indent == base_indent
+            && matches!(line.trim_start().chars().next(), Some('}' | ')' | ']'))
+        {
+            is_anchored = true;
+            break;
+        }
+    }
+    let content = Doc::list(reflow_with_indent(expr, true).collect());
+    if is_anchored {
+        content
+    } else {
+        content.nest(indent_width)
+    }
 }
 
 fn format_children_with_inserting_linebreak<'s, F>(

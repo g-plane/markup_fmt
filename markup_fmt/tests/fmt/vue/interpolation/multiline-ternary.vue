@@ -1,0 +1,17 @@
+<template>
+  <div class="mb-1 text-muted">
+    {{
+      state.ondertekening === "paraaf"
+      ? "paraaf arts:"
+      : "handtekening arts:"
+    }}
+  </div>
+  <span>
+    {{
+      formatName({
+        first: person.first,
+        last: person.last,
+      })
+    }}
+  </span>
+</template>
