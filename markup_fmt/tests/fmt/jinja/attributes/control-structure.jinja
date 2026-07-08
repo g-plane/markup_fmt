@@ -1,0 +1,22 @@
+<select
+    {% if fname %}name="{{ fname }}"{% endif %}
+    {% if fid %}id="{{ fid }}"{% endif %}
+    {% if required %}required{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if has_desc %}
+      aria-describedby="{{ fid }}-desc"
+    {% endif %}
+    class="select w-full validator"
+    {{ attrs }}
+>
+    {% if placeholder %}
+       <option value="" disabled selected>{{ placeholder }}</option>
+    {% endif %}
+    {{ slot }}
+</select>
+
+{% if fname %}name="{{ fname }}"{% endif %}
+{% if fid %}id="{{ fid }}"{% endif %}
+{% if required %}required{% endif %}
+{% if disabled %}disabled{% endif %}
+{% if has_desc %}aria-describedby="{{ fid }}-desc"{% endif %}

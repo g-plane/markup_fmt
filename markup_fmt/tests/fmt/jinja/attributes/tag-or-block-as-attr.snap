@@ -2,20 +2,14 @@
 source: markup_fmt/tests/fmt.rs
 ---
 <div
-  {% if colored_with_absolute_dates %}
-    colored-with-absolute-dates
-  {% endif %}
-  {% if colored_with_days %}
-    colored-with-days
-  {% endif %}
+  {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %}
+  {% if colored_with_days %}colored-with-days{% endif %}
 >
 </div>
 
 <div
   class="flex"
-  {% if colored_with_absolute_dates %}
-    colored-with-absolute-dates
-  {% endif %}
+  {% if colored_with_absolute_dates %}colored-with-absolute-dates{% endif %}
   id="3"
 >
 </div>
@@ -27,9 +21,7 @@ source: markup_fmt/tests/fmt.rs
 <input
   type="text"
   hidden
-  {% if widget.required is not False %}
-    required
-  {% endif %}
+  {% if widget.required is not False %}required{% endif %}
 />
 
 <details {% if category %}open{% endif %}>
@@ -70,9 +62,7 @@ source: markup_fmt/tests/fmt.rs
       data-{{key}}="{{value}}"
     {% endfor %}
   {% elif datepicker %}
-    {% if datepicker.should_delay %}
-      data-should_delay
-    {% endif %}
+    {% if datepicker.should_delay %}data-should_delay{% endif %}
   {% else %}
     data-start="08:30:00"
     data-end="20:30:00"
@@ -90,9 +80,7 @@ source: markup_fmt/tests/fmt.rs
   name="{{ field.name }}"
   id="id_{{ field.name }}{{ forloop.count }}"
   value="{{ choice.0 }}"
-  {% if choice.0 == field.value %}
-    checked="checked"
-  {% endif %}
+  {% if choice.0 == field.value %}checked="checked"{% endif %}
 />
 
 <input
@@ -100,27 +88,20 @@ source: markup_fmt/tests/fmt.rs
   type="radio"
   name="callback_method"
   value="callback"
-  {% if not office_open %}
-    disabled
-    class="hidden"
-  {% endif %}
+  {% if not office_open %}disabled class="hidden"{% endif %}
 >
 
 <div
   class="flex foo"
   id="index_id"
-  {% if index_type == "foo" %}
-    style="display: none"
-  {% endif %}
+  {% if index_type == "foo" %}style="display: none"{% endif %}
 >
   My text that should sometimes be hidden
 </div>
 
 <div
   data-toggle-mobile="true"
-  {% if "adsl" not in connectivity_technology %}
-    data-filter="fiber"
-  {% endif %}
+  {% if "adsl" not in connectivity_technology %}data-filter="fiber"{% endif %}
   class="foo bar baz yayayayayayaya"
 >
   Data attributes
@@ -131,9 +112,7 @@ source: markup_fmt/tests/fmt.rs
     <li>
       <a
         href="{{ subentry.url }}"
-        {% if subentry.active %}
-          class="dropdown-menu-selected"
-        {% endif %}
+        {% if subentry.active %}class="dropdown-menu-selected"{% endif %}
       >{{ subentry.name }}</a>
     </li>
   {% else %}
