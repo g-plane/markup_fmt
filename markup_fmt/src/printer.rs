@@ -236,17 +236,24 @@ impl<'s> DocGen<'s> for AngularSwitchArm<'s> {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text(format!("@{}", self.keyword)));
         if let Some(expr) = self.expr {
-            docs.push(Doc::text(" ("));
+            docs.push(Doc::space());
+            if !self.expr_naked {
+                docs.push(Doc::char('('));
+            }
             docs.push(Doc::text(ctx.format_expr(expr.0, false, expr.1)));
-            docs.push(Doc::char(')'));
+            if !self.expr_naked {
+                docs.push(Doc::char(')'));
+            }
         }
-        docs.push(Doc::text(" {"));
-        docs.push(format_control_structure_block_children(
-            &self.children,
-            ctx,
-            state,
-        ));
-        docs.push(Doc::char('}'));
+        if let Some(children) = &self.children {
+            docs.push(Doc::text(" {"));
+            docs.push(format_control_structure_block_children(
+                children, ctx, state,
+            ));
+            docs.push(Doc::char('}'));
+        } else {
+            docs.push(Doc::char(';'));
+        }
         Doc::list(docs)
     }
 }

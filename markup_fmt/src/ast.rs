@@ -74,7 +74,8 @@ pub struct AngularSwitch<'s> {
 pub struct AngularSwitchArm<'s> {
     pub keyword: &'static str,
     pub expr: Option<(&'s str, usize)>,
-    pub children: Vec<Node<'s>>,
+    pub expr_naked: bool,
+    pub children: Option<Vec<Node<'s>>>,
 }
 
 #[derive(Debug)]

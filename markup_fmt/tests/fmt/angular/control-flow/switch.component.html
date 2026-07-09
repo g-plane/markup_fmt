@@ -18,3 +18,13 @@
       <p>first</p>
     }
   }
+
+@switch (status) {
+    @case ('active') {
+        <span>Active</span>
+    }
+    @case ('inactive') {
+        <span>Inactive</span>
+    }
+    @default never;
+}
