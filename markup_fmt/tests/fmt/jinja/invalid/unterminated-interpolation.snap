@@ -1,10 +1,6 @@
 ---
 source: markup_fmt/tests/fmt.rs
 ---
-{{
-  comment #}
+{{ comment # }}
 
-  This gets nuked
-
-  This too
-}}
+This gets nuked This too

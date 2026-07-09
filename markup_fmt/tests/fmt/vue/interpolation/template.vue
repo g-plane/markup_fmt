@@ -7,4 +7,5 @@
     What is going on {{ prop1 }} and {{ prop2 }}
   </div>
   </root>
+  <p>{{ '{' }}</p>
 </template>
