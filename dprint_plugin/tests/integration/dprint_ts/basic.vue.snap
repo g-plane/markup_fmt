@@ -45,4 +45,5 @@ function greet(msg: string) {
     }"
   >
   </div>
+  <button .disabled="a && b"></button>
 </template>

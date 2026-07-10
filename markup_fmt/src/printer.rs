@@ -1999,6 +1999,21 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                     docs.push(Doc::text(arg_and_modifiers.trim_start_matches(':')));
                 }
             }
+            "." => {
+                is_v_bind = true;
+                let is_long_style = matches!(ctx.options.v_bind_style, Some(VBindStyle::Long));
+                if is_long_style {
+                    docs.push(Doc::text("v-bind:"));
+                } else {
+                    docs.push(Doc::char('.'));
+                }
+                if let Some(arg_and_modifiers) = self.arg_and_modifiers {
+                    docs.push(Doc::text(arg_and_modifiers));
+                }
+                if is_long_style {
+                    docs.push(Doc::text(".prop"));
+                }
+            }
             "bind" => {
                 is_v_bind = true;
                 if let Some(arg_and_modifiers) = self.arg_and_modifiers {

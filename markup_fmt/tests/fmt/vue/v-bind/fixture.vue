@@ -6,4 +6,5 @@
   <button v-bind></button>
   <button v-bind.sync></button>
   <label :for="for"></label>
+  <button .disabled="   a &&b "></button>
 </template>

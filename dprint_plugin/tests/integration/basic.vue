@@ -34,4 +34,5 @@ function greet(msg:string){alert(msg)}
     }"
   >
   </div>
+  <button .disabled="   a &&b "></button>
 </template>

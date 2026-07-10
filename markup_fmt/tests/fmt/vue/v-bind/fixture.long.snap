@@ -9,4 +9,5 @@ source: markup_fmt/tests/fmt.rs
   <button v-bind></button>
   <button v-bind.sync></button>
   <label v-bind:for="for"></label>
+  <button v-bind:disabled.prop="a &&b"></button>
 </template>

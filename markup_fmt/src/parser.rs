@@ -2724,6 +2724,10 @@ impl<'s> Parser<'s> {
                 self.chars.next();
                 ":"
             }
+            Some((_, '.')) => {
+                self.chars.next();
+                "."
+            }
             Some((_, '@')) => {
                 self.chars.next();
                 "@"
@@ -2745,7 +2749,7 @@ impl<'s> Parser<'s> {
             _ => return Err(self.emit_error(SyntaxErrorKind::ExpectVueDirective)),
         };
 
-        let arg_and_modifiers = if matches!(name, ":" | "@" | "#")
+        let arg_and_modifiers = if matches!(name, ":" | "." | "@" | "#")
             || self
                 .chars
                 .peek()
