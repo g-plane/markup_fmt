@@ -184,7 +184,8 @@ impl<'s> DocGen<'s> for AngularInterpolation<'s> {
             .concat(reflow_with_indent(
                 ctx.try_format_expr(self.expr, false, self.start)
                     .as_deref()
-                    .unwrap_or(self.expr),
+                    .unwrap_or(self.expr)
+                    .trim_ascii(),
                 true,
             ))
             .nest(ctx.indent_width)
