@@ -2801,7 +2801,9 @@ impl<'s> Parser<'s> {
 
 /// Front matter is only front matter at the very top of the document, otherwise `---` is plain text.
 fn is_front_matter_start(source: &str, offset: usize) -> bool {
-    source.get(..offset).is_some_and(|s| s.trim_end().is_empty())
+    source
+        .get(..offset)
+        .is_some_and(|s| s.trim_end().is_empty())
 }
 
 /// Returns true if the provided character is a valid HTML tag name character.
