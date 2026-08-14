@@ -176,17 +176,22 @@ where
         }
     }
 
-    pub(crate) fn format_binding(&mut self, code: &str, start: usize) -> String {
+    pub(crate) fn format_binding(&mut self, code: &str, start: usize, state: &State) -> String {
         let code = code.trim_ascii();
         if code.is_empty() {
             String::new()
         } else {
-            let wrapped = format!("let {code} = 0");
+            let has_initializer = code.contains('=');
+            let wrapped = if has_initializer {
+                format!("let {code}")
+            } else {
+                format!("let {code} = 0")
+            };
             let formatted = self.format_with_external_formatter(
                 &wrapped,
                 Hints {
                     print_width: self.print_width,
-                    indent_level: 0,
+                    indent_level: state.indent_level,
                     attr: false,
                     ext: "ts",
                 },
@@ -195,7 +200,13 @@ where
             let formatted = formatted.trim_matches(|c: char| c.is_ascii_whitespace() || c == ';');
             formatted
                 .strip_prefix("let ")
-                .and_then(|s| s.strip_suffix(" = 0"))
+                .and_then(|s| {
+                    if has_initializer {
+                        Some(s)
+                    } else {
+                        s.strip_suffix(" = 0")
+                    }
+                })
                 .unwrap_or(formatted)
                 .to_owned()
         }

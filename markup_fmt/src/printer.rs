@@ -28,7 +28,7 @@ impl<'s> DocGen<'s> for AngularElseIf<'s> {
         docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
         if let Some((reference, start)) = self.reference {
             docs.push(Doc::text("; as "));
-            docs.push(Doc::text(ctx.format_binding(reference, start)));
+            docs.push(Doc::text(ctx.format_binding(reference, start, state)));
         }
         docs.push(Doc::text(") {"));
         docs.push(format_control_structure_block_children(
@@ -48,9 +48,11 @@ impl<'s> DocGen<'s> for AngularFor<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@for ("));
-        docs.push(Doc::text(
-            ctx.format_binding(self.binding.0, self.binding.1),
-        ));
+        docs.push(Doc::text(ctx.format_binding(
+            self.binding.0,
+            self.binding.1,
+            state,
+        )));
         docs.push(Doc::text(" of "));
         docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
         if let Some((track, start)) = self.track {
@@ -145,7 +147,7 @@ impl<'s> DocGen<'s> for AngularIf<'s> {
         docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
         if let Some((reference, start)) = self.reference {
             docs.push(Doc::text("; as "));
-            docs.push(Doc::text(ctx.format_binding(reference, start)));
+            docs.push(Doc::text(ctx.format_binding(reference, start, state)));
         }
         docs.push(Doc::text(") {"));
         docs.push(format_control_structure_block_children(
@@ -1408,22 +1410,28 @@ impl<'s> DocGen<'s> for Root<'s> {
 }
 
 impl<'s> DocGen<'s> for SvelteAtTag<'s> {
-    fn doc<F>(&self, ctx: &mut Ctx<'s, F>, _: &State<'s>) -> Doc<'s>
+    fn doc<F>(&self, ctx: &mut Ctx<'s, F>, state: &State<'s>) -> Doc<'s>
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, Error>,
     {
-        Doc::text("{@")
-            .append(Doc::text(self.name))
-            .append(Doc::space())
-            .concat(reflow_with_indent(
-                &if self.name == "const" {
-                    ctx.format_binding(self.expr.0, self.expr.1)
-                } else {
-                    ctx.format_expr(self.expr.0, false, self.expr.1)
-                },
-                true,
-            ))
-            .append(Doc::char('}'))
+        let mut docs = Vec::with_capacity(5);
+        docs.push(Doc::text("{@"));
+        docs.push(Doc::text(self.name));
+        docs.push(Doc::space());
+        let expr = if self.name == "const" {
+            ctx.format_binding(self.expr.0, self.expr.1, state)
+        } else {
+            ctx.format_expr(self.expr.0, false, self.expr.1)
+        };
+        let should_not_indent = expr.ends_with(['}', ']', ')']);
+        docs.extend(reflow_with_indent(&expr, true));
+        if should_not_indent {
+            Doc::list(docs).append(Doc::char('}'))
+        } else {
+            Doc::list(docs)
+                .nest(ctx.indent_width)
+                .append(Doc::char('}'))
+        }
     }
 }
 
@@ -1503,7 +1511,7 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
             head.push(Doc::text("then"));
             if let Some((binding, start)) = then {
                 head.push(Doc::space());
-                head.push(Doc::text(ctx.format_binding(binding, start)));
+                head.push(Doc::text(ctx.format_binding(binding, start, state)));
             }
         }
 
@@ -1512,7 +1520,7 @@ impl<'s> DocGen<'s> for SvelteAwaitBlock<'s> {
             head.push(Doc::text("catch"));
             if let Some((binding, start)) = catch {
                 head.push(Doc::space());
-                head.push(Doc::text(ctx.format_binding(binding, start)));
+                head.push(Doc::text(ctx.format_binding(binding, start, state)));
             }
         }
 
@@ -1551,7 +1559,7 @@ impl<'s> DocGen<'s> for SvelteCatchBlock<'s> {
         let children = format_control_structure_block_children(&self.children, ctx, state);
         if let Some((binding, start)) = self.binding {
             Doc::text("{:catch ")
-                .append(Doc::text(ctx.format_binding(binding, start)))
+                .append(Doc::text(ctx.format_binding(binding, start, state)))
                 .append(Doc::char('}'))
                 .append(children)
         } else {
@@ -1573,7 +1581,7 @@ impl<'s> DocGen<'s> for SvelteEachBlock<'s> {
         ));
         if let Some(binding) = self.binding {
             docs.push(Doc::text(" as "));
-            docs.push(Doc::text(ctx.format_binding(binding.0, binding.1)));
+            docs.push(Doc::text(ctx.format_binding(binding.0, binding.1, state)));
         }
 
         if let Some(index) = self.index {
@@ -1727,7 +1735,7 @@ impl<'s> DocGen<'s> for SvelteThenBlock<'s> {
         docs.push(Doc::text("{:then"));
         if let Some((binding, start)) = self.binding {
             docs.push(Doc::space());
-            docs.push(Doc::text(ctx.format_binding(binding, start)));
+            docs.push(Doc::text(ctx.format_binding(binding, start, state)));
         }
         docs.push(Doc::char('}'));
         docs.push(format_control_structure_block_children(
@@ -1930,13 +1938,16 @@ impl<'s> DocGen<'s> for VentoTag<'s> {
                         if let Some((binding, expr)) = rest.trim().split_once('=') {
                             Doc::text(tag_name.to_string())
                                 .append(Doc::space())
-                                .concat(reflow_with_indent(&ctx.format_binding(binding, 0), true))
+                                .concat(reflow_with_indent(
+                                    &ctx.format_binding(binding, 0, state),
+                                    true,
+                                ))
                                 .append(Doc::text(" = "))
                                 .concat(reflow_with_indent(&ctx.format_expr(expr, false, 0), true))
                         } else {
-                            Doc::text(tag_name.to_string())
-                                .append(Doc::space())
-                                .concat(reflow_with_indent(&ctx.format_binding(rest, 0), true))
+                            Doc::text(tag_name.to_string()).append(Doc::space()).concat(
+                                reflow_with_indent(&ctx.format_binding(rest, 0, state), true),
+                            )
                         }
                     } else if let ("import", _) = parsed_tag {
                         Doc::list(
@@ -2114,7 +2125,7 @@ impl<'s> DocGen<'s> for VueDirective<'s> {
                         }))
                     }
                 }
-                "#" | "slot" => Cow::from(ctx.format_binding(value, value_start)),
+                "#" | "slot" => Cow::from(ctx.format_binding(value, value_start, state)),
                 _ => {
                     if value.bytes().all(|b| b.is_ascii_alphanumeric()) {
                         // not only a shorthand but also allowing JavaScript keywords
