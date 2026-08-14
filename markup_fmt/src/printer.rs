@@ -1416,7 +1416,11 @@ impl<'s> DocGen<'s> for SvelteAtTag<'s> {
             .append(Doc::text(self.name))
             .append(Doc::space())
             .concat(reflow_with_indent(
-                &ctx.format_expr(self.expr.0, false, self.expr.1),
+                &if self.name == "const" {
+                    ctx.format_binding(self.expr.0, self.expr.1)
+                } else {
+                    ctx.format_expr(self.expr.0, false, self.expr.1)
+                },
                 true,
             ))
             .append(Doc::char('}'))

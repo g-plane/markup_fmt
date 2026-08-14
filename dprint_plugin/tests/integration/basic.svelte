@@ -67,3 +67,5 @@ function generateHtml(data:unknown) {
 			<!-- ... -->
 		{/if}
 	</div>
+
+{@const something: [][] = []}
