@@ -2373,10 +2373,9 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => {
-                    end = self.source.len();
-                    break;
-                }
+                // Recovering here by treating the rest of the source as expression
+                // would print a closing brace that the next parse can't match back.
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}'))),
             }
         }
         Ok((unsafe { self.source.get_unchecked(start..end) }, start))

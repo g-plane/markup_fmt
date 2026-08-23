@@ -33,6 +33,33 @@ fn fmt_snapshot() {
     });
 }
 
+/// Unterminated interpolations used to be auto-closed with a `}}` that the next parse
+/// couldn't match back, so every pass appended one more `}`.
+/// Angular recovers into a text node instead, covered by `angular/interpolation/unterminated`.
+#[test]
+fn unterminated_interpolation_is_a_syntax_error() {
+    let format = |input: &str, language| {
+        format_text(input, language, &Default::default(), |code, _| {
+            Ok(code.into())
+        })
+    };
+
+    for input in ["{{{", "{{\"", "{{'", "{{`", "{{ a"] {
+        for language in [
+            Language::Vue,
+            Language::Svelte,
+            Language::Jinja,
+            Language::Vento,
+            Language::Mustache,
+        ] {
+            assert!(
+                format(input, language).is_err(),
+                "{input:?} should be a syntax error in {language:?}"
+            );
+        }
+    }
+}
+
 fn run_format_test(
     path: &Path,
     input: &str,
