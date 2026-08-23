@@ -1144,7 +1144,7 @@ impl<'s> Parser<'s> {
         let start = start + 1;
 
         let mut pair_stack = vec![];
-        let mut end = start;
+        let end;
         loop {
             match self.chars.next() {
                 Some((i, '-')) if pair_stack.is_empty() => {
@@ -1203,7 +1203,8 @@ impl<'s> Parser<'s> {
                     self.chars.next();
                 }
                 Some(..) => continue,
-                None => break,
+                // Reaching the end of the file means there's no closing delimiter, so this isn't front matter.
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectFrontMatter)),
             }
         }
 
@@ -1726,7 +1727,9 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
-                    self.parse_front_matter().map(NodeKind::FrontMatter)
+                    self.try_parse(Parser::parse_front_matter)
+                        .map(NodeKind::FrontMatter)
+                        .or_else(|_| self.parse_text_node().map(NodeKind::Text))
                 } else {
                     self.parse_text_node().map(NodeKind::Text)
                 }
