@@ -229,4 +229,28 @@ mod tests {
             );
         });
     }
+
+    #[test]
+    fn unterminated_interpolation() {
+        let format = |input: &str, language| {
+            format_text(input, language, &Default::default(), |code, _| {
+                Ok(Cow::from(code))
+            })
+        };
+
+        for input in ["{{{", "{{\"", "{{'", "{{`", "{{ a"] {
+            for language in [
+                Language::Vue,
+                Language::Svelte,
+                Language::Jinja,
+                Language::Vento,
+                Language::Mustache,
+            ] {
+                assert!(
+                    format(input, language).is_err(),
+                    "{input:?} should be a syntax error in {language:?}"
+                );
+            }
+        }
+    }
 }
