@@ -824,7 +824,15 @@ impl<'s> Parser<'s> {
                         }
                     }
                     Some((_, '{')) if can_interpolate => {
-                        chars_stack.push('{');
+                        // Outside Svelte, a lone `{` is literal text, so only `{{`, `{%` and `{#` open an interpolation.
+                        if matches!(self.language, Language::Svelte)
+                            || self
+                                .chars
+                                .peek()
+                                .is_some_and(|(_, c)| matches!(c, '{' | '%' | '#'))
+                        {
+                            chars_stack.push('{');
+                        }
                     }
                     Some((_, '}'))
                         if can_interpolate
