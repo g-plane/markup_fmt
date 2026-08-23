@@ -743,9 +743,8 @@ impl<'s> Parser<'s> {
                     let mut chars = self.chars.clone();
                     chars.next();
                     if let Some((_, '{')) = chars.next() {
-                        let end =
-                            start + self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
-                        Some((start, end))
+                        self.parse_mustache_interpolation()?;
+                        Some((start, self.peek_pos()))
                     } else {
                         None
                     }
@@ -771,7 +770,8 @@ impl<'s> Parser<'s> {
                             break;
                         }
                         Some((_, '{')) => {
-                            end += self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
+                            self.parse_mustache_interpolation()?;
+                            end = self.peek_pos();
                         }
                         Some((_, c)) => {
                             end += c.len_utf8();
@@ -870,11 +870,10 @@ impl<'s> Parser<'s> {
                                 })?;
                             }
                             Some((_, '{')) => {
-                                chars.next();
+                                self.parse_mustache_interpolation()?;
                                 // We use inclusive range when returning string,
                                 // so we need to substract 1 here.
-                                let (interpolation, _) = self.parse_mustache_interpolation()?;
-                                end += interpolation.len() + "{{}}".len() - 1;
+                                end = self.peek_pos() - 1;
                             }
                             _ => {
                                 self.chars.next();
@@ -2433,11 +2432,11 @@ impl<'s> Parser<'s> {
                 end = *i + c.len_utf8();
                 self.chars.next();
             } else if *c == '{' && matches!(self.language, Language::Jinja) {
-                let current_i = *i;
                 let mut chars = self.chars.clone();
                 chars.next();
                 if chars.next_if(|(_, c)| *c == '{').is_some() {
-                    end = current_i + self.parse_mustache_interpolation()?.0.len() + "{{}}".len();
+                    self.parse_mustache_interpolation()?;
+                    end = self.peek_pos();
                 } else {
                     break;
                 }

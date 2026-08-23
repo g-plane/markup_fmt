@@ -203,4 +203,30 @@ mod tests {
         );
         assert_eq!(ext.as_deref(), Some("tsx"));
     }
+
+    #[test]
+    fn unterminated_interpolation_in_tag_is_rejected() {
+        for input in [
+            "<h{{ level }",
+            "<input {{ field.attrs }",
+            "<div data-{{ key }",
+            "<option value={{ id }",
+            "<div class=btn-{{ variant }",
+        ] {
+            let err = format_text(input, Language::Jinja, &Default::default(), |code, _| {
+                Ok(Cow::from(code))
+            })
+            .unwrap_err();
+            assert!(
+                matches!(
+                    err,
+                    FormatError::Syntax(SyntaxError {
+                        kind: SyntaxErrorKind::ExpectAttrName,
+                        ..
+                    })
+                ),
+                "expected an attribute name error for {input:?}, got {err}"
+            );
+        }
+    }
 }
