@@ -2937,7 +2937,7 @@ pub fn parse_as_interpolated(
     let mut dynamics = Vec::new();
     let mut chars = text.char_indices().peekable();
     let mut pos = 0;
-    let mut brace_stack = 0u8;
+    let mut brace_stack = 0usize;
     while let Some((i, c)) = chars.next() {
         match c {
             '{' => {
@@ -2962,6 +2962,11 @@ pub fn parse_as_interpolated(
                 }
             }
             '}' => {
+                // `pos` only marks an interpolation start while the stack isn't empty,
+                // so a `}` without a matching `{` is just static text.
+                if brace_stack == 0 {
+                    continue;
+                }
                 if brace_stack > 1 {
                     brace_stack -= 1;
                     continue;

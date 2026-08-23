@@ -1,0 +1,6 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+<div style="}"></div>
+
+<div style="color: red}"></div>
