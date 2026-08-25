@@ -2746,7 +2746,13 @@ where
         ] if is_all_ascii_whitespace(text_node.raw) => Doc::line_or_space(),
         _ => format_ws_sensitive_leading_ws(children)
             .append(format_children_without_inserting_linebreak(
-                children, ctx, state,
+                children,
+                ctx,
+                // Children are nested below, so external formatters must see the deeper indent.
+                &State {
+                    indent_level: state.indent_level + 1,
+                    ..*state
+                },
             ))
             .nest(ctx.indent_width)
             .append(format_ws_sensitive_trailing_ws(children)),
