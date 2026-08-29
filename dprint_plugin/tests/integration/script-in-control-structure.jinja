@@ -1,0 +1,14 @@
+{% if enabled %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("nested");
+    });
+  </script>
+{% endif %}
+{% for item in items %}
+  {% if item %}
+    <script>
+      console.log("deep");
+    </script>
+  {% endif %}
+{% endfor %}
