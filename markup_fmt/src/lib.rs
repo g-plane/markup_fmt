@@ -203,4 +203,30 @@ mod tests {
         );
         assert_eq!(ext.as_deref(), Some("tsx"));
     }
+
+    #[test]
+    fn unterminated_jinja_tag_is_rejected() {
+        // Pre-fix, all of these formatted with the tag content replaced by `{%  %}`.
+        for input in [
+            "{%",
+            "{% if x",
+            "{% set x = 1",
+            "{% if x %}body{% endif %}{% set y = 2",
+        ] {
+            let err = format_text(input, Language::Jinja, &Default::default(), |code, _| {
+                Ok(Cow::from(code))
+            })
+            .unwrap_err();
+            assert!(
+                matches!(
+                    err,
+                    FormatError::Syntax(SyntaxError {
+                        kind: SyntaxErrorKind::ExpectChar('}'),
+                        ..
+                    })
+                ),
+                "expected an unterminated-tag error for {input:?}, got {err}"
+            );
+        }
+    }
 }
