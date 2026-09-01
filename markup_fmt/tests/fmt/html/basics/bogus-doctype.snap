@@ -3,4 +3,5 @@ source: markup_fmt/tests/fmt.rs
 ---
 <!DOCTYPE<!---->
 <!DOCTYPE html>
-<!DOCTYPE<!---->
+<!DOCTYPE<!--
+-->
