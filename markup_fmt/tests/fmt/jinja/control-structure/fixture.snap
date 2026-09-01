@@ -98,3 +98,9 @@ source: markup_fmt/tests/fmt.rs
     <dt>Realname</dt>
   </dl>
 {% endcall %}
+
+{% if outer %}
+  {% raw %}
+        <p     class="untouched"      >keep</p>
+    {% endraw %}
+{% endif %}

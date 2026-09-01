@@ -90,3 +90,9 @@ There are {{ count }} {{ name }} objects.
         <dt>Realname</dt>
     </dl>
 {% endcall %}
+
+{% if outer %}
+    {% raw %}
+        <p     class="untouched"      >keep</p>
+    {% endraw %}
+{% endif %}
