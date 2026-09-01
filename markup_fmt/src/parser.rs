@@ -973,6 +973,10 @@ impl<'s> Parser<'s> {
         } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
         };
+        // A doctype value never starts with `<`; swallowing one breaks idempotency.
+        if self.chars.peek().is_some_and(|(_, c)| *c == '<') {
+            return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
+        }
         self.skip_ws();
 
         let value_start = if let Some((start, _)) = self.chars.peek() {
