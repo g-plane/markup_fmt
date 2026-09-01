@@ -206,27 +206,27 @@ mod tests {
 
     #[test]
     fn unterminated_interpolation_in_tag_is_rejected() {
-        for input in [
+        [
             "<h{{ level }",
             "<input {{ field.attrs }",
             "<div data-{{ key }",
             "<option value={{ id }",
             "<div class=btn-{{ variant }",
-        ] {
+        ]
+        .iter()
+        .for_each(|input| {
             let err = format_text(input, Language::Jinja, &Default::default(), |code, _| {
                 Ok(Cow::from(code))
             })
             .unwrap_err();
-            assert!(
-                matches!(
-                    err,
-                    FormatError::Syntax(SyntaxError {
-                        kind: SyntaxErrorKind::ExpectAttrName,
-                        ..
-                    })
-                ),
-                "expected an attribute name error for {input:?}, got {err}"
+            std::assert_matches!(
+                err,
+                FormatError::Syntax(SyntaxError {
+                    kind: SyntaxErrorKind::ExpectAttrName,
+                    ..
+                }),
+                "expected an attribute name error for {input:?}, got {err}",
             );
-        }
+        });
     }
 }
