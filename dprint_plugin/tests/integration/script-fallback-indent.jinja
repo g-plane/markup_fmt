@@ -1,0 +1,13 @@
+<div>
+      <!-- External formater fails because of jinja syntax -->
+      <script>
+      {% if debug %}
+      console.log('debug');
+      {% endif %}
+      </script>
+  <!-- No issues for the external formater -->
+  <script>
+    console.log
+    ('valid js is still formatted');
+  </script>
+</div>
