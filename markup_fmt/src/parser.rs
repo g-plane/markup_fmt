@@ -2382,10 +2382,7 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => {
-                    end = self.source.len();
-                    break;
-                }
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}'))),
             }
         }
         Ok((unsafe { self.source.get_unchecked(start..end) }, start))
