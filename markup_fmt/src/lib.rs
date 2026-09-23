@@ -231,8 +231,7 @@ mod tests {
     }
 
     #[test]
-    fn unterminated_jinja_tag_is_rejected() {
-        // Pre-fix, all of these formatted with the tag content replaced by `{%  %}`.
+    fn unterminated_jinja_tag() {
         for input in [
             "{%",
             "{% if x",

@@ -1344,7 +1344,6 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                // Recovering here would leave the tag content empty, silently deleting it.
                 None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}'))),
             }
         }
