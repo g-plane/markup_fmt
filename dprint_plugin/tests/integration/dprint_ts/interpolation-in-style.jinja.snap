@@ -1,0 +1,9 @@
+---
+source: dprint_plugin/tests/integration.rs
+---
+<style>
+.theme {
+  background: {{ bg }};
+  color: {{ fg }};
+}
+</style>
