@@ -1340,7 +1340,7 @@ impl<'s> Parser<'s> {
         };
         let start = start + 1;
 
-        let mut end = start;
+        let end;
         loop {
             match self.chars.next() {
                 Some((i, '%')) => {
@@ -1350,7 +1350,7 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => break,
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}'))),
             }
         }
 
@@ -1406,33 +1406,29 @@ impl<'s> Parser<'s> {
                     }
                 }
                 let next_tag_start = self.peek_pos();
-                if let Ok(next_tag) = self.parse_jinja_tag() {
-                    let next_tag_name = parse_jinja_tag_name(&next_tag);
-                    if next_tag_name
-                        .strip_prefix("end")
-                        .is_some_and(|name| name == tag_name)
-                    {
-                        body.push(JinjaTagOrChildren::Tag(next_tag));
-                        break;
-                    }
-                    if (tag_name == "if" || tag_name == "for")
-                        && matches!(next_tag_name, "elif" | "elseif" | "else")
-                    {
-                        body.push(JinjaTagOrChildren::Tag(next_tag));
-                    } else {
-                        let kind =
-                            self.parse_jinja_tag_or_block(Some(next_tag), children_parser)?;
-                        let node = T::build(kind, unsafe {
-                            self.source.get_unchecked(next_tag_start..self.peek_pos())
-                        });
-                        if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
-                            nodes.push(node);
-                        } else {
-                            body.push(JinjaTagOrChildren::Children(vec![node]));
-                        }
-                    }
-                } else {
+                let next_tag = self.parse_jinja_tag()?;
+                let next_tag_name = parse_jinja_tag_name(&next_tag);
+                if next_tag_name
+                    .strip_prefix("end")
+                    .is_some_and(|name| name == tag_name)
+                {
+                    body.push(JinjaTagOrChildren::Tag(next_tag));
                     break;
+                }
+                if (tag_name == "if" || tag_name == "for")
+                    && matches!(next_tag_name, "elif" | "elseif" | "else")
+                {
+                    body.push(JinjaTagOrChildren::Tag(next_tag));
+                } else {
+                    let kind = self.parse_jinja_tag_or_block(Some(next_tag), children_parser)?;
+                    let node = T::build(kind, unsafe {
+                        self.source.get_unchecked(next_tag_start..self.peek_pos())
+                    });
+                    if let Some(JinjaTagOrChildren::Children(nodes)) = body.last_mut() {
+                        nodes.push(node);
+                    } else {
+                        body.push(JinjaTagOrChildren::Children(vec![node]));
+                    }
                 }
             }
             Ok(T::from_block(JinjaBlock { body }))
