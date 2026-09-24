@@ -824,7 +824,12 @@ impl<'s> Parser<'s> {
                         }
                     }
                     Some((_, '{')) if can_interpolate => {
-                        chars_stack.push('{');
+                        // Outside Svelte, a lone `{` is literal text, so only `{{`, `{%` and `{#` open an interpolation.
+                        if matches!(self.language, Language::Svelte)
+                            || matches!(self.chars.peek(), Some((_, '{' | '%' | '#')))
+                        {
+                            chars_stack.push('{');
+                        }
                     }
                     Some((_, '}'))
                         if can_interpolate
@@ -1147,7 +1152,7 @@ impl<'s> Parser<'s> {
         let start = start + 1;
 
         let mut pair_stack = vec![];
-        let mut end = start;
+        let end;
         loop {
             match self.chars.next() {
                 Some((i, '-')) if pair_stack.is_empty() => {
@@ -1206,7 +1211,8 @@ impl<'s> Parser<'s> {
                     self.chars.next();
                 }
                 Some(..) => continue,
-                None => break,
+                // Reaching the end of the file means there's no closing delimiter, so this isn't front matter.
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectFrontMatter)),
             }
         }
 
@@ -1723,7 +1729,9 @@ impl<'s> Parser<'s> {
                 let mut chars = self.chars.clone();
                 chars.next();
                 if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
-                    self.parse_front_matter().map(NodeKind::FrontMatter)
+                    self.try_parse(Parser::parse_front_matter)
+                        .map(NodeKind::FrontMatter)
+                        .or_else(|_| self.parse_text_node().map(NodeKind::Text))
                 } else {
                     self.parse_text_node().map(NodeKind::Text)
                 }
@@ -2370,10 +2378,7 @@ impl<'s> Parser<'s> {
                     }
                 }
                 Some(..) => continue,
-                None => {
-                    end = self.source.len();
-                    break;
-                }
+                None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}'))),
             }
         }
         Ok((unsafe { self.source.get_unchecked(start..end) }, start))
