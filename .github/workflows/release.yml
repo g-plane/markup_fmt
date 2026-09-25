@@ -37,4 +37,4 @@ jobs:
         run: |
           cp target/wasm32-unknown-unknown/release/dprint_plugin_markup.wasm dprint_plugin/deployment/npm/plugin.wasm
           cd dprint_plugin/deployment/npm
-          npm publish
+          npx npm@latest publish
