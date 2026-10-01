@@ -53,3 +53,5 @@ source: markup_fmt/tests/fmt.rs
 {{- example }}
 {{ example -}}
 {{- example -}}
+
+{{ 'Use .format with value "{}".'.format('10') }}

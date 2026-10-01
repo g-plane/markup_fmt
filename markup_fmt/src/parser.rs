@@ -2358,7 +2358,7 @@ impl<'s> Parser<'s> {
                         end = i;
                         break;
                     } else {
-                        pair_stack.pop();
+                        pair_stack.pop_if(|c| matches!(c, '{' | '$'));
                     }
                 }
                 Some((_, c @ '\'' | c @ '"' | c @ '`')) => match pair_stack.last() {
