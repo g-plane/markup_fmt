@@ -2377,6 +2377,9 @@ impl<'s> Parser<'s> {
                         pair_stack.push('$');
                     }
                 }
+                Some((_, '\\')) => {
+                    self.chars.next();
+                }
                 Some(..) => continue,
                 None => return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}'))),
             }
