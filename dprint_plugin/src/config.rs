@@ -439,6 +439,7 @@ pub(crate) fn resolve_config(
                 "xsd",
                 "xslt",
                 "xsl",
+                "csproj",
             ]
             .into_iter()
             .map(String::from)
