@@ -1768,12 +1768,16 @@ impl<'s> Parser<'s> {
                     let i = *i;
                     let mut chars = self.chars.clone();
                     chars.next();
-                    if chars.next_if(|(_, c)| *c == '/').is_some()
+                    let is_end_tag = chars.next_if(|(_, c)| *c == '/').is_some();
+                    // https://html.spec.whatwg.org/multipage/parsing.html#rawtext-end-tag-name-state
+                    let is_tag_name = tag_name
+                        .chars()
+                        .zip(chars.by_ref())
+                        .all(|(a, (_, b))| a.eq_ignore_ascii_case(&b))
                         && chars
-                            .by_ref()
-                            .zip(tag_name.chars())
-                            .all(|((_, a), b)| a.eq_ignore_ascii_case(&b))
-                    {
+                            .peek()
+                            .is_none_or(|(_, c)| matches!(c, '>' | '/') || c.is_ascii_whitespace());
+                    if is_end_tag && is_tag_name {
                         if nested == 0 {
                             end = i;
                             break;
@@ -1782,12 +1786,7 @@ impl<'s> Parser<'s> {
                             self.chars = chars;
                             continue;
                         }
-                    } else if allow_nested
-                        && chars
-                            .by_ref()
-                            .zip(tag_name.chars())
-                            .all(|((_, a), b)| a.eq_ignore_ascii_case(&b))
-                    {
+                    } else if allow_nested && is_tag_name {
                         nested += 1;
                         self.chars = chars;
                         continue;
