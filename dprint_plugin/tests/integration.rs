@@ -1,5 +1,5 @@
 use anyhow::Error;
-use dprint_core::configuration::GlobalConfiguration;
+use dprint_core::configuration::{ConfigKeyMap, GlobalConfiguration};
 use insta::{Settings, assert_snapshot, glob};
 use markup_fmt::{
     FormatError,
@@ -16,6 +16,15 @@ fn integration_with_dprint_ts_snapshot() {
             Err(e) if e.kind() == io::ErrorKind::NotFound => Default::default(),
             Err(e) => panic!("{e}"),
         };
+        let style_config: ConfigKeyMap = fs::read_to_string(path.with_extension("toml"))
+            .ok()
+            .and_then(|file| {
+                toml::from_str::<toml::Table>(&file)
+                    .unwrap()
+                    .remove("malva")
+            })
+            .map(|malva| malva.try_into().unwrap())
+            .unwrap_or_default();
         let file_name = path.file_name().and_then(|file_name| file_name.to_str());
         if file_name.is_some_and(|file_name| file_name.starts_with("deno")) {
             options.language.script_indent = true;
@@ -28,7 +37,7 @@ fn integration_with_dprint_ts_snapshot() {
             &options,
             |code, hints| -> anyhow::Result<Cow<str>> {
                 let ext = hints.ext;
-                let additional_config =
+                let mut additional_config =
                     dprint_plugin_markup::build_additional_config(hints, &options);
                 let global_config = GlobalConfiguration {
                     line_width: Some(options.layout.print_width as u32),
@@ -37,6 +46,7 @@ fn integration_with_dprint_ts_snapshot() {
                     ..Default::default()
                 };
                 if let Some(syntax) = malva::detect_syntax(Path::new("file").with_extension(ext)) {
+                    additional_config.extend(style_config.clone());
                     malva::format_text(
                         code,
                         syntax,
