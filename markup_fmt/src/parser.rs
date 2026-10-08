@@ -923,11 +923,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_comment(&mut self) -> PResult<Comment<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '<')
-            .and_then(|_| self.try_consume_str("!--"))
-        else {
+        let Some((start, _)) = self.try_consume_str("<!--") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectComment));
         };
         let start = start + 1;
@@ -2261,9 +2257,7 @@ impl<'s> Parser<'s> {
             }
         }
         if self
-            .chars
-            .next_if(|(_, c)| *c == 'i')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .try_consume_str("if")
             .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
