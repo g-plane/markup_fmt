@@ -907,14 +907,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, ']')) => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == ']')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '>'))
-                        .is_some()
-                    {
+                    if self.try_consume_str("]>").is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
@@ -942,14 +936,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, '-')) => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == '-')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '>'))
-                        .is_some()
-                    {
+                    if self.try_consume_str("->").is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
@@ -1156,14 +1144,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, '-')) if pair_stack.is_empty() => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == '-')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '-'))
-                        .is_some()
-                    {
+                    if self.try_consume_str("--").is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
