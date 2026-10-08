@@ -63,6 +63,13 @@ impl<'s> Parser<'s> {
             .unwrap_or(self.source.len())
     }
 
+    /// Peeks the second char without consuming.
+    fn second(&self) -> Option<char> {
+        let mut chars = self.chars.clone();
+        chars.next();
+        chars.next().map(|(_, c)| c)
+    }
+
     fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
         let pos = self.peek_pos();
         self.emit_error_with_pos(kind, pos)
@@ -585,11 +592,9 @@ impl<'s> Parser<'s> {
                 }
                 '<' if !matches!(pair_stack.last(), Some('/' | '*' | '\'' | '"' | '`')) => {
                     let i = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars
-                        .next_if(|(_, c)| is_html_tag_name_char(*c) || *c == '!' || *c == '>')
-                        .is_some()
+                    if self
+                        .second()
+                        .is_some_and(|c| is_html_tag_name_char(c) || c == '!' || c == '>')
                     {
                         let prev = unsafe { self.source.get_unchecked(pos..i) };
                         if prev.is_empty() {
@@ -710,11 +715,9 @@ impl<'s> Parser<'s> {
             Language::Jinja => {
                 self.skip_ws();
                 let result = if matches!(self.chars.peek(), Some((_, '{'))) {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    match chars.next() {
-                        Some((_, '{')) => self.parse_native_attr().map(Attribute::Native),
-                        Some((_, '#')) => self.parse_jinja_comment().map(Attribute::JinjaComment),
+                    match self.second() {
+                        Some('{') => self.parse_native_attr().map(Attribute::Native),
+                        Some('#') => self.parse_jinja_comment().map(Attribute::JinjaComment),
                         _ => self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr),
                     }
                 } else {
@@ -740,9 +743,7 @@ impl<'s> Parser<'s> {
             let Some((start, mut end)) = (match self.chars.peek() {
                 Some((i, '{')) => {
                     let start = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if let Some((_, '{')) = chars.next() {
+                    if self.second() == Some('{') {
                         self.parse_mustache_interpolation()?;
                         Some((start, self.peek_pos()))
                     } else {
@@ -763,17 +764,15 @@ impl<'s> Parser<'s> {
                     end += c.len_utf8();
                     self.chars.next();
                 } else if *c == '{' {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    match chars.next() {
-                        Some((_, '%')) => {
+                    match self.second() {
+                        Some('%') => {
                             break;
                         }
-                        Some((_, '{')) => {
+                        Some('{') => {
                             self.parse_mustache_interpolation()?;
                             end = self.peek_pos();
                         }
-                        Some((_, c)) => {
+                        Some(c) => {
                             end += c.len_utf8();
                             self.chars.next();
                         }
@@ -862,10 +861,8 @@ impl<'s> Parser<'s> {
                         ) =>
                     {
                         end = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
-                        match chars.peek() {
-                            Some((_, '%'))
+                        match self.second() {
+                            Some('%')
                                 if self
                                     .parse_jinja_tag_or_block(None, &mut Parser::parse_node)
                                     .is_ok() =>
@@ -874,7 +871,7 @@ impl<'s> Parser<'s> {
                                     self.emit_error(SyntaxErrorKind::ExpectAttrValue)
                                 })?;
                             }
-                            Some((_, '{')) => {
+                            Some('{') => {
                                 self.parse_mustache_interpolation()?;
                                 // We use inclusive range when returning string,
                                 // so we need to substract 1 here.
@@ -1253,9 +1250,7 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars.next_if(|(_, c)| *c == '%').is_some() {
+                    if self.second() == Some('%') {
                         break;
                     }
                     children.push(children_parser(self)?);
@@ -1560,16 +1555,15 @@ impl<'s> Parser<'s> {
     fn parse_node_kind(&mut self) -> PResult<NodeKind<'s>> {
         match self.chars.peek() {
             Some((_, '<')) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                match chars.next() {
-                    Some((_, c))
+                let second = self.second();
+                match second {
+                    Some(c)
                         if is_html_tag_name_char(c)
                             || is_special_tag_name_char(c, self.language) =>
                     {
                         self.parse_element().map(NodeKind::Element)
                     }
-                    Some((_, '!')) => {
+                    Some('!') => {
                         if matches!(
                             self.language,
                             Language::Html
@@ -1592,7 +1586,7 @@ impl<'s> Parser<'s> {
                             self.parse_comment().map(NodeKind::Comment)
                         }
                     }
-                    Some((_, '?')) if self.language == Language::Xml => {
+                    Some('?') if self.language == Language::Xml => {
                         self.parse_xml_decl().map(NodeKind::XmlDecl)
                     }
                     _ => self.parse_text_node().map(NodeKind::Text),
@@ -1709,20 +1703,16 @@ impl<'s> Parser<'s> {
                     self.parse_text_node().map(NodeKind::Text)
                 }
             }
-            Some((_, '@')) if matches!(self.language, Language::Angular) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                match chars.next() {
-                    Some((_, 'i')) => self.parse_angular_if().map(NodeKind::AngularIf),
-                    Some((_, 'f')) => self.parse_angular_for().map(NodeKind::AngularFor),
-                    Some((_, 's')) => self.parse_angular_switch().map(NodeKind::AngularSwitch),
-                    Some((_, 'l')) => self.parse_angular_let().map(NodeKind::AngularLet),
-                    Some((_, 'd')) => self
-                        .parse_angular_defer()
-                        .map(NodeKind::AngularGenericBlocks),
-                    _ => self.parse_text_node().map(NodeKind::Text),
-                }
-            }
+            Some((_, '@')) if matches!(self.language, Language::Angular) => match self.second() {
+                Some('i') => self.parse_angular_if().map(NodeKind::AngularIf),
+                Some('f') => self.parse_angular_for().map(NodeKind::AngularFor),
+                Some('s') => self.parse_angular_switch().map(NodeKind::AngularSwitch),
+                Some('l') => self.parse_angular_let().map(NodeKind::AngularLet),
+                Some('d') => self
+                    .parse_angular_defer()
+                    .map(NodeKind::AngularGenericBlocks),
+                _ => self.parse_text_node().map(NodeKind::Text),
+            },
             Some(..) => self.parse_text_node().map(NodeKind::Text),
             None => Err(self.emit_error(SyntaxErrorKind::ExpectElement)),
         }
@@ -2408,9 +2398,7 @@ impl<'s> Parser<'s> {
                 end = *i + c.len_utf8();
                 self.chars.next();
             } else if *c == '{' && matches!(self.language, Language::Jinja) {
-                let mut chars = self.chars.clone();
-                chars.next();
-                if chars.next_if(|(_, c)| *c == '{').is_some() {
+                if self.second() == Some('{') {
                     self.parse_mustache_interpolation()?;
                     end = self.peek_pos();
                 } else {
@@ -2439,9 +2427,7 @@ impl<'s> Parser<'s> {
                     }
                     Language::Vue | Language::Vento | Language::Mustache => {
                         let i = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
-                        if chars.next_if(|(_, c)| *c == '{').is_some() {
+                        if self.second() == Some('{') {
                             end = i;
                             break;
                         }
@@ -2453,12 +2439,7 @@ impl<'s> Parser<'s> {
                     }
                     Language::Jinja => {
                         let i = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
-                        if chars
-                            .next_if(|(_, c)| *c == '%' || *c == '{' || *c == '#')
-                            .is_some()
-                        {
+                        if matches!(self.second(), Some('%' | '{' | '#')) {
                             end = i;
                             break;
                         }
@@ -2481,10 +2462,8 @@ impl<'s> Parser<'s> {
                 },
                 Some((i, '<')) => {
                     let i = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    match chars.next() {
-                        Some((_, c))
+                    match self.second() {
+                        Some(c)
                             if is_html_tag_name_char(c)
                                 || is_special_tag_name_char(c, self.language)
                                 || c == '/'
@@ -2540,9 +2519,7 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars.next_if(|(_, c)| *c == '{').is_some() {
+                    if self.second() == Some('{') {
                         break;
                     }
                     children.push(self.parse_node()?);
