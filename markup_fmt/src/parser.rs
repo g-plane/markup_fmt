@@ -907,14 +907,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, ']')) => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == ']')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '>'))
-                        .is_some()
-                    {
+                    if self.try_consume_str("]>").is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
@@ -929,11 +923,7 @@ impl<'s> Parser<'s> {
     }
 
     fn parse_comment(&mut self) -> PResult<Comment<'s>> {
-        let Some((start, _)) = self
-            .chars
-            .next_if(|(_, c)| *c == '<')
-            .and_then(|_| self.try_consume_str("!--"))
-        else {
+        let Some((start, _)) = self.try_consume_str("<!--") else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectComment));
         };
         let start = start + 1;
@@ -942,14 +932,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, '-')) => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == '-')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '>'))
-                        .is_some()
-                    {
+                    if self.try_consume_str("->").is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
@@ -1080,10 +1064,7 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '<')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if let Some((pos, _)) = chars.next_if(|(_, c)| *c == '/') {
-                        self.chars = chars;
+                    if let Some((pos, _)) = self.try_consume_str("</") {
                         let close_tag_name = self.parse_tag_name()?;
                         if !close_tag_name.eq_ignore_ascii_case(tag_name) {
                             let (line, column) =
@@ -1156,14 +1137,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, '-')) if pair_stack.is_empty() => {
-                    let mut chars = self.chars.clone();
-                    if chars
-                        .next_if(|(_, c)| *c == '-')
-                        .and_then(|_| chars.next_if(|(_, c)| *c == '-'))
-                        .is_some()
-                    {
+                    if self.try_consume_str("--").is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
@@ -1314,10 +1289,8 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.next() {
                 Some((i, '#')) => {
-                    let mut chars = self.chars.clone();
-                    if chars.next_if(|(_, c)| *c == '}').is_some() {
+                    if self.chars.next_if(|(_, c)| *c == '}').is_some() {
                         end = i;
-                        self.chars = chars;
                         break;
                     }
                 }
@@ -2284,9 +2257,7 @@ impl<'s> Parser<'s> {
             }
         }
         if self
-            .chars
-            .next_if(|(_, c)| *c == 'i')
-            .and_then(|_| self.chars.next_if(|(_, c)| *c == 'f'))
+            .try_consume_str("if")
             .map(|_| self.skip_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
@@ -2734,14 +2705,9 @@ impl<'s> Parser<'s> {
                 "#"
             }
             Some((_, 'v')) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                if chars.next_if(|(_, c)| *c == '-').is_some() {
-                    self.chars = chars;
-                    self.parse_identifier()?
-                } else {
-                    return Err(self.emit_error(SyntaxErrorKind::ExpectVueDirective));
-                }
+                self.try_consume_str("v-")
+                    .ok_or_else(|| self.emit_error(SyntaxErrorKind::ExpectVueDirective))?;
+                self.parse_identifier()?
             }
             _ => return Err(self.emit_error(SyntaxErrorKind::ExpectVueDirective)),
         };
