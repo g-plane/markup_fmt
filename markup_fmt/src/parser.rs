@@ -63,6 +63,26 @@ impl<'s> Parser<'s> {
             .unwrap_or(self.source.len())
     }
 
+    /// Peeks the second char without consuming.
+    fn second(&self) -> Option<char> {
+        let mut chars = self.chars.clone();
+        chars.next();
+        chars.next().map(|(_, c)| c)
+    }
+
+    /// Peeks the third char without consuming.
+    fn third(&self) -> Option<char> {
+        let mut chars = self.chars.clone();
+        chars.next();
+        chars.next();
+        chars.next().map(|(_, c)| c)
+    }
+
+    /// Returns the unconsumed part of the source.
+    fn rest(&mut self) -> &'s str {
+        &self.source[self.peek_pos()..]
+    }
+
     fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
         let pos = self.peek_pos();
         self.emit_error_with_pos(kind, pos)
@@ -78,12 +98,13 @@ impl<'s> Parser<'s> {
         }
     }
 
-    fn skip_ws(&mut self) {
-        while self
-            .chars
-            .next_if(|(_, c)| c.is_ascii_whitespace())
-            .is_some()
-        {}
+    /// Consumes chars while the predicate holds.
+    fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
+        while self.chars.next_if(|(_, c)| predicate(*c)).is_some() {}
+    }
+
+    fn eat_ws(&mut self) {
+        self.eat_while(|c| c.is_ascii_whitespace());
     }
 
     /// Tries to consume the exact string.
@@ -154,17 +175,17 @@ impl<'s> Parser<'s> {
         if self.try_consume_str("@defer").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("defer")));
         }
-        self.skip_ws();
+        self.eat_ws();
         let mut blocks = vec![self.parse_angular_generic_block("defer")?];
 
         loop {
             let chars = self.chars.clone();
-            self.skip_ws();
+            self.eat_ws();
             if self.chars.next_if(|(_, c)| *c == '@').is_some()
                 && let Ok(name) = self.parse_identifier()
                 && matches!(name, "loading" | "error" | "placeholder")
             {
-                self.skip_ws();
+                self.eat_ws();
                 blocks.push(self.parse_angular_generic_block(name)?);
             } else {
                 self.chars = chars;
@@ -177,7 +198,7 @@ impl<'s> Parser<'s> {
         if self.try_consume_str("@for").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("for")));
         }
-        self.skip_ws();
+        self.eat_ws();
 
         let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
@@ -195,9 +216,9 @@ impl<'s> Parser<'s> {
 
         let mut track = None;
         if self.chars.next_if(|(_, c)| *c == ';').is_some() {
-            self.skip_ws();
+            self.eat_ws();
             if self.try_consume_str("track").is_some() {
-                self.skip_ws();
+                self.eat_ws();
                 if let Some((start, _)) = self.chars.peek() {
                     let start = *start;
                     track = Some(self.parse_angular_inline_script(start)?);
@@ -207,42 +228,30 @@ impl<'s> Parser<'s> {
 
         let mut aliases = vec![];
         while self.chars.next_if(|(_, c)| *c == ';').is_some() {
-            self.skip_ws();
-            let mut chars = self.chars.clone();
-            if chars
-                .next_if(|(_, c)| *c == 'l')
-                .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-                .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-                .is_some()
-                && let Some((start, _)) = self.chars.peek()
-            {
-                let start = *start;
+            self.eat_ws();
+            if self.rest().starts_with("let") {
+                let start = self.peek_pos();
                 aliases.push(self.parse_angular_inline_script(start)?);
             }
         }
 
         self.chars.next_if(|(_, c)| *c == ';');
-        self.skip_ws();
+        self.eat_ws();
         if self.chars.next_if(|(_, c)| *c == ')').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
         };
-        self.skip_ws();
+        self.eat_ws();
         let children = self.parse_angular_control_flow_children()?;
 
         let mut empty = None;
-        let mut chars = self.chars.clone();
-        while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
-        if chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'm'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'y'))
-            .is_some()
+        if self
+            .rest()
+            .trim_start_matches(|c: char| c.is_ascii_whitespace())
+            .starts_with("@empty")
         {
-            self.chars = chars;
-            self.skip_ws();
+            self.eat_ws();
+            self.try_consume_str("@empty");
+            self.eat_ws();
             empty = Some(self.parse_angular_control_flow_children()?);
         }
 
@@ -279,7 +288,7 @@ impl<'s> Parser<'s> {
         } else {
             None
         };
-        self.skip_ws();
+        self.eat_ws();
         Ok(AngularGenericBlock {
             keyword,
             header,
@@ -291,42 +300,30 @@ impl<'s> Parser<'s> {
         if self.try_consume_str("@if").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularBlock("if")));
         }
-        self.skip_ws();
+        self.eat_ws();
 
         let (expr, reference) = self.parse_angular_if_cond()?;
-        self.skip_ws();
+        self.eat_ws();
         let children = self.parse_angular_control_flow_children()?;
 
         let mut else_if_blocks = vec![];
         let mut else_children = None;
-        'alter: loop {
-            let mut chars = self.chars.clone();
-            'peek: loop {
-                match chars.next() {
-                    Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
-                    Some((_, '@')) => {
-                        if chars
-                            .next_if(|(_, c)| *c == 'e')
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 'l'))
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-                            .is_some()
-                        {
-                            self.chars = chars;
-                            break 'peek;
-                        } else {
-                            break 'alter;
-                        }
-                    }
-                    _ => break 'alter,
-                }
+        loop {
+            if !self
+                .rest()
+                .trim_start_matches(|c: char| c.is_ascii_whitespace())
+                .starts_with("@else")
+            {
+                break;
             }
-            self.skip_ws();
+            self.eat_ws();
+            self.try_consume_str("@else");
+            self.eat_ws();
 
             if self.try_consume_str("if").is_some() {
-                self.skip_ws();
+                self.eat_ws();
                 let (expr, reference) = self.parse_angular_if_cond()?;
-                self.skip_ws();
+                self.eat_ws();
                 let children = self.parse_angular_control_flow_children()?;
                 else_if_blocks.push(AngularElseIf {
                     expr,
@@ -357,11 +354,11 @@ impl<'s> Parser<'s> {
 
         let mut reference = None;
         if self.chars.next_if(|(_, c)| *c == ';').is_some() {
-            self.skip_ws();
+            self.eat_ws();
             if self.try_consume_str("as").is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("as")));
             }
-            self.skip_ws();
+            self.eat_ws();
             if let Some((start, _)) = self.chars.peek() {
                 let start = *start;
                 reference = Some(self.parse_angular_inline_script(start)?);
@@ -421,14 +418,14 @@ impl<'s> Parser<'s> {
         if self.try_consume_str("@let").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularLet));
         }
-        self.skip_ws();
+        self.eat_ws();
 
         let name = self.parse_identifier()?;
-        self.skip_ws();
+        self.eat_ws();
         if self.chars.next_if(|(_, c)| *c == '=').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('=')));
         }
-        self.skip_ws();
+        self.eat_ws();
         let start = self.peek_pos();
         let expr = self.parse_angular_inline_script(start)?;
         if self.chars.next_if(|(_, c)| *c == ';').is_none() {
@@ -442,7 +439,7 @@ impl<'s> Parser<'s> {
         if self.try_consume_str("@switch").is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectAngularSwitch));
         }
-        self.skip_ws();
+        self.eat_ws();
 
         let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
@@ -452,11 +449,11 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
         }
 
-        self.skip_ws();
+        self.eat_ws();
         if self.chars.next_if(|(_, c)| *c == '{').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('{')));
         }
-        self.skip_ws();
+        self.eat_ws();
 
         let mut arms = Vec::with_capacity(2);
         while let Some((_, '@')) = self.chars.peek() {
@@ -466,7 +463,7 @@ impl<'s> Parser<'s> {
                     if self.try_consume_str("case").is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case")));
                     }
-                    self.skip_ws();
+                    self.eat_ws();
                     let Some((start, _)) = self.chars.next_if(|(_, c)| *c == '(') else {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectChar('(')));
                     };
@@ -474,7 +471,7 @@ impl<'s> Parser<'s> {
                     if self.chars.next_if(|(_, c)| *c == ')').is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
                     }
-                    self.skip_ws();
+                    self.eat_ws();
                     let children = self.parse_angular_control_flow_children()?;
                     arms.push(AngularSwitchArm {
                         keyword: "case",
@@ -482,13 +479,13 @@ impl<'s> Parser<'s> {
                         expr_naked: false,
                         children: Some(children),
                     });
-                    self.skip_ws();
+                    self.eat_ws();
                 }
                 Some((_, 'd')) => {
                     if self.try_consume_str("default").is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("default")));
                     }
-                    self.skip_ws();
+                    self.eat_ws();
                     let (expr, children) = if matches!(self.chars.peek(), Some((_, '{'))) {
                         (None, Some(self.parse_angular_control_flow_children()?))
                     } else {
@@ -504,13 +501,13 @@ impl<'s> Parser<'s> {
                         expr_naked: true,
                         children,
                     });
-                    self.skip_ws();
+                    self.eat_ws();
                 }
                 _ => return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("case"))),
             }
         }
 
-        self.skip_ws();
+        self.eat_ws();
         if self.chars.next_if(|(_, c)| *c == '}').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}')));
         }
@@ -524,11 +521,11 @@ impl<'s> Parser<'s> {
                 (None, start, first_char)
             } else {
                 let name = self.parse_attr_name()?;
-                self.skip_ws();
+                self.eat_ws();
                 if let Some((start, first_char)) = self
                     .chars
                     .next_if(|(_, c)| *c == '=')
-                    .map(|_| self.skip_ws())
+                    .map(|_| self.eat_ws())
                     .and_then(|_| self.chars.next_if(|(_, c)| matches!(c, '{' | '`')))
                 {
                     (Some(name), start, first_char)
@@ -538,7 +535,7 @@ impl<'s> Parser<'s> {
             };
 
         if first_char == '`' {
-            while self.chars.next_if(|(_, c)| *c != '`').is_some() {}
+            self.eat_while(|c| c != '`');
             if let Some((end, _)) = self.chars.next_if(|(_, c)| *c == '`') {
                 Ok(AstroAttribute {
                     name,
@@ -585,11 +582,9 @@ impl<'s> Parser<'s> {
                 }
                 '<' if !matches!(pair_stack.last(), Some('/' | '*' | '\'' | '"' | '`')) => {
                     let i = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars
-                        .next_if(|(_, c)| is_html_tag_name_char(*c) || *c == '!' || *c == '>')
-                        .is_some()
+                    if self
+                        .second()
+                        .is_some_and(|c| is_html_tag_name_char(c) || c == '!' || c == '>')
                     {
                         let prev = unsafe { self.source.get_unchecked(pos..i) };
                         if prev.is_empty() {
@@ -708,20 +703,18 @@ impl<'s> Parser<'s> {
                 .map(Attribute::Astro)
                 .or_else(|_| self.parse_native_attr().map(Attribute::Native)),
             Language::Jinja => {
-                self.skip_ws();
+                self.eat_ws();
                 let result = if matches!(self.chars.peek(), Some((_, '{'))) {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    match chars.next() {
-                        Some((_, '{')) => self.parse_native_attr().map(Attribute::Native),
-                        Some((_, '#')) => self.parse_jinja_comment().map(Attribute::JinjaComment),
+                    match self.second() {
+                        Some('{') => self.parse_native_attr().map(Attribute::Native),
+                        Some('#') => self.parse_jinja_comment().map(Attribute::JinjaComment),
                         _ => self.parse_jinja_tag_or_block(None, &mut Parser::parse_attr),
                     }
                 } else {
                     self.parse_native_attr().map(Attribute::Native)
                 };
                 if result.is_ok() {
-                    self.skip_ws();
+                    self.eat_ws();
                 }
                 result
             }
@@ -740,9 +733,7 @@ impl<'s> Parser<'s> {
             let Some((start, mut end)) = (match self.chars.peek() {
                 Some((i, '{')) => {
                     let start = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if let Some((_, '{')) = chars.next() {
+                    if self.second() == Some('{') {
                         self.parse_mustache_interpolation()?;
                         Some((start, self.peek_pos()))
                     } else {
@@ -763,17 +754,15 @@ impl<'s> Parser<'s> {
                     end += c.len_utf8();
                     self.chars.next();
                 } else if *c == '{' {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    match chars.next() {
-                        Some((_, '%')) => {
+                    match self.second() {
+                        Some('%') => {
                             break;
                         }
-                        Some((_, '{')) => {
+                        Some('{') => {
                             self.parse_mustache_interpolation()?;
                             end = self.peek_pos();
                         }
-                        Some((_, c)) => {
+                        Some(c) => {
                             end += c.len_utf8();
                             self.chars.next();
                         }
@@ -862,10 +851,8 @@ impl<'s> Parser<'s> {
                         ) =>
                     {
                         end = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
-                        match chars.peek() {
-                            Some((_, '%'))
+                        match self.second() {
+                            Some('%')
                                 if self
                                     .parse_jinja_tag_or_block(None, &mut Parser::parse_node)
                                     .is_ok() =>
@@ -874,7 +861,7 @@ impl<'s> Parser<'s> {
                                     self.emit_error(SyntaxErrorKind::ExpectAttrValue)
                                 })?;
                             }
-                            Some((_, '{')) => {
+                            Some('{') => {
                                 self.parse_mustache_interpolation()?;
                                 // We use inclusive range when returning string,
                                 // so we need to substract 1 here.
@@ -965,14 +952,14 @@ impl<'s> Parser<'s> {
         if self.chars.peek().is_some_and(|(_, c)| *c == '<') {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
         }
-        self.skip_ws();
+        self.eat_ws();
 
         let value_start = if let Some((start, _)) = self.chars.peek() {
             *start
         } else {
             return Err(self.emit_error(SyntaxErrorKind::ExpectDoctype));
         };
-        while self.chars.next_if(|(_, c)| *c != '>').is_some() {}
+        self.eat_while(|c| c != '>');
 
         if let Some((value_end, _)) = self.chars.next_if(|(_, c)| *c == '>') {
             Ok(Doctype {
@@ -1078,7 +1065,7 @@ impl<'s> Parser<'s> {
                                 pos,
                             ));
                         }
-                        self.skip_ws();
+                        self.eat_ws();
                         if self.chars.next_if(|(_, c)| *c == '>').is_some() {
                             break;
                         }
@@ -1253,9 +1240,7 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars.next_if(|(_, c)| *c == '%').is_some() {
+                    if self.second() == Some('%') {
                         break;
                     }
                     children.push(children_parser(self)?);
@@ -1537,10 +1522,10 @@ impl<'s> Parser<'s> {
 
     fn parse_native_attr(&mut self) -> PResult<NativeAttribute<'s>> {
         let name = self.parse_attr_name()?;
-        self.skip_ws();
+        self.eat_ws();
         let mut quote = None;
         let value = if self.chars.next_if(|(_, c)| *c == '=').is_some() {
-            self.skip_ws();
+            self.eat_ws();
             quote = self
                 .chars
                 .peek()
@@ -1560,16 +1545,15 @@ impl<'s> Parser<'s> {
     fn parse_node_kind(&mut self) -> PResult<NodeKind<'s>> {
         match self.chars.peek() {
             Some((_, '<')) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                match chars.next() {
-                    Some((_, c))
+                let second = self.second();
+                match second {
+                    Some(c)
                         if is_html_tag_name_char(c)
                             || is_special_tag_name_char(c, self.language) =>
                     {
                         self.parse_element().map(NodeKind::Element)
                     }
-                    Some((_, '!')) => {
+                    Some('!') => {
                         if matches!(
                             self.language,
                             Language::Html
@@ -1592,17 +1576,16 @@ impl<'s> Parser<'s> {
                             self.parse_comment().map(NodeKind::Comment)
                         }
                     }
-                    Some((_, '?')) if self.language == Language::Xml => {
+                    Some('?') if self.language == Language::Xml => {
                         self.parse_xml_decl().map(NodeKind::XmlDecl)
                     }
                     _ => self.parse_text_node().map(NodeKind::Text),
                 }
             }
             Some((_, '{')) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                match chars.next() {
-                    Some((_, '{')) => {
+                let second = self.second();
+                match second {
+                    Some('{') => {
                         match self.language {
                             Language::Html | Language::Xml => {
                                 self.parse_text_node().map(NodeKind::Text)
@@ -1653,31 +1636,25 @@ impl<'s> Parser<'s> {
                             Language::Mustache => self.parse_mustache_block_or_interpolation(),
                         }
                     }
-                    Some((_, '#')) if matches!(self.language, Language::Svelte) => {
-                        match chars.next() {
-                            Some((_, 'i')) => {
-                                self.parse_svelte_if_block().map(NodeKind::SvelteIfBlock)
-                            }
-                            Some((_, 'e')) => self
-                                .parse_svelte_each_block()
-                                .map(NodeKind::SvelteEachBlock),
-                            Some((_, 'a')) => self
-                                .parse_svelte_await_block()
-                                .map(NodeKind::SvelteAwaitBlock),
-                            Some((_, 'k')) => {
-                                self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock)
-                            }
-                            Some((_, 's')) => self
-                                .parse_svelte_snippet_block()
-                                .map(NodeKind::SvelteSnippetBlock),
-                            _ => self.parse_text_node().map(NodeKind::Text),
-                        }
-                    }
-                    Some((_, '#')) if matches!(self.language, Language::Jinja) => {
+                    Some('#') if matches!(self.language, Language::Svelte) => match self.third() {
+                        Some('i') => self.parse_svelte_if_block().map(NodeKind::SvelteIfBlock),
+                        Some('e') => self
+                            .parse_svelte_each_block()
+                            .map(NodeKind::SvelteEachBlock),
+                        Some('a') => self
+                            .parse_svelte_await_block()
+                            .map(NodeKind::SvelteAwaitBlock),
+                        Some('k') => self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock),
+                        Some('s') => self
+                            .parse_svelte_snippet_block()
+                            .map(NodeKind::SvelteSnippetBlock),
+                        _ => self.parse_text_node().map(NodeKind::Text),
+                    },
+                    Some('#') if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_comment().map(NodeKind::JinjaComment)
                     }
-                    Some((_, '@')) => self.parse_svelte_at_tag().map(NodeKind::SvelteAtTag),
-                    Some((_, '%')) if matches!(self.language, Language::Jinja) => {
+                    Some('@') => self.parse_svelte_at_tag().map(NodeKind::SvelteAtTag),
+                    Some('%') if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_tag_or_block(None, &mut Parser::parse_node)
                     }
                     _ => match self.language {
@@ -1699,9 +1676,7 @@ impl<'s> Parser<'s> {
                         | Language::Mustache
                 ) && is_front_matter_start(self.source, *i) =>
             {
-                let mut chars = self.chars.clone();
-                chars.next();
-                if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
+                if self.second() == Some('-') && self.third() == Some('-') {
                     self.try_parse(Parser::parse_front_matter)
                         .map(NodeKind::FrontMatter)
                         .or_else(|_| self.parse_text_node().map(NodeKind::Text))
@@ -1709,20 +1684,16 @@ impl<'s> Parser<'s> {
                     self.parse_text_node().map(NodeKind::Text)
                 }
             }
-            Some((_, '@')) if matches!(self.language, Language::Angular) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                match chars.next() {
-                    Some((_, 'i')) => self.parse_angular_if().map(NodeKind::AngularIf),
-                    Some((_, 'f')) => self.parse_angular_for().map(NodeKind::AngularFor),
-                    Some((_, 's')) => self.parse_angular_switch().map(NodeKind::AngularSwitch),
-                    Some((_, 'l')) => self.parse_angular_let().map(NodeKind::AngularLet),
-                    Some((_, 'd')) => self
-                        .parse_angular_defer()
-                        .map(NodeKind::AngularGenericBlocks),
-                    _ => self.parse_text_node().map(NodeKind::Text),
-                }
-            }
+            Some((_, '@')) if matches!(self.language, Language::Angular) => match self.second() {
+                Some('i') => self.parse_angular_if().map(NodeKind::AngularIf),
+                Some('f') => self.parse_angular_for().map(NodeKind::AngularFor),
+                Some('s') => self.parse_angular_switch().map(NodeKind::AngularSwitch),
+                Some('l') => self.parse_angular_let().map(NodeKind::AngularLet),
+                Some('d') => self
+                    .parse_angular_defer()
+                    .map(NodeKind::AngularGenericBlocks),
+                _ => self.parse_text_node().map(NodeKind::Text),
+            },
             Some(..) => self.parse_text_node().map(NodeKind::Text),
             None => Err(self.emit_error(SyntaxErrorKind::ExpectElement)),
         }
@@ -1800,7 +1771,7 @@ impl<'s> Parser<'s> {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteAtTag));
         };
         let name = self.parse_identifier()?;
-        self.skip_ws();
+        self.eat_ws();
         let expr = self.parse_svelte_or_astro_expr()?;
         Ok(SvelteAtTag { name, expr })
     }
@@ -1809,7 +1780,7 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.try_consume_str("@attach"))
             .is_some()
         {
@@ -1825,11 +1796,11 @@ impl<'s> Parser<'s> {
             None
         } else {
             let name = self.parse_attr_name()?;
-            self.skip_ws();
+            self.eat_ws();
             if self
                 .chars
                 .next_if(|(_, c)| *c == '=')
-                .map(|_| self.skip_ws())
+                .map(|_| self.eat_ws())
                 .and_then(|_| self.chars.next_if(|(_, c)| *c == '{'))
                 .is_some()
             {
@@ -1851,7 +1822,7 @@ impl<'s> Parser<'s> {
         {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
-        self.skip_ws();
+        self.eat_ws();
 
         let expr = {
             let start = self.peek_pos();
@@ -1861,31 +1832,11 @@ impl<'s> Parser<'s> {
                 match self.chars.peek() {
                     Some((i, c)) if c.is_ascii_whitespace() => {
                         let i = *i;
-                        self.skip_ws();
-                        let mut chars = self.chars.clone();
-                        match chars.next() {
-                            Some((_, 't'))
-                                if chars
-                                    .next_if(|(_, c)| *c == 'h')
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'n'))
-                                    .is_some() =>
-                            {
-                                end = i;
-                                break;
-                            }
-                            Some((_, 'c'))
-                                if chars
-                                    .next_if(|(_, c)| *c == 'a')
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'c'))
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'h'))
-                                    .is_some() =>
-                            {
-                                end = i;
-                                break;
-                            }
-                            _ => {}
+                        self.eat_ws();
+                        let rest = self.rest();
+                        if rest.starts_with("then") || rest.starts_with("catch") {
+                            end = i;
+                            break;
                         }
                     }
                     Some((i, '{')) => {
@@ -1911,9 +1862,9 @@ impl<'s> Parser<'s> {
             (unsafe { self.source.get_unchecked(start..end) }, start)
         };
 
-        self.skip_ws();
+        self.eat_ws();
         let then_binding = if self.try_consume_str("then").is_some() {
-            self.skip_ws();
+            self.eat_ws();
             Some(match self.chars.peek() {
                 Some((_, '}')) => None,
                 _ => Some(self.parse_svelte_binding()?),
@@ -1922,9 +1873,9 @@ impl<'s> Parser<'s> {
             None
         };
 
-        self.skip_ws();
+        self.eat_ws();
         let catch_binding = if self.try_consume_str("catch").is_some() {
-            self.skip_ws();
+            self.eat_ws();
             Some(match self.chars.peek() {
                 Some((_, '}')) => None,
                 _ => Some(self.parse_svelte_binding()?),
@@ -1933,7 +1884,7 @@ impl<'s> Parser<'s> {
             None
         };
 
-        self.skip_ws();
+        self.eat_ws();
         if self.chars.next_if(|(_, c)| *c == '}').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectChar('}')));
         }
@@ -1950,12 +1901,12 @@ impl<'s> Parser<'s> {
             })
             .is_ok()
         {
-            self.skip_ws();
+            self.eat_ws();
             let binding = match self.chars.peek() {
                 Some((_, '}')) => None,
                 _ => {
                     let binding = self.parse_svelte_binding()?;
-                    self.skip_ws();
+                    self.eat_ws();
                     Some(binding)
                 }
             };
@@ -1978,12 +1929,12 @@ impl<'s> Parser<'s> {
             })
             .is_ok()
         {
-            self.skip_ws();
+            self.eat_ws();
             let binding = match self.chars.peek() {
                 Some((_, '}')) => None,
                 _ => {
                     let binding = self.parse_svelte_binding()?;
-                    self.skip_ws();
+                    self.eat_ws();
                     Some(binding)
                 }
             };
@@ -1999,9 +1950,9 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.try_consume_str("/await"))
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
@@ -2043,10 +1994,10 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
-                    if chars.next_if(|(_, c)| *c == '/' || *c == ':').is_some() {
+                    if self.rest()[1..]
+                        .trim_start_matches(|c: char| c.is_ascii_whitespace())
+                        .starts_with(['/', ':'])
+                    {
                         break;
                     }
                     children.push(self.parse_node()?);
@@ -2068,7 +2019,7 @@ impl<'s> Parser<'s> {
         {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteIfBlock));
         };
-        self.skip_ws();
+        self.eat_ws();
 
         let mut binding = None;
         let expr = {
@@ -2079,22 +2030,21 @@ impl<'s> Parser<'s> {
                 match self.chars.peek() {
                     Some((i, c)) if c.is_ascii_whitespace() => {
                         end = *i;
-                        self.skip_ws();
-                        let mut chars = self.chars.clone();
-                        if chars
-                            .next_if(|(_, c)| *c == 'a')
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
-                            .and_then(|_| chars.next_if(|(_, c)| c.is_ascii_whitespace()))
-                            .is_some()
+                        self.eat_ws();
+                        let rest = self.rest();
+                        if rest.starts_with("as")
+                            && rest[2..].starts_with(|c: char| c.is_ascii_whitespace())
                         {
-                            self.chars = chars;
-                            self.skip_ws();
+                            self.try_consume_str("as");
+                            self.eat_ws();
                             binding = Some(self.parse_svelte_binding()?);
 
                             // fix for #127
-                            let mut chars = self.chars.clone();
-                            while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
-                            if matches!(chars.peek(), Some((_, '}' | '(' | ','))) {
+                            if self
+                                .rest()
+                                .trim_start_matches(|c: char| c.is_ascii_whitespace())
+                                .starts_with(['}', '(', ','])
+                            {
                                 break;
                             }
                         }
@@ -2148,15 +2098,15 @@ impl<'s> Parser<'s> {
             (unsafe { self.source.get_unchecked(start..end) }, start)
         };
 
-        self.skip_ws();
+        self.eat_ws();
         let index = if self.chars.next_if(|(_, c)| *c == ',').is_some() {
-            self.skip_ws();
+            self.eat_ws();
             Some(self.parse_identifier()?)
         } else {
             None
         };
 
-        self.skip_ws();
+        self.eat_ws();
         let key = if let Some((start, '(')) = self.chars.peek() {
             let start = start + 1;
             Some((self.parse_inside('(', ')', false)?, start))
@@ -2164,7 +2114,7 @@ impl<'s> Parser<'s> {
             None
         };
 
-        self.skip_ws();
+        self.eat_ws();
         if self.chars.next_if(|(_, c)| *c == '}').is_none() {
             return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteEachBlock));
         }
@@ -2176,7 +2126,7 @@ impl<'s> Parser<'s> {
                 parser
                     .try_consume_str("{:else")
                     .and_then(|_| {
-                        parser.skip_ws();
+                        parser.eat_ws();
                         parser.chars.next_if(|(_, c)| *c == '}')
                     })
                     .ok_or_else(|| parser.emit_error(SyntaxErrorKind::ExpectSvelteEachBlock))
@@ -2191,9 +2141,9 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.try_consume_str("/each"))
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
@@ -2228,13 +2178,13 @@ impl<'s> Parser<'s> {
             if self.chars.next_if(|(_, c)| *c == '{').is_none() {
                 return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteBlockEnd));
             }
-            self.skip_ws();
+            self.eat_ws();
             match self.chars.next() {
                 Some((_, ':')) => {
                     if self.try_consume_str("else").is_none() {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectSvelteElseIfBlock));
                     }
-                    self.skip_ws();
+                    self.eat_ws();
                     match self.chars.next() {
                         Some((_, 'i')) => {
                             if self.chars.next_if(|(_, c)| *c == 'f').is_none() {
@@ -2258,7 +2208,7 @@ impl<'s> Parser<'s> {
         }
         if self
             .try_consume_str("if")
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
@@ -2298,9 +2248,9 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.try_consume_str("/key"))
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
@@ -2372,9 +2322,9 @@ impl<'s> Parser<'s> {
         if self
             .chars
             .next_if(|(_, c)| *c == '{')
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.try_consume_str("/snippet"))
-            .map(|_| self.skip_ws())
+            .map(|_| self.eat_ws())
             .and_then(|_| self.chars.next_if(|(_, c)| *c == '}'))
             .is_some()
         {
@@ -2408,9 +2358,7 @@ impl<'s> Parser<'s> {
                 end = *i + c.len_utf8();
                 self.chars.next();
             } else if *c == '{' && matches!(self.language, Language::Jinja) {
-                let mut chars = self.chars.clone();
-                chars.next();
-                if chars.next_if(|(_, c)| *c == '{').is_some() {
+                if self.second() == Some('{') {
                     self.parse_mustache_interpolation()?;
                     end = self.peek_pos();
                 } else {
@@ -2439,9 +2387,7 @@ impl<'s> Parser<'s> {
                     }
                     Language::Vue | Language::Vento | Language::Mustache => {
                         let i = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
-                        if chars.next_if(|(_, c)| *c == '{').is_some() {
+                        if self.second() == Some('{') {
                             end = i;
                             break;
                         }
@@ -2453,12 +2399,7 @@ impl<'s> Parser<'s> {
                     }
                     Language::Jinja => {
                         let i = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
-                        if chars
-                            .next_if(|(_, c)| *c == '%' || *c == '{' || *c == '#')
-                            .is_some()
-                        {
+                        if matches!(self.second(), Some('%' | '{' | '#')) {
                             end = i;
                             break;
                         }
@@ -2466,13 +2407,10 @@ impl<'s> Parser<'s> {
                     }
                     Language::Angular => {
                         let i = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
+                        let rest = self.rest();
                         // there can be interpolation inside ICU expression, so there will be three `{`,
                         // and the first one is for ICU expression, while the second one and third one are for interpolation.
-                        if chars.next_if(|(_, c)| *c == '{').is_some()
-                            && chars.next_if(|(_, c)| *c == '{').is_none()
-                        {
+                        if rest.starts_with("{{") && !rest.starts_with("{{{") {
                             end = i;
                             break;
                         }
@@ -2481,10 +2419,8 @@ impl<'s> Parser<'s> {
                 },
                 Some((i, '<')) => {
                     let i = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    match chars.next() {
-                        Some((_, c))
+                    match self.second() {
+                        Some(c)
                             if is_html_tag_name_char(c)
                                 || is_special_tag_name_char(c, self.language)
                                 || c == '/'
@@ -2503,9 +2439,7 @@ impl<'s> Parser<'s> {
                         && is_front_matter_start(self.source, *i) =>
                 {
                     let i = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
+                    if self.second() == Some('-') && self.third() == Some('-') {
                         end = i;
                         break;
                     }
@@ -2540,9 +2474,7 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if chars.next_if(|(_, c)| *c == '{').is_some() {
+                    if self.second() == Some('{') {
                         break;
                     }
                     children.push(self.parse_node()?);
@@ -2723,9 +2655,9 @@ impl<'s> Parser<'s> {
             None
         };
 
-        self.skip_ws();
+        self.eat_ws();
         let value = if self.chars.next_if(|(_, c)| *c == '=').is_some() {
-            self.skip_ws();
+            self.eat_ws();
             Some(self.parse_attr_value()?)
         } else {
             None
