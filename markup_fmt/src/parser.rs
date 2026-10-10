@@ -78,6 +78,11 @@ impl<'s> Parser<'s> {
         chars.next().map(|(_, c)| c)
     }
 
+    /// Returns the unconsumed part of the source.
+    fn rest(&mut self) -> &'s str {
+        &self.source[self.peek_pos()..]
+    }
+
     fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
         let pos = self.peek_pos();
         self.emit_error_with_pos(kind, pos)
@@ -223,15 +228,8 @@ impl<'s> Parser<'s> {
         let mut aliases = vec![];
         while self.chars.next_if(|(_, c)| *c == ';').is_some() {
             self.skip_ws();
-            let mut chars = self.chars.clone();
-            if chars
-                .next_if(|(_, c)| *c == 'l')
-                .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-                .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-                .is_some()
-                && let Some((start, _)) = self.chars.peek()
-            {
-                let start = *start;
+            if self.rest().starts_with("let") {
+                let start = self.peek_pos();
                 aliases.push(self.parse_angular_inline_script(start)?);
             }
         }
@@ -245,18 +243,13 @@ impl<'s> Parser<'s> {
         let children = self.parse_angular_control_flow_children()?;
 
         let mut empty = None;
-        let mut chars = self.chars.clone();
-        while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
-        if chars
-            .next_if(|(_, c)| *c == '@')
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'm'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'p'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-            .and_then(|_| chars.next_if(|(_, c)| *c == 'y'))
-            .is_some()
+        if self
+            .rest()
+            .trim_start_matches(|c: char| c.is_ascii_whitespace())
+            .starts_with("@empty")
         {
-            self.chars = chars;
+            self.skip_ws();
+            self.try_consume_str("@empty");
             self.skip_ws();
             empty = Some(self.parse_angular_control_flow_children()?);
         }
@@ -314,28 +307,16 @@ impl<'s> Parser<'s> {
 
         let mut else_if_blocks = vec![];
         let mut else_children = None;
-        'alter: loop {
-            let mut chars = self.chars.clone();
-            'peek: loop {
-                match chars.next() {
-                    Some((_, c)) if c.is_ascii_whitespace() => continue 'peek,
-                    Some((_, '@')) => {
-                        if chars
-                            .next_if(|(_, c)| *c == 'e')
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 'l'))
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-                            .is_some()
-                        {
-                            self.chars = chars;
-                            break 'peek;
-                        } else {
-                            break 'alter;
-                        }
-                    }
-                    _ => break 'alter,
-                }
+        loop {
+            if !self
+                .rest()
+                .trim_start_matches(|c: char| c.is_ascii_whitespace())
+                .starts_with("@else")
+            {
+                break;
             }
+            self.skip_ws();
+            self.try_consume_str("@else");
             self.skip_ws();
 
             if self.try_consume_str("if").is_some() {
@@ -1851,30 +1832,10 @@ impl<'s> Parser<'s> {
                     Some((i, c)) if c.is_ascii_whitespace() => {
                         let i = *i;
                         self.skip_ws();
-                        let mut chars = self.chars.clone();
-                        match chars.next() {
-                            Some((_, 't'))
-                                if chars
-                                    .next_if(|(_, c)| *c == 'h')
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'e'))
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'n'))
-                                    .is_some() =>
-                            {
-                                end = i;
-                                break;
-                            }
-                            Some((_, 'c'))
-                                if chars
-                                    .next_if(|(_, c)| *c == 'a')
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 't'))
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'c'))
-                                    .and_then(|_| chars.next_if(|(_, c)| *c == 'h'))
-                                    .is_some() =>
-                            {
-                                end = i;
-                                break;
-                            }
-                            _ => {}
+                        let rest = self.rest();
+                        if rest.starts_with("then") || rest.starts_with("catch") {
+                            end = i;
+                            break;
                         }
                     }
                     Some((i, '{')) => {
@@ -2032,10 +1993,10 @@ impl<'s> Parser<'s> {
         loop {
             match self.chars.peek() {
                 Some((_, '{')) => {
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
-                    if chars.next_if(|(_, c)| *c == '/' || *c == ':').is_some() {
+                    if self.rest()[1..]
+                        .trim_start_matches(|c: char| c.is_ascii_whitespace())
+                        .starts_with(['/', ':'])
+                    {
                         break;
                     }
                     children.push(self.parse_node()?);
@@ -2069,21 +2030,20 @@ impl<'s> Parser<'s> {
                     Some((i, c)) if c.is_ascii_whitespace() => {
                         end = *i;
                         self.skip_ws();
-                        let mut chars = self.chars.clone();
-                        if chars
-                            .next_if(|(_, c)| *c == 'a')
-                            .and_then(|_| chars.next_if(|(_, c)| *c == 's'))
-                            .and_then(|_| chars.next_if(|(_, c)| c.is_ascii_whitespace()))
-                            .is_some()
+                        let rest = self.rest();
+                        if rest.starts_with("as")
+                            && rest[2..].starts_with(|c: char| c.is_ascii_whitespace())
                         {
-                            self.chars = chars;
+                            self.try_consume_str("as");
                             self.skip_ws();
                             binding = Some(self.parse_svelte_binding()?);
 
                             // fix for #127
-                            let mut chars = self.chars.clone();
-                            while chars.next_if(|(_, c)| c.is_ascii_whitespace()).is_some() {}
-                            if matches!(chars.peek(), Some((_, '}' | '(' | ','))) {
+                            if self
+                                .rest()
+                                .trim_start_matches(|c: char| c.is_ascii_whitespace())
+                                .starts_with(['}', '(', ','])
+                            {
                                 break;
                             }
                         }
@@ -2446,13 +2406,10 @@ impl<'s> Parser<'s> {
                     }
                     Language::Angular => {
                         let i = *i;
-                        let mut chars = self.chars.clone();
-                        chars.next();
+                        let rest = self.rest();
                         // there can be interpolation inside ICU expression, so there will be three `{`,
                         // and the first one is for ICU expression, while the second one and third one are for interpolation.
-                        if chars.next_if(|(_, c)| *c == '{').is_some()
-                            && chars.next_if(|(_, c)| *c == '{').is_none()
-                        {
+                        if rest.starts_with("{{") && !rest.starts_with("{{{") {
                             end = i;
                             break;
                         }
