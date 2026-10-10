@@ -399,6 +399,8 @@ impl<'s> Parser<'s> {
                     } else if chars_stack.last().is_some_and(|last| *last == '(') {
                         chars_stack.pop();
                         self.chars.next();
+                    } else {
+                        self.chars.next();
                     }
                 }
                 Some((i, ';')) if chars_stack.is_empty() => {

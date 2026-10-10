@@ -255,6 +255,23 @@ mod tests {
     }
 
     #[test]
+    fn unbalanced_quote_in_angular_control_flow() {
+        for input in [
+            r#"@if (a") {}"#,
+            r#"@if (foo("bar)) {}"#,
+            r#"@for (item of items"; track item) {}"#,
+        ] {
+            assert!(
+                format_text(input, Language::Angular, &Default::default(), |code, _| {
+                    Ok(Cow::from(code))
+                })
+                .is_err(),
+                "{input:?} should be a syntax error"
+            );
+        }
+    }
+
+    #[test]
     fn unterminated_jinja_tag() {
         for input in [
             "{%",
