@@ -70,6 +70,14 @@ impl<'s> Parser<'s> {
         chars.next().map(|(_, c)| c)
     }
 
+    /// Peeks the third char without consuming.
+    fn third(&self) -> Option<char> {
+        let mut chars = self.chars.clone();
+        chars.next();
+        chars.next();
+        chars.next().map(|(_, c)| c)
+    }
+
     fn emit_error(&mut self, kind: SyntaxErrorKind) -> SyntaxError {
         let pos = self.peek_pos();
         self.emit_error_with_pos(kind, pos)
@@ -1593,10 +1601,9 @@ impl<'s> Parser<'s> {
                 }
             }
             Some((_, '{')) => {
-                let mut chars = self.chars.clone();
-                chars.next();
-                match chars.next() {
-                    Some((_, '{')) => {
+                let second = self.second();
+                match second {
+                    Some('{') => {
                         match self.language {
                             Language::Html | Language::Xml => {
                                 self.parse_text_node().map(NodeKind::Text)
@@ -1647,31 +1654,25 @@ impl<'s> Parser<'s> {
                             Language::Mustache => self.parse_mustache_block_or_interpolation(),
                         }
                     }
-                    Some((_, '#')) if matches!(self.language, Language::Svelte) => {
-                        match chars.next() {
-                            Some((_, 'i')) => {
-                                self.parse_svelte_if_block().map(NodeKind::SvelteIfBlock)
-                            }
-                            Some((_, 'e')) => self
-                                .parse_svelte_each_block()
-                                .map(NodeKind::SvelteEachBlock),
-                            Some((_, 'a')) => self
-                                .parse_svelte_await_block()
-                                .map(NodeKind::SvelteAwaitBlock),
-                            Some((_, 'k')) => {
-                                self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock)
-                            }
-                            Some((_, 's')) => self
-                                .parse_svelte_snippet_block()
-                                .map(NodeKind::SvelteSnippetBlock),
-                            _ => self.parse_text_node().map(NodeKind::Text),
-                        }
-                    }
-                    Some((_, '#')) if matches!(self.language, Language::Jinja) => {
+                    Some('#') if matches!(self.language, Language::Svelte) => match self.third() {
+                        Some('i') => self.parse_svelte_if_block().map(NodeKind::SvelteIfBlock),
+                        Some('e') => self
+                            .parse_svelte_each_block()
+                            .map(NodeKind::SvelteEachBlock),
+                        Some('a') => self
+                            .parse_svelte_await_block()
+                            .map(NodeKind::SvelteAwaitBlock),
+                        Some('k') => self.parse_svelte_key_block().map(NodeKind::SvelteKeyBlock),
+                        Some('s') => self
+                            .parse_svelte_snippet_block()
+                            .map(NodeKind::SvelteSnippetBlock),
+                        _ => self.parse_text_node().map(NodeKind::Text),
+                    },
+                    Some('#') if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_comment().map(NodeKind::JinjaComment)
                     }
-                    Some((_, '@')) => self.parse_svelte_at_tag().map(NodeKind::SvelteAtTag),
-                    Some((_, '%')) if matches!(self.language, Language::Jinja) => {
+                    Some('@') => self.parse_svelte_at_tag().map(NodeKind::SvelteAtTag),
+                    Some('%') if matches!(self.language, Language::Jinja) => {
                         self.parse_jinja_tag_or_block(None, &mut Parser::parse_node)
                     }
                     _ => match self.language {
@@ -1693,9 +1694,7 @@ impl<'s> Parser<'s> {
                         | Language::Mustache
                 ) && is_front_matter_start(self.source, *i) =>
             {
-                let mut chars = self.chars.clone();
-                chars.next();
-                if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
+                if self.second() == Some('-') && self.third() == Some('-') {
                     self.try_parse(Parser::parse_front_matter)
                         .map(NodeKind::FrontMatter)
                         .or_else(|_| self.parse_text_node().map(NodeKind::Text))
@@ -2482,9 +2481,7 @@ impl<'s> Parser<'s> {
                         && is_front_matter_start(self.source, *i) =>
                 {
                     let i = *i;
-                    let mut chars = self.chars.clone();
-                    chars.next();
-                    if let Some(((_, '-'), (_, '-'))) = chars.next().zip(chars.next()) {
+                    if self.second() == Some('-') && self.third() == Some('-') {
                         end = i;
                         break;
                     }
