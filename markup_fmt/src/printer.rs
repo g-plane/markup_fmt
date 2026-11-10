@@ -254,7 +254,7 @@ impl<'s> DocGen<'s> for AngularSwitchArm<'s> {
                 children, ctx, state,
             ));
             docs.push(Doc::char('}'));
-        } else {
+        } else if self.semicolon {
             docs.push(Doc::char(';'));
         }
         Doc::list(docs)

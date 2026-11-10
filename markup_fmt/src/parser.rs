@@ -461,12 +461,17 @@ impl<'s> Parser<'s> {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectChar(')')));
                     }
                     self.eat_ws();
-                    let children = self.parse_angular_control_flow_children()?;
+                    let children = if matches!(self.chars.peek(), Some((_, '{'))) {
+                        Some(self.parse_angular_control_flow_children()?)
+                    } else {
+                        None
+                    };
                     arms.push(AngularSwitchArm {
                         keyword: "case",
                         expr: Some(expr),
                         expr_naked: false,
-                        children: Some(children),
+                        children,
+                        semicolon: false,
                     });
                     self.eat_ws();
                 }
@@ -475,20 +480,26 @@ impl<'s> Parser<'s> {
                         return Err(self.emit_error(SyntaxErrorKind::ExpectKeyword("default")));
                     }
                     self.eat_ws();
-                    let (expr, children) = if matches!(self.chars.peek(), Some((_, '{'))) {
-                        (None, Some(self.parse_angular_control_flow_children()?))
+                    let (expr, children, semicolon) = if matches!(self.chars.peek(), Some((_, '{')))
+                    {
+                        (
+                            None,
+                            Some(self.parse_angular_control_flow_children()?),
+                            false,
+                        )
                     } else {
                         let start = self.peek_pos();
                         let expr =
                             self.try_parse(|parser| parser.parse_angular_inline_script(start));
-                        self.chars.next_if(|(_, c)| *c == ';');
-                        (expr.ok(), None)
+                        let semicolon = self.chars.next_if(|(_, c)| *c == ';').is_some();
+                        (expr.ok(), None, semicolon)
                     };
                     arms.push(AngularSwitchArm {
                         keyword: "default",
                         expr,
                         expr_naked: true,
                         children,
+                        semicolon,
                     });
                     self.eat_ws();
                 }

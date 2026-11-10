@@ -76,6 +76,7 @@ pub struct AngularSwitchArm<'s> {
     pub expr: Option<(&'s str, usize)>,
     pub expr_naked: bool,
     pub children: Option<Vec<Node<'s>>>,
+    pub semicolon: bool,
 }
 
 #[derive(Debug)]
