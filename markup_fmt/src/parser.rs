@@ -15,6 +15,8 @@ use crate::{
 use std::{iter::Peekable, str::CharIndices};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "config_serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "config_serde", serde(rename_all = "camelCase"))]
 /// Supported languages.
 pub enum Language {
     Html,

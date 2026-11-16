@@ -336,6 +336,7 @@ dependencies = [
  "insta",
  "malva",
  "markup_fmt",
+ "serde",
  "serde_json",
  "similar-asserts",
  "toml",

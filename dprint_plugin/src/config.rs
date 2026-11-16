@@ -1,18 +1,20 @@
 use dprint_core::{
     configuration::{
-        ConfigKeyMap, ConfigurationDiagnostic, GlobalConfiguration, NewLineKind,
+        ConfigKeyMap, ConfigKeyValue, ConfigurationDiagnostic, GlobalConfiguration, NewLineKind,
         get_nullable_value, get_unknown_property_diagnostics, get_value,
     },
     plugins::{FileMatchingInfo, PluginResolveConfigurationResult},
 };
-use markup_fmt::config::*;
+use markup_fmt::{Language, config::*};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 pub(crate) fn resolve_config(
     mut config: ConfigKeyMap,
     global_config: &GlobalConfiguration,
-) -> PluginResolveConfigurationResult<FormatOptions> {
+) -> PluginResolveConfigurationResult<PluginOptions> {
     let mut diagnostics = Vec::new();
-    let markup_fmt_config = FormatOptions {
+    let format_options = FormatOptions {
         layout: LayoutOptions {
             print_width: get_value(
                 &mut config,
@@ -412,39 +414,86 @@ pub(crate) fn resolve_config(
         },
     };
 
+    let extensions = config
+        .shift_remove("extensions")
+        .and_then(|value| match value {
+            ConfigKeyValue::Object(object) => object
+                .into_iter()
+                .map(|(mut key, value)| {
+                    if key.starts_with('.') {
+                        key.remove(0);
+                    }
+                    value.as_string().and_then(|value| match &**value {
+                        "html" => Some((key, Language::Html)),
+                        "vue" => Some((key, Language::Vue)),
+                        "svelte" => Some((key, Language::Svelte)),
+                        "astro" => Some((key, Language::Astro)),
+                        "angular" => Some((key, Language::Angular)),
+                        "jinja" => Some((key, Language::Jinja)),
+                        "vento" => Some((key, Language::Vento)),
+                        "mustache" => Some((key, Language::Mustache)),
+                        "xml" => Some((key, Language::Xml)),
+                        _ => {
+                            diagnostics.push(ConfigurationDiagnostic {
+                                property_name: "extensions".into(),
+                                message: format!("invalid language for extension `{key}`"),
+                            });
+                            None
+                        }
+                    })
+                })
+                .collect::<Option<BTreeMap<_, _>>>(),
+            _ => None,
+        })
+        .unwrap_or_default();
+
     diagnostics.extend(get_unknown_property_diagnostics(config));
 
+    let file_matching = FileMatchingInfo {
+        file_extensions: [
+            "html",
+            "vue",
+            "svelte",
+            "astro",
+            "jinja",
+            "jinja2",
+            "j2",
+            "twig",
+            "njk",
+            "vto",
+            "component.html",
+            "mustache",
+            "hbs",
+            "handlebars",
+            "xml",
+            "svg",
+            "wsdl",
+            "xsd",
+            "xslt",
+            "xsl",
+            "csproj",
+        ]
+        .into_iter()
+        .chain(extensions.keys().map(|key| &**key))
+        .map(String::from)
+        .collect(),
+        file_names: vec![],
+    };
+
     PluginResolveConfigurationResult {
-        config: markup_fmt_config,
-        diagnostics,
-        file_matching: FileMatchingInfo {
-            file_extensions: [
-                "html",
-                "vue",
-                "svelte",
-                "astro",
-                "jinja",
-                "jinja2",
-                "j2",
-                "twig",
-                "njk",
-                "vto",
-                "component.html",
-                "mustache",
-                "hbs",
-                "handlebars",
-                "xml",
-                "svg",
-                "wsdl",
-                "xsd",
-                "xslt",
-                "xsl",
-                "csproj",
-            ]
-            .into_iter()
-            .map(String::from)
-            .collect(),
-            file_names: vec![],
+        config: PluginOptions {
+            format: format_options,
+            extensions,
         },
+        diagnostics,
+        file_matching,
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PluginOptions {
+    #[serde(flatten)]
+    pub format: FormatOptions,
+
+    pub extensions: BTreeMap<String, Language>,
 }

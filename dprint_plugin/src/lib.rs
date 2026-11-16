@@ -1,4 +1,4 @@
-use crate::config::resolve_config;
+use crate::config::{PluginOptions, resolve_config};
 use anyhow::Result;
 use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration},
@@ -9,16 +9,17 @@ use dprint_core::{
     },
 };
 use markup_fmt::{
-    FormatError, Hints,
+    FormatError, Hints, Language,
     config::{FormatOptions, Quotes, ScriptFormatter},
-    detect_language, format_text,
+    format_text,
 };
+use std::path::Path;
 
 mod config;
 
 pub struct MarkupFmtPluginHandler;
 
-impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
+impl SyncPluginHandler<PluginOptions> for MarkupFmtPluginHandler {
     fn plugin_info(&mut self) -> PluginInfo {
         let version = env!("CARGO_PKG_VERSION").to_string();
         PluginInfo {
@@ -41,7 +42,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
         &mut self,
         config: ConfigKeyMap,
         global_config: &GlobalConfiguration,
-    ) -> PluginResolveConfigurationResult<FormatOptions> {
+    ) -> PluginResolveConfigurationResult<PluginOptions> {
         resolve_config(config, global_config)
     }
 
@@ -51,16 +52,13 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
 
     fn format(
         &mut self,
-        request: SyncFormatRequest<FormatOptions>,
+        request: SyncFormatRequest<PluginOptions>,
         mut format_with_host: impl FnMut(SyncHostFormatRequest) -> FormatResult,
     ) -> FormatResult {
-        // falling back to HTML allows to format files with unknown extensions, such as .svg
-        let language = detect_language(request.file_path).unwrap_or(markup_fmt::Language::Html);
-
         let format_result = format_text(
             std::str::from_utf8(&request.file_bytes)?,
-            language,
-            request.config,
+            select_language(request.file_path, request.config),
+            &request.config.format,
             |code, hints| {
                 let mut file_name = request
                     .file_path
@@ -69,7 +67,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
                     .to_owned();
                 file_name.push("#.");
                 file_name.push(hints.ext);
-                let additional_config = build_additional_config(hints, request.config);
+                let additional_config = build_additional_config(hints, &request.config.format);
                 format_with_host(SyncHostFormatRequest {
                     file_path: &request.file_path.with_file_name(file_name),
                     file_bytes: code.as_bytes(),
@@ -105,7 +103,7 @@ impl SyncPluginHandler<FormatOptions> for MarkupFmtPluginHandler {
 dprint_core::generate_plugin_code!(
     MarkupFmtPluginHandler,
     MarkupFmtPluginHandler,
-    FormatOptions
+    PluginOptions
 );
 
 #[doc(hidden)]
@@ -144,4 +142,33 @@ pub fn build_additional_config(hints: Hints, config: &FormatOptions) -> ConfigKe
     }
 
     additional_config
+}
+
+fn select_language(path: impl AsRef<Path>, config: &PluginOptions) -> Language {
+    let path = path.as_ref();
+    path.extension()
+        .and_then(|ext| config.extensions.get(ext.to_str()?))
+        .cloned()
+        .or_else(|| markup_fmt::detect_language(path))
+        .unwrap_or(Language::Html)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn language() {
+        let mut extensions = BTreeMap::new();
+        extensions.insert("tpl".into(), Language::Jinja);
+        let config = PluginOptions {
+            format: Default::default(),
+            extensions,
+        };
+
+        assert_eq!(select_language("test.tpl", &config), Language::Jinja);
+        assert_eq!(select_language("test.svelte", &config), Language::Svelte);
+        assert_eq!(select_language("plain.txt", &config), Language::Html);
+    }
 }

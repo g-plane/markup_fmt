@@ -385,6 +385,25 @@
       "description": "Text directive for ignoring formatting a whole file.",
       "type": "string",
       "default": "dprint-ignore-file"
+    },
+    "extensions": {
+      "description": "Adds or overrides extensions with specified languages.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "oneOf": [
+          { "const": "html" },
+          { "const": "vue" },
+          { "const": "svelte" },
+          { "const": "astro" },
+          { "const": "angular" },
+          { "const": "jinja" },
+          { "const": "vento" },
+          { "const": "mustache" },
+          { "const": "xml" }
+        ]
+      },
+      "default": {}
     }
   }
 }
