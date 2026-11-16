@@ -9,8 +9,10 @@ use crate::{
 };
 use anyhow::Error;
 use itertools::{EitherOrBoth, Itertools};
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write};
 use tiny_pretty::Doc;
+
+const INTERPOLATION_PLACEHOLDER: &str = "_saya0909_";
 
 pub(super) trait DocGen<'s> {
     fn doc<F>(&self, ctx: &mut Ctx<'s, F>, state: &State<'s>) -> Doc<'s>
@@ -811,27 +813,10 @@ impl<'s> DocGen<'s> for Element<'s> {
                         .unwrap_or("css");
                     let (statics, dynamics) =
                         parse_as_interpolated(text_node.raw, text_node.start, ctx.language, false);
-                    const PLACEHOLDER: &str = "_saya0909_";
-                    let masked = statics.join(PLACEHOLDER);
+                    let masked = mask_interpolations(&statics);
                     let formatted = ctx.format_style(&masked, lang, text_node.start, &state);
                     let doc = Doc::hard_line().concat(reflow_with_indent(
-                        formatted
-                            .split(PLACEHOLDER)
-                            .map(Cow::from)
-                            .interleave(dynamics.iter().map(|(expr, start)| match ctx.language {
-                                Language::Jinja => Cow::from(format!(
-                                    "{{{{ {} }}}}",
-                                    ctx.format_jinja(expr, *start, true, &state),
-                                )),
-                                Language::Vento => Cow::from(format!(
-                                    "{{{{ {} }}}}",
-                                    ctx.format_expr(expr, false, *start),
-                                )),
-                                Language::Mustache => Cow::from(format!("{{{{{expr}}}}}")),
-                                _ => unreachable!(),
-                            }))
-                            .collect::<String>()
-                            .trim(),
+                        restore_interpolations(&formatted, &dynamics, false, ctx, &state).trim(),
                         lang != "sass",
                     ));
                     docs.push(
@@ -1250,31 +1235,12 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
             } else if self.name.eq_ignore_ascii_case("style") {
                 let (statics, dynamics) =
                     parse_as_interpolated(&value, value_start, ctx.language, true);
-                const PLACEHOLDER: &str = "_mnk0430_";
                 let formatted =
-                    ctx.format_style_attr(&statics.join(PLACEHOLDER), value_start, state);
+                    ctx.format_style_attr(&mask_interpolations(&statics), value_start, state);
                 quote = compute_attr_value_quote(&formatted, self.quote, ctx);
-                docs.push(Doc::text(
-                    formatted
-                        .split(PLACEHOLDER)
-                        .map(Cow::from)
-                        .interleave(dynamics.iter().map(|(expr, start)| match ctx.language {
-                            Language::Svelte => {
-                                Cow::from(format!("{{{}}}", ctx.format_expr(expr, true, *start),))
-                            }
-                            Language::Jinja => Cow::from(format!(
-                                "{{{{ {} }}}}",
-                                ctx.format_jinja(expr, *start, true, state),
-                            )),
-                            Language::Vento => Cow::from(format!(
-                                "{{{{ {} }}}}",
-                                ctx.format_expr(expr, true, *start),
-                            )),
-                            Language::Mustache => Cow::from(format!("{{{{{expr}}}}}")),
-                            _ => unreachable!(),
-                        }))
-                        .collect::<String>(),
-                ));
+                docs.push(Doc::text(restore_interpolations(
+                    &formatted, &dynamics, true, ctx, state,
+                )));
             } else if self.name.eq_ignore_ascii_case("accept")
                 && !matches!(ctx.language, Language::Xml)
                 && state
@@ -2774,6 +2740,52 @@ where
             &ctx.format_stmt_header(fake_keyword, code),
             true,
         ))
+}
+
+/// Joins `statics` with numbered [`INTERPOLATION_PLACEHOLDER`] markers.
+fn mask_interpolations(statics: &[&str]) -> String {
+    let Some((first, rest)) = statics.split_first() else {
+        return String::new();
+    };
+    let mut masked = String::from(*first);
+    for (slot, text) in rest.iter().enumerate() {
+        let _ = write!(masked, "{INTERPOLATION_PLACEHOLDER}{slot}_");
+        masked.push_str(text);
+    }
+    masked
+}
+
+/// Puts back the interpolations [`mask_interpolations`] replaced, formatting each expression for
+/// `ctx.language`. `attr` must match the flag given to [`parse_as_interpolated`].
+fn restore_interpolations<'s, F>(
+    formatted: &str,
+    dynamics: &[(&str, usize)],
+    attr: bool,
+    ctx: &mut Ctx<'s, F>,
+    state: &State<'s>,
+) -> String
+where
+    F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, Error>,
+{
+    let mut pieces = formatted.split(INTERPOLATION_PLACEHOLDER);
+    let mut restored = String::from(pieces.next().unwrap_or_default());
+    for piece in pieces {
+        let (slot, text) = piece.split_once('_').unwrap_or(("", piece));
+        // A slot without an interpolation comes from an unterminated `{{`; it renders as nothing.
+        if let Some(&(expr, start)) = slot.parse().ok().and_then(|slot: usize| dynamics.get(slot)) {
+            restored.push_str(&match ctx.language {
+                Language::Svelte => format!("{{{}}}", ctx.format_expr(expr, attr, start)),
+                Language::Jinja => {
+                    format!("{{{{ {} }}}}", ctx.format_jinja(expr, start, true, state))
+                }
+                Language::Vento => format!("{{{{ {} }}}}", ctx.format_expr(expr, attr, start)),
+                Language::Mustache => format!("{{{{{expr}}}}}"),
+                _ => unreachable!(),
+            });
+        }
+        restored.push_str(text);
+    }
+    restored
 }
 
 /// Computes the appropriate quote character (single or double) to use for an attribute value.
