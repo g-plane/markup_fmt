@@ -1,0 +1,16 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{{
+  serialize (buildObject
+    "name" name
+    "version" version
+  )
+}}}
+
+{{~{
+  serialize (buildObject
+    "name" name
+    "version" version
+  )
+}~}}

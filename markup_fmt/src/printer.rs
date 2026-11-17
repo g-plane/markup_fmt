@@ -1128,21 +1128,46 @@ impl<'s> DocGen<'s> for MustacheInterpolation<'s> {
                 .concat(reflow_raw(self.content))
                 .append(Doc::text("}}"))
         } else {
-            let content = if let Some(content) = self
-                .content
-                .strip_prefix('{')
-                .and_then(|s| s.strip_suffix('}'))
+            let content = self.content.strip_prefix('~').unwrap_or(self.content);
+            let content = content.strip_suffix('~').unwrap_or(content);
+            let (opening, content, closing) = if let Some(content) =
+                content.strip_prefix('{').and_then(|s| s.strip_suffix('}'))
             {
-                Cow::from(format!("{{{}}}", content.trim()))
+                (
+                    if self.content.starts_with('~') {
+                        "{{~{"
+                    } else {
+                        "{{{"
+                    },
+                    content.trim(),
+                    if self.content.ends_with('~') {
+                        "}~}}"
+                    } else {
+                        "}}}"
+                    },
+                )
             } else {
-                Cow::from(self.content.trim())
+                (
+                    if self.content.starts_with('~') {
+                        "{{~"
+                    } else {
+                        "{{"
+                    },
+                    content.trim(),
+                    if self.content.ends_with('~') {
+                        "~}}"
+                    } else {
+                        "}}"
+                    },
+                )
             };
-            Doc::text("{{")
+            // Keep delimiters and whitespace controls intact when the expression wraps.
+            Doc::text(opening)
                 .append(Doc::line_or_nil())
-                .concat(reflow_owned(&content))
+                .concat(reflow_raw(content))
                 .nest(ctx.indent_width)
                 .append(Doc::line_or_nil())
-                .append(Doc::text("}}"))
+                .append(Doc::text(closing))
                 .group()
         }
     }
