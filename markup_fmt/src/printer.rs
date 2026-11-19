@@ -1123,26 +1123,17 @@ impl<'s> DocGen<'s> for MustacheInterpolation<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, Error>,
     {
-        if self.content.starts_with('!') {
-            Doc::text("{{")
-                .concat(reflow_raw(self.content))
-                .append(Doc::text("}}"))
+        let opening = Doc::text("{{").append(Doc::text(self.prefix));
+        let closing = Doc::text(self.suffix).append(Doc::text("}}"));
+        if !self.prefix.ends_with('{') && self.content.starts_with('!') {
+            opening.concat(reflow_raw(self.content)).append(closing)
         } else {
-            let content = if let Some(content) = self
-                .content
-                .strip_prefix('{')
-                .and_then(|s| s.strip_suffix('}'))
-            {
-                Cow::from(format!("{{{}}}", content.trim()))
-            } else {
-                Cow::from(self.content.trim())
-            };
-            Doc::text("{{")
+            opening
                 .append(Doc::line_or_nil())
-                .concat(reflow_owned(&content))
+                .concat(reflow_raw(self.content.trim()))
                 .nest(ctx.indent_width)
                 .append(Doc::line_or_nil())
-                .append(Doc::text("}}"))
+                .append(closing)
                 .group()
         }
     }

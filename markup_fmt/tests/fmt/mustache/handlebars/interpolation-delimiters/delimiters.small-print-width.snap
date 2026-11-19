@@ -1,0 +1,34 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{
+  value
+}}
+
+{{~
+  value
+}}
+
+{{
+  value
+~}}
+
+{{~
+  value
+~}}
+
+{{{
+  value
+}}}
+
+{{~{
+  value
+}}}
+
+{{{
+  value
+}~}}
+
+{{~{
+  value
+}~}}
