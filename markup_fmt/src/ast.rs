@@ -238,6 +238,8 @@ pub struct MustacheBlockControl<'s> {
 /// See https://mustache.github.io/mustache.5.html
 pub struct MustacheInterpolation<'s> {
     pub content: &'s str,
+    pub prefix: &'s str,
+    pub suffix: &'s str,
 }
 
 #[derive(Debug)]

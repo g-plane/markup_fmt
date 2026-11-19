@@ -1,0 +1,8 @@
+---
+source: markup_fmt/tests/fmt.rs
+---
+{{#if condition}}
+  {{~{else}~}}
+{{~else~}}
+  {{{else}}}
+{{/if}}

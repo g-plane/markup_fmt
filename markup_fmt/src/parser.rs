@@ -1486,15 +1486,15 @@ impl<'s> Parser<'s> {
                 }
                 let node = self.parse_node()?;
                 if let NodeKind::MustacheInterpolation(interpolation) = &node.kind
-                    && let ("else", wc_before, wc_after) =
-                        strip_hbs_whitespace_control(interpolation.content)
+                    && !interpolation.prefix.ends_with('{')
+                    && interpolation.content == "else"
                 {
                     controls.push(MustacheBlockControl {
                         name: "else",
                         prefix: "",
                         content: None,
-                        wc_before,
-                        wc_after,
+                        wc_before: interpolation.prefix == "~",
+                        wc_after: interpolation.suffix == "~",
                     });
                     children.push(vec![]);
                 } else if let Some(nodes) = children.last_mut() {
@@ -1506,8 +1506,17 @@ impl<'s> Parser<'s> {
                 children,
             }))
         } else {
+            let (content, triple) = if let Some(content) =
+                content.strip_prefix('{').and_then(|s| s.strip_suffix('}'))
+            {
+                (content, true)
+            } else {
+                (content, false)
+            };
             Ok(NodeKind::MustacheInterpolation(MustacheInterpolation {
-                content: raw,
+                content,
+                prefix: &raw[..usize::from(wc_before) + usize::from(triple)],
+                suffix: &raw[raw.len() - usize::from(wc_after) - usize::from(triple)..],
             }))
         }
     }

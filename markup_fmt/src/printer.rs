@@ -1123,51 +1123,17 @@ impl<'s> DocGen<'s> for MustacheInterpolation<'s> {
     where
         F: for<'a> FnMut(&'a str, Hints) -> Result<Cow<'a, str>, Error>,
     {
-        if self.content.starts_with('!') {
-            Doc::text("{{")
-                .concat(reflow_raw(self.content))
-                .append(Doc::text("}}"))
+        let opening = Doc::text("{{").append(Doc::text(self.prefix));
+        let closing = Doc::text(self.suffix).append(Doc::text("}}"));
+        if !self.prefix.ends_with('{') && self.content.starts_with('!') {
+            opening.concat(reflow_raw(self.content)).append(closing)
         } else {
-            let content = self.content.strip_prefix('~').unwrap_or(self.content);
-            let content = content.strip_suffix('~').unwrap_or(content);
-            let (opening, content, closing) = if let Some(content) =
-                content.strip_prefix('{').and_then(|s| s.strip_suffix('}'))
-            {
-                (
-                    if self.content.starts_with('~') {
-                        "{{~{"
-                    } else {
-                        "{{{"
-                    },
-                    content.trim(),
-                    if self.content.ends_with('~') {
-                        "}~}}"
-                    } else {
-                        "}}}"
-                    },
-                )
-            } else {
-                (
-                    if self.content.starts_with('~') {
-                        "{{~"
-                    } else {
-                        "{{"
-                    },
-                    content.trim(),
-                    if self.content.ends_with('~') {
-                        "~}}"
-                    } else {
-                        "}}"
-                    },
-                )
-            };
-            // Keep delimiters and whitespace controls intact when the expression wraps.
-            Doc::text(opening)
+            opening
                 .append(Doc::line_or_nil())
-                .concat(reflow_raw(content))
+                .concat(reflow_raw(self.content.trim()))
                 .nest(ctx.indent_width)
                 .append(Doc::line_or_nil())
-                .append(Doc::text(closing))
+                .append(closing)
                 .group()
         }
     }
