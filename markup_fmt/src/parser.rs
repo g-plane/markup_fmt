@@ -1506,17 +1506,23 @@ impl<'s> Parser<'s> {
                 children,
             }))
         } else {
-            let (content, triple) = if let Some(content) =
-                content.strip_prefix('{').and_then(|s| s.strip_suffix('}'))
-            {
+            let (content, brace) = if let Some(content) = content.strip_circumfix('{', '}') {
                 (content, true)
             } else {
                 (content, false)
             };
             Ok(NodeKind::MustacheInterpolation(MustacheInterpolation {
                 content,
-                prefix: &raw[..usize::from(wc_before) + usize::from(triple)],
-                suffix: &raw[raw.len() - usize::from(wc_after) - usize::from(triple)..],
+                prefix: match (wc_before, brace) {
+                    (true, true) => raw.get(..2).unwrap_or_default(),
+                    (true, false) | (false, true) => raw.get(..1).unwrap_or_default(),
+                    (false, false) => "",
+                },
+                suffix: match (wc_after, brace) {
+                    (true, true) => raw.get(raw.len() - 2..).unwrap_or_default(),
+                    (true, false) | (false, true) => raw.get(raw.len() - 1..).unwrap_or_default(),
+                    (false, false) => "",
+                },
             }))
         }
     }
