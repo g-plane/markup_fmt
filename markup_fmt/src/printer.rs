@@ -25,7 +25,10 @@ impl<'s> DocGen<'s> for AngularElseIf<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@else if ("));
-        docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
+        docs.push(Doc::text(
+            ctx.try_format_expr(self.expr.0, false, self.expr.1)
+                .map_or(Cow::from(self.expr.0), Cow::from),
+        ));
         if let Some((reference, start)) = self.reference {
             docs.push(Doc::text("; as "));
             docs.push(Doc::text(ctx.format_binding(reference, start, state)));
@@ -54,10 +57,16 @@ impl<'s> DocGen<'s> for AngularFor<'s> {
             state,
         )));
         docs.push(Doc::text(" of "));
-        docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
+        docs.push(Doc::text(
+            ctx.try_format_expr(self.expr.0, false, self.expr.1)
+                .map_or(Cow::from(self.expr.0), Cow::from),
+        ));
         if let Some((track, start)) = self.track {
             docs.push(Doc::text("; track "));
-            docs.push(Doc::text(ctx.format_expr(track, false, start)));
+            docs.push(Doc::text(
+                ctx.try_format_expr(track, false, start)
+                    .map_or(Cow::from(track), Cow::from),
+            ));
         }
         self.aliases.iter().for_each(|(aliases, start)| {
             docs.push(Doc::text("; "));
@@ -144,7 +153,10 @@ impl<'s> DocGen<'s> for AngularIf<'s> {
 
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@if ("));
-        docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
+        docs.push(Doc::text(
+            ctx.try_format_expr(self.expr.0, false, self.expr.1)
+                .map_or(Cow::from(self.expr.0), Cow::from),
+        ));
         if let Some((reference, start)) = self.reference {
             docs.push(Doc::text("; as "));
             docs.push(Doc::text(ctx.format_binding(reference, start, state)));
@@ -205,7 +217,10 @@ impl<'s> DocGen<'s> for AngularLet<'s> {
         Doc::text("@let ")
             .append(Doc::text(self.name))
             .append(Doc::text(" = "))
-            .append(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)))
+            .append(Doc::text(
+                ctx.try_format_expr(self.expr.0, false, self.expr.1)
+                    .map_or(Cow::from(self.expr.0), Cow::from),
+            ))
             .append(Doc::char(';'))
     }
 }
@@ -217,7 +232,10 @@ impl<'s> DocGen<'s> for AngularSwitch<'s> {
     {
         let mut docs = Vec::with_capacity(5);
         docs.push(Doc::text("@switch ("));
-        docs.push(Doc::text(ctx.format_expr(self.expr.0, false, self.expr.1)));
+        docs.push(Doc::text(
+            ctx.try_format_expr(self.expr.0, false, self.expr.1)
+                .map_or(Cow::from(self.expr.0), Cow::from),
+        ));
         docs.push(Doc::text(") {"));
         docs.extend(
             self.arms
@@ -243,7 +261,10 @@ impl<'s> DocGen<'s> for AngularSwitchArm<'s> {
             if !self.expr_naked {
                 docs.push(Doc::char('('));
             }
-            docs.push(Doc::text(ctx.format_expr(expr.0, false, expr.1)));
+            docs.push(Doc::text(
+                ctx.try_format_expr(expr.0, false, expr.1)
+                    .map_or(Cow::from(expr.0), Cow::from),
+            ));
             if !self.expr_naked {
                 docs.push(Doc::char(')'));
             }
@@ -1199,7 +1220,8 @@ impl<'s> DocGen<'s> for NativeAttribute<'s> {
                 Language::Angular
                     if self.name.starts_with(['[', '(']) && self.name.ends_with([']', ')']) =>
                 {
-                    Cow::from(ctx.format_expr(value, false, value_start))
+                    ctx.try_format_expr(value, false, value_start)
+                        .map_or(Cow::from(value), Cow::from)
                 }
                 _ => {
                     if !matches!(ctx.language, Language::Angular | Language::Xml)

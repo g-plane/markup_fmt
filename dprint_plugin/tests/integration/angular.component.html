@@ -1,6 +1,7 @@
 <button type="button" (click)="deleteHero(  )">Delete hero</button>
 
 <tr><td [colSpan]="1+1">Three-Four</td></tr>
+<div [class.on]="switch.state ? 'Published' : 'Unpublished'"></div>
 
 <p>The hero's birthday is {{birthday|date}}</p>
 
@@ -11,12 +12,16 @@
     <span>{{ value }}</span>
   }
 </div>
+@if (a | b: 1) {
+<p>x</p>
+} @else if (c | d: 2) {}
 
 <ul>
     @for ({id,name} of getItems ( );   track  id . value   ;let idx   =   $index,e=$even) {
   <li>{{ name }}</li>
 }
 </ul>
+@for (item of a | b: 1; track c | d: 2) {}
 
 @switch(
   should . be . formatted
@@ -24,9 +29,13 @@
   @case(
   should . be . formatted) {}
 }
+@switch (a | b: 1) {
+@case (c | d: 2) {}
+}
 
 <div>{{ a ?. b ( ) }}</div>
 
 @let user = getUser (  1  );
+@let user = getUser (  2  ) | check: true;
 
 <div>{{ value | number: '1.5-5' }}</div>
