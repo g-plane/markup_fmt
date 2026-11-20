@@ -1487,12 +1487,16 @@ impl<'s> Parser<'s> {
                 let node = self.parse_node()?;
                 if let NodeKind::MustacheInterpolation(interpolation) = &node.kind
                     && !interpolation.prefix.ends_with('{')
-                    && interpolation.content == "else"
+                    && let Some(rest) = interpolation
+                        .content
+                        .strip_prefix("else")
+                        .map(|s| s.trim_ascii())
+                    && (rest.is_empty() || rest.starts_with("if"))
                 {
                     controls.push(MustacheBlockControl {
                         name: "else",
                         prefix: "",
-                        content: None,
+                        content: if rest.is_empty() { None } else { Some(rest) },
                         wc_before: interpolation.prefix == "~",
                         wc_after: interpolation.suffix == "~",
                     });

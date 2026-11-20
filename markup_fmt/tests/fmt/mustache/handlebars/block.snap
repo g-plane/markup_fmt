@@ -14,3 +14,9 @@ source: markup_fmt/tests/fmt.rs
     {{~/if~}}
   </a>
 {{~/each}}
+
+{{#if isActive}}
+  <img alt="Active" />
+{{else if isInactive}}
+  <img alt="Inactive" />
+{{/if}}

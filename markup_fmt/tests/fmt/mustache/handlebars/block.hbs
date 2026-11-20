@@ -11,3 +11,9 @@
     {{~/if~}}
   </a>
 {{~/each}}
+
+{{#if isActive}}
+  <img alt="Active" />
+{{else if isInactive}}
+  <img alt="Inactive" />
+{{/if}}
